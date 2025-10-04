@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=LinkPure
+Comment=A cross-platform application that automatically monitors clipboard URL changes and rewrites them according to rules.
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/LinkPure %u
+Terminal=false
+Type=Application
+Icon=LinkPure
+Categories=Utility;
+StartupWMClass=LinkPure
+
+ 

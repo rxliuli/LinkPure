@@ -1,0 +1,15 @@
+{
+	"fixed": {
+		"file_version": "0.0.1"
+	},
+	"info": {
+		"0000": {
+			"ProductVersion": "0.0.1",
+			"CompanyName": "com.rxliuli",
+			"FileDescription": "A cross-platform application that automatically monitors clipboard URL changes and rewrites them according to rules.",
+			"LegalCopyright": "(c) 2025, rxliuli",
+			"ProductName": "LinkPure",
+			"Comments": "URL clipboard rewriting tool"
+		}
+	}
+}

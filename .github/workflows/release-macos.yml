@@ -1,0 +1,152 @@
+name: Release macOS DMG
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'build/config.yml'
+
+jobs:
+  Version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      version_changed: ${{ steps.check_version.outputs.version_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for version change
+        id: check_version
+        run: |
+          if git diff --name-only HEAD~1..HEAD | grep -q '^build/config\.yml$'; then
+            # Extract version from current and previous commit (grep with 2 spaces to match indented version field)
+            CURRENT_VERSION=$(git show HEAD:build/config.yml | grep '^  version:' | sed 's/.*version: "\(.*\)".*/\1/')
+            PREV_VERSION=$(git show HEAD~1:build/config.yml | grep '^  version:' | sed 's/.*version: "\(.*\)".*/\1/')
+
+            echo "Current version: $CURRENT_VERSION"
+            echo "Previous version: $PREV_VERSION"
+
+            if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+              echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
+              echo "version_changed=1" >> "$GITHUB_OUTPUT"
+            else
+              echo "Version field not changed"
+              echo "version_changed=0" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "build/config.yml not modified"
+            echo "version_changed=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get version
+        if: steps.check_version.outputs.version_changed == '1'
+        id: get_version
+        run: |
+          VERSION=$(grep '^  version:' build/config.yml | sed 's/.*version: "\(.*\)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $VERSION"
+
+  Build:
+    needs: Version
+    if: needs.Version.outputs.version_changed == '1'
+    runs-on: macos-latest
+    environment: release-macOS
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.1'
+
+      - name: Install Task
+        run: |
+          brew install go-task/tap/go-task
+
+      - name: Install Wails
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 'latest'
+
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Import certificates
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+
+          # Set the keychain for codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Setup notarization credentials
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          # Create AuthKey file
+          mkdir -p ~/private_keys
+          echo "$APPLE_API_KEY" | base64 --decode > ~/private_keys/AuthKey_$APPLE_API_KEY_ID.p8
+
+          # Store credentials in keychain for notarytool
+          xcrun notarytool store-credentials "LinkPure" \
+            --key ~/private_keys/AuthKey_$APPLE_API_KEY_ID.p8 \
+            --key-id $APPLE_API_KEY_ID \
+            --issuer $APPLE_API_ISSUER
+
+      - name: Build and package DMG
+        run: |
+          chmod +x build-dmg.sh
+          ./build-dmg.sh
+
+      - name: Rename DMG with version
+        run: |
+          VERSION="${{ needs.Version.outputs.version }}"
+          mv bin/LinkPure-Installer.dmg bin/LinkPure-${VERSION}.dmg
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'v${{ needs.Version.outputs.version }}'
+          name: 'LinkPure v${{ needs.Version.outputs.version }}'
+          draft: false
+          prerelease: false
+          files: |
+            bin/LinkPure-${{ needs.Version.outputs.version }}.dmg
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
