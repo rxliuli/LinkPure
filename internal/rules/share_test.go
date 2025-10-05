@@ -23,10 +23,10 @@ func TestGetShareRules(t *testing.T) {
 	foundGoogle := false
 
 	for _, rule := range rules {
-		if rule.ID == "amazon-params" {
+		if rule.ID == "clearurls-amazon-params" {
 			foundAmazon = true
 		}
-		if rule.ID == "google-redirect-0" {
+		if rule.ID == "clearurls-google-redirect-0" {
 			foundGoogle = true
 		}
 	}

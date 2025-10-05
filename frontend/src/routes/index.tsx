@@ -71,8 +71,7 @@ export function HomePage() {
         return undefined
       }
 
-      const tempRules = [editingRule]
-      const result = await native().rule.checkRuleChain(tempRules, testUrl)
+      const result = await native().rule.checkRuleChain(editingRule, testUrl)
 
       let testResult = ''
       switch (result.status) {

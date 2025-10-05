@@ -364,3 +364,19 @@ func TestRealCase1(t *testing.T) {
 		t.Errorf("Expected URL to be %s, got %s", "https://www.google.com/search?q=测试 JavaScript", result.URL)
 	}
 }
+
+func TestRealCase2(t *testing.T) {
+	rule := CommonRule{
+		ID:                "real-case-2",
+		RegexFilter:       `^https://apps.apple.com/\w+?/app/.+?/(\w+)$`,
+		RegexSubstitution: "https://apps.apple.com/app/$1",
+	}
+
+	result := MatchRuleWithResult(rule, "https://apps.apple.com/cn/app/cleaner-for-x/id6752027292")
+	if !result.Match {
+		t.Errorf("Expected Match to be %v, got %v", true, result.Match)
+	}
+	if result.URL != "https://apps.apple.com/app/id6752027292" {
+		t.Errorf("Expected URL to be %s, got %s", "https://apps.apple.com/app/id6752027292", result.URL)
+	}
+}

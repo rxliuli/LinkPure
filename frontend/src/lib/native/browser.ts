@@ -42,10 +42,10 @@ export function browser(): NativeApi {
       },
     },
     rule: {
-      checkRuleChain: async (list: Rule[], from: string) => {
+      checkRuleChain: async (list: Rule, from: string) => {
         // Simple client-side implementation
         const maxRedirects = 5
-        const enabledRules = list.filter((r) => r.enabled)
+        const enabledRules = [list].filter((r) => r.enabled)
         const redirectURLs: string[] = []
         let currentURL = from
 

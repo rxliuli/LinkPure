@@ -13,8 +13,8 @@ export function CheckNotificationPermission(): $CancellablePromise<boolean> {
     return $Call.ByID(3722011932);
 }
 
-export function CheckRuleChain(list: rules$0.LocalRule[], $from: string): $CancellablePromise<rules$0.CheckResult> {
-    return $Call.ByID(3728189383, list, $from).then(($result: any) => {
+export function CheckRuleChain(rule: rules$0.LocalRule, $from: string): $CancellablePromise<rules$0.CheckResult> {
+    return $Call.ByID(3728189383, rule, $from).then(($result: any) => {
         return $$createType0($result);
     });
 }

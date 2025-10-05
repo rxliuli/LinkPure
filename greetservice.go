@@ -31,8 +31,14 @@ func (g *GreetService) DeleteRule(id string) error {
 	return rules.DeleteRule(id)
 }
 
-func (g *GreetService) CheckRuleChain(list []rules.LocalRule, from string) rules.CheckResult {
-	return rules.CheckRuleChain(rules.GetEnabledRules(), from, &rules.CheckOptions{MaxRedirects: 5})
+func (g *GreetService) CheckRuleChain(rule rules.LocalRule, from string) rules.CheckResult {
+	return rules.CheckRuleChain([]rules.CommonRule{
+		{
+			ID:                rule.ID,
+			RegexFilter:       rule.From,
+			RegexSubstitution: rule.To,
+		},
+	}, from, nil)
 }
 
 func (g *GreetService) SaveJsonFile(content string, fileName string) bool {

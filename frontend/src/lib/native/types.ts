@@ -1,9 +1,9 @@
 import {
-  Rule as BackendRule,
   CheckResult,
+  LocalRule,
 } from '../../../bindings/linkpure/internal/rules/models'
 
-export type Rule = BackendRule
+export type Rule = LocalRule
 
 export interface NativeApi {
   store: {
@@ -13,7 +13,7 @@ export interface NativeApi {
     deleteRule: (id: string) => Promise<void>
   }
   rule: {
-    checkRuleChain: (list: Rule[], from: string) => Promise<CheckResult>
+    checkRuleChain: (list: Rule, from: string) => Promise<CheckResult>
   }
   dialog: {
     saveJsonFile: (content: string, fileName: string) => Promise<boolean>
