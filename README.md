@@ -157,5 +157,3 @@ The shared rules are sourced from:
 - [ClearURLs](https://github.com/ClearURLs/Addon): Comprehensive tracking parameter database
 - [Linkumori](https://github.com/Linkumori/Linkumori-Extension): Community-maintained URL parameter removal rules
 - [Custom Rules](./internal/rules/sources/custom-rules.json): Manually maintained rules
-
-See [scripts/README.md](scripts/README.md) for more details.
