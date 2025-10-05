@@ -2,6 +2,10 @@
 
 A cross-platform application that monitors clipboard URL changes and rewrites them based on user-defined rules.
 
+## Download
+
+Download the latest version from [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
+
 ## Features
 
 - 🔄 **Automatic URL Rewriting**: Monitors clipboard and rewrites URLs based on matching rules
