@@ -9,3 +9,4 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 *.p8
 *.p12
 node_modules
+.claude

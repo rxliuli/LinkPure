@@ -6,6 +6,7 @@ A cross-platform application that monitors clipboard URL changes and rewrites th
 
 - 🔄 **Automatic URL Rewriting**: Monitors clipboard and rewrites URLs based on matching rules
 - 📋 **Rule Management**: Visual interface for managing redirect rules
+- 🌐 **Built-in Shared Rules**: 218 pre-configured rules for cleaning tracking parameters and unwrapping redirects from popular sites (Google, Amazon, YouTube, Facebook, Twitter, etc.)
 - 🧪 **Rule Testing**: Test rule before applying
 - 🔔 **System Notifications**: Notifies when URLs are rewritten
 - 🌓 **Dark Mode**: System dark mode support
@@ -43,9 +44,29 @@ pnpm build
 
 ## Usage Examples
 
-### Rule Configuration
+### Built-in Shared Rules
 
-Rules use regular expressions for matching and rewriting:
+LinkPure comes with 218 pre-configured rules that automatically:
+
+#### Clean Tracking Parameters
+
+- Remove `utm_*`, `fbclid`, `gclid`, and other tracking parameters
+- Clean Amazon affiliate tags and tracking IDs
+- Strip YouTube tracking parameters (`feature`, `si`, etc.)
+- Remove social media tracking codes
+
+#### Unwrap Redirects
+
+- Extract actual URLs from Google redirect links (`/url?q=...`)
+- Unwrap Facebook link shim (`l.facebook.com/l.php`)
+- Decode Reddit outbound links
+- Remove tracking from email links
+
+These rules are embedded in the application and work out of the box. No configuration needed!
+
+### Custom Rule Configuration
+
+You can also create your own rules using regular expressions:
 
 **Example 1: Redirect Google Search to DuckDuckGo**
 
@@ -98,7 +119,12 @@ Rules use regular expressions for matching and rewriting:
 │   └── bindings/          # Wails-generated TypeScript bindings
 ├── internal/              # Backend internal packages
 │   ├── rules/            # Rule storage and matching logic
+│   │   └── shared-rules.json  # Built-in shared rules (embedded)
 │   ├── conf/             # Configuration management
 │   └── tray/             # System tray
+├── rules/                # Source rule files
+│   ├── clean-tracking.json    # Tracking parameter cleaning rules
+│   ├── redirects.json         # Redirect unwrapping rules
+│   └── shared-rules.json      # Merged shared rules
 └── main.go               # Application entry point
 ```
