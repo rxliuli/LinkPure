@@ -10,7 +10,7 @@ Download the latest version from [GitHub Releases](https://github.com/rxliuli/Li
 
 - 🔄 **Automatic URL Rewriting**: Monitors clipboard and rewrites URLs based on matching rules
 - 📋 **Rule Management**: Visual interface for managing redirect rules
-- 🌐 **Built-in Shared Rules**: 218 pre-configured rules for cleaning tracking parameters and unwrapping redirects from popular sites (Google, Amazon, YouTube, Facebook, Twitter, etc.)
+- 🌐 **Built-in Shared Rules**: 1000+ pre-configured rules for cleaning tracking parameters and unwrapping redirects from popular sites (Google, Amazon, YouTube, Facebook, Twitter, etc.)
 - 🧪 **Rule Testing**: Test rule before applying
 - 🔔 **System Notifications**: Notifies when URLs are rewritten
 - 🌓 **Dark Mode**: System dark mode support
@@ -50,7 +50,7 @@ pnpm build
 
 ### Built-in Shared Rules
 
-LinkPure comes with 218 pre-configured rules that automatically:
+LinkPure comes with 1000+ pre-configured rules that automatically:
 
 #### Clean Tracking Parameters
 
@@ -123,12 +123,39 @@ You can also create your own rules using regular expressions:
 │   └── bindings/          # Wails-generated TypeScript bindings
 ├── internal/              # Backend internal packages
 │   ├── rules/            # Rule storage and matching logic
-│   │   └── shared-rules.json  # Built-in shared rules (embedded)
+│   │   ├── assets/
+│   │   │   └── shared-rules.json  # Built-in shared rules (embedded)
+│   │   └── sources/      # Rule source files
+│   │       ├── custom-rules.json     # Custom rules (tracked in git)
+│   │       ├── clearurls-rules.json  # Auto-downloaded ClearURLs rules
+│   │       └── linkumori-rules.json  # Auto-downloaded Linkumori rules
 │   ├── conf/             # Configuration management
 │   └── tray/             # System tray
-├── rules/                # Source rule files
-│   ├── clean-tracking.json    # Tracking parameter cleaning rules
-│   ├── redirects.json         # Redirect unwrapping rules
-│   └── shared-rules.json      # Merged shared rules
+├── scripts/              # Maintenance scripts
+│   ├── download_rules.js  # Download external rules
+│   └── merge_sources.js   # Merge rule sources
 └── main.go               # Application entry point
 ```
+
+## Contributing
+
+### Updating Shared Rules
+
+To update the built-in shared rules from external sources:
+
+```bash
+# Update all rules
+npm run update-rules
+
+# Or step by step
+npm run download-rules  # Download latest rules from ClearURLs and Linkumori
+npm run merge-sources   # Merge with custom rules
+```
+
+The shared rules are sourced from:
+
+- [ClearURLs](https://github.com/ClearURLs/Addon): Comprehensive tracking parameter database
+- [Linkumori](https://github.com/Linkumori/Linkumori-Extension): Community-maintained URL parameter removal rules
+- [Custom Rules](./internal/rules/sources/custom-rules.json): Manually maintained rules
+
+See [scripts/README.md](scripts/README.md) for more details.

@@ -1,0 +1,21 @@
+{
+  "$schema": "./schema.json",
+  "name": "Custom Rules",
+  "description": "Manually maintained custom rules for link-pure",
+  "rules": [
+    {
+      "id": "chromewebstore-google-com-params",
+      "regexFilter": "^(https://chromewebstore.google.com/detail/.*?/\\w+)",
+      "removeParams": [
+        "authuser",
+        "hl"
+      ],
+      "test": [
+        {
+          "from": "https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin?authuser=0&hl=en",
+          "to": "https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin"
+        }
+      ]
+    }
+  ]
+}
