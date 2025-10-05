@@ -4,5 +4,5 @@
 export {
     CheckResult,
     CheckStatus,
-    Rule
+    LocalRule
 } from "./models.js";

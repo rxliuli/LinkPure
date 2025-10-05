@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Rule Schema",
+  "definitions": {
+    "Rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "regexFilter": {
+          "type": "string",
+          "description": "Source pattern for the rule"
+        },
+        "regexSubstitution": {
+          "type": "string",
+          "description": "Destination pattern for the rule"
+        },
+        "removeParams": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of query parameters to remove from the URL"
+        },
+        "test": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "uri",
+                "description": "The input URL to test the rule against"
+              },
+              "to": {
+                "type": "string",
+                "description": "The expected output after applying the rule"
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "id",
+        "regexFilter"
+      ]
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the rule set"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the rule set"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Rule"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "rules"
+  ]
+}

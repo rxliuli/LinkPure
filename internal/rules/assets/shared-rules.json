@@ -1,0 +1,1998 @@
+{
+  "$schema": "./schema.json",
+  "name": "Shared Rules",
+  "description": "Combined tracking parameter cleaning and redirect unwrapping rules",
+  "rules": [
+    {
+      "id": "amazon-raw-0",
+      "regexFilter": "\\/ref=[^/?]*",
+      "regexSubstitution": ""
+    },
+    {
+      "id": "amazon search-raw-0",
+      "regexFilter": "\\/ref=[^/?]*",
+      "regexSubstitution": ""
+    },
+    {
+      "id": "google-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}\\/url\\?.*?(?:url|q)=(https?[^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "google-redirect-1",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}\\/.*?adurl=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "google-redirect-2",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}\\/amp\\/s\\/([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "doubleclick-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?doubleclick(?:\\.[a-z]{2,}){1,}\\/.*?tag_for_child_directed_treatment=;%3F([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "googleadservices-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?googleadservices\\.com\\/.*?adurl=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "youtube-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?youtube\\.com\\/redirect?.*?q=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "facebook-redirect-0",
+      "regexFilter": "^https?:\\/\\/l[a-z]?\\.facebook\\.com/l\\.php\\?.*?u=(https?%3A%2F%2F[^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "reddit-redirect-0",
+      "regexFilter": "^https?:\\/\\/out\\.reddit\\.com\\/.*?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "reddit-redirect-1",
+      "regexFilter": "^https?:\\/\\/click\\.redditmail\\.com\\/.*?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "ebay-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?rover\\.ebay(?:\\.[a-z]{2,}){1,}\\/rover.*mpre=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "govdelivery.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?links\\.govdelivery\\.com.*\\/track\\?.*(https?:\\/\\/.*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "steamcommunity-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?steamcommunity\\.com\\/linkfilter\\/\\?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "mozaws.net-redirect-0",
+      "regexFilter": "https?:\\/\\/[^/]+\\/v1\\/[0-9a-f]{64}\\/(.*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "deviantart.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?deviantart\\.com\\/.*?\\/outgoing\\?(.*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "site2.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?site2\\.com.*?\\?.*=(.*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "site.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?site\\.com.*?\\?to=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "site3.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?site3\\.com.*?\\?r=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "linksynergy.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?linksynergy\\.com\\/.*?murl=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "gate.sc-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?gate\\.sc\\/.*?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "vk.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/vk\\.com\\/away\\.php\\?to=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "curseforge.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?curseforge\\.com\\/linkout\\?remoteUrl=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "messenger.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/l\\.messenger\\.com\\/l\\.php\\?u=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "smartredirect.de-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?smartredirect\\.de.*?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "rutracker.org-redirect-0",
+      "regexFilter": ".*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "instagram-redirect-0",
+      "regexFilter": ".*u=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "imgsrc.ru-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?dlp\\.imgsrc\\.ru\\/go\\/\\d+\\/\\d+\\/\\d+\\/([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "awstrack.me-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?awstrack\\.me\\/.*\\/(https?.*?)\\/",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "exactag.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?exactag\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "disq.us-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?disq\\.us\\/.*?url=([^&]*)%3A",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "anonym.to-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?anonym\\.to.*\\?([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "ClearURLsTest-redirect-0",
+      "regexFilter": "^https?:\\/\\/kevinroebert\\.gitlab\\.io\\/ClearUrls\\/void\\/index\\.html\\?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "ClearURLsTest2-redirect-0",
+      "regexFilter": "^https?:\\/\\/test\\.clearurls\\.xyz\\/void\\/index\\.html\\?url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "alabout.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?alabout\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "tradedoubler.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tradedoubler\\.com.*(?:url|_td_deeplink)=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "srvtrck.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?srvtrck\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "mysku.ru-redirect-0",
+      "regexFilter": "^https?:\\/\\/mysku\\.ru.*r=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "admitad.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?admitad\\.com.*ulp=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "digidip.net-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?digidip\\.net.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "bigfishgames.com-raw-0",
+      "regexFilter": "\\?pc$",
+      "regexSubstitution": ""
+    },
+    {
+      "id": "dpbolvw.net-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?dpbolvw\\.net.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "mailpanion.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?mailpanion\\.com.*destination=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "signtr.website-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?signtr\\.website.*redirect=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "mailtrack.io-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?mailtrack\\.io.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "effiliation.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?effiliation\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "hlserve.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?hlserve\\.com.*dest=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "flexlinkspro.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?flexlinkspro\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "ccbill.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/refer\\.ccbill\\.com.*HTML=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "idealo-partner.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?idealo-partner\\.com.*trg=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "webgains.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?webgains\\.com.*wgtarget=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "getpocket.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?getpocket\\.com.*url=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "tokopedia.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tokopedia\\.com\\/promo.*r=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "app.adjust.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/app\\.adjust\\.com.*redirect=([^&]*)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "duckduckgo-redirect-0",
+      "regexFilter": "^https?:\\/\\/duckduckgo\\.com\\/l\\/.*?uddg=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "partner-ads.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/.*?partner-ads\\.com\\/.*?htmlurl=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "href.li-redirect-0",
+      "regexFilter": "^https?:\\/\\/href\\.li\\/\\?(http.+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "adform.net-redirect-0",
+      "regexFilter": "^https?:\\/\\/track\\.adform\\.net\\/C\\/.*?ckurl=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "artefact.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/.*?artefact\\.com\\/trck\\/.*?deeplinkurl=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "awin1.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/.*?awin1\\.com\\/.*?ued=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "telekom.de-redirect-0",
+      "regexFilter": "^https?:\\/\\/aaa\\.telekom\\.de\\/trck\\/.*?deeplinkurl=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "cc.loginfra.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/cc\\.loginfra\\.com\\/.*?u=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "t.umblr.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/t\\.umblr\\.com\\/redirect\\?z=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "pantip.com-raw-0",
+      "regexFilter": "#lead.*",
+      "regexSubstitution": ""
+    },
+    {
+      "id": "skimresources.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/go\\.skimresources\\.com\\/.*?url=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "mozgcp.net-redirect-0",
+      "regexFilter": "^https?:\\/\\/prod\\.outgoing\\.prod\\.webservices\\.mozgcp\\.net\\/v1\\/.+?\\/([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "viglink.com-redirect-0",
+      "regexFilter": "^https?:\\/\\/redirect\\.viglink\\.com\\/.*?u=([^&]+)",
+      "regexSubstitution": "$1"
+    },
+    {
+      "id": "chromewebstore-google-com-params",
+      "regexFilter": "^(https://chromewebstore.google.com/detail/.*?/\\w+)\\?authuser=0&hl=en$",
+      "regexSubstitution": "$1",
+      "test": [
+        {
+          "from": "https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin?authuser=0&hl=en",
+          "to": "https://chromewebstore.google.com/detail/redirector/lioaeidejmlpffbndjhaameocfldlhin"
+        }
+      ]
+    },
+    {
+      "id": "amazon-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?amazon(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "p[fd]_rd_[a-z]*",
+        "qid",
+        "srs?",
+        "__mk_[a-z]{1,3}_[a-z]{1,3}",
+        "spIA",
+        "ms3_c",
+        "[a-z%0-9]*ie",
+        "refRID",
+        "colii?d",
+        "[^a-z%0-9]adId",
+        "qualifier",
+        "_encoding",
+        "smid",
+        "field-lbr_brands_browse-bin",
+        "ref_?",
+        "th",
+        "sprefix",
+        "crid",
+        "keywords",
+        "cv_ct_[a-z]+",
+        "linkCode",
+        "creativeASIN",
+        "ascsubtag",
+        "aaxitk",
+        "hsa_cr_id",
+        "sb-ci-[a-z]+",
+        "rnid",
+        "dchild",
+        "camp",
+        "creative",
+        "content-id",
+        "dib",
+        "dib_tag",
+        "social_share",
+        "starsLeft",
+        "skipTwisterOG"
+      ]
+    },
+    {
+      "id": "amazon-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?amazon(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "tag",
+        "ascsubtag"
+      ]
+    },
+    {
+      "id": "msn-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?msn\\.com",
+      "removeParams": [
+        "cvid",
+        "ocid"
+      ]
+    },
+    {
+      "id": "amazon search-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?amazon(?:\\.[a-z]{2,}){1,}\\/s\\?",
+      "removeParams": [
+        "p[fd]_rd_[a-z]*",
+        "qid",
+        "srs?",
+        "__mk_[a-z]{1,3}_[a-z]{1,3}",
+        "spIA",
+        "ms3_c",
+        "[a-z%0-9]*ie",
+        "refRID",
+        "colii?d",
+        "[^a-z%0-9]adId",
+        "qualifier",
+        "_encoding",
+        "smid",
+        "field-lbr_brands_browse-bin",
+        "ref_?",
+        "th",
+        "sprefix",
+        "crid",
+        "cv_ct_[a-z]+",
+        "linkCode",
+        "creativeASIN",
+        "ascsubtag",
+        "aaxitk",
+        "hsa_cr_id",
+        "sb-ci-[a-z]+",
+        "rnid",
+        "dchild",
+        "camp",
+        "creative"
+      ]
+    },
+    {
+      "id": "amazon search-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?amazon(?:\\.[a-z]{2,}){1,}\\/s\\?",
+      "removeParams": [
+        "tag"
+      ]
+    },
+    {
+      "id": "google-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "ved",
+        "bi[a-z]*",
+        "gfe_[a-z]*",
+        "ei",
+        "source",
+        "gs_[a-z]*",
+        "site",
+        "oq",
+        "esrc",
+        "uact",
+        "cd",
+        "cad",
+        "gws_[a-z]*",
+        "atyp",
+        "vet",
+        "_u",
+        "je",
+        "dcr",
+        "ie",
+        "sei",
+        "sa",
+        "dpr",
+        "btn[a-z]*",
+        "usg",
+        "cd",
+        "cad",
+        "uact",
+        "aqs",
+        "sourceid",
+        "sxsrf",
+        "rlz",
+        "i-would-rather-use-firefox",
+        "pcampaignid",
+        "sca_(?:esv|upv)",
+        "iflsig",
+        "fbs",
+        "ictx",
+        "cshid"
+      ],
+      "test": [
+        {
+          "from": "https://www.google.com/search?q=js&ie=UTF-8",
+          "to": "https://www.google.com/search?q=js"
+        }
+      ]
+    },
+    {
+      "id": "google-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "referrer"
+      ]
+    },
+    {
+      "id": "globalRules-params",
+      "regexFilter": ".*",
+      "removeParams": [
+        "(?:%3F)?utm(?:_[a-z_]*)?",
+        "(?:%3F)?mtm(?:_[a-z_]*)?",
+        "(?:%3F)?ga_[a-z_]+",
+        "(?:%3F)?yclid",
+        "(?:%3F)?_openstat",
+        "(?:%3F)?fb_action_(?:types|ids)",
+        "(?:%3F)?fb_(?:source|ref)",
+        "(?:%3F)?fbclid",
+        "(?:%3F)?action_(?:object|type|ref)_map",
+        "(?:%3F)?gs_l",
+        "(?:%3F)?mkt_tok",
+        "(?:%3F)?hmb_(?:campaign|medium|source)",
+        "(?:%3F)?gclid",
+        "(?:%3F)?srsltid",
+        "(?:%3F)?otm_[a-z_]*",
+        "(?:%3F)?cmpid",
+        "(?:%3F)?os_ehash",
+        "(?:%3F)?_ga",
+        "(?:%3F)?_gl",
+        "(?:%3F)?__twitter_impression",
+        "(?:%3F)?wt_?z?mc",
+        "(?:%3F)?wtrid",
+        "(?:%3F)?[a-z]?mc",
+        "(?:%3F)?dclid",
+        "Echobox",
+        "(?:%3F)?spm",
+        "(?:%3F)?vn(?:_[a-z]*)+",
+        "(?:%3F)?tracking_source",
+        "(?:%3F)?ceneo_spo",
+        "(?:%3F)?itm_(?:campaign|medium|source)",
+        "(?:%3F)?__hsfp",
+        "(?:%3F)?__hssc",
+        "(?:%3F)?__hstc",
+        "(?:%3F)?_hsenc",
+        "(?:%3F)?__s",
+        "(?:%3F)?hsCtaTracking",
+        "(?:%3F)?mc_(?:eid|cid|tc)",
+        "(?:%3F)?ml_subscriber",
+        "(?:%3F)?ml_subscriber_hash",
+        "(?:%3F)?msclkid",
+        "(?:%3F)?oly_anon_id",
+        "(?:%3F)?oly_enc_id",
+        "(?:%3F)?rb_clickid",
+        "(?:%3F)?s_cid",
+        "(?:%3F)?vero_conv",
+        "(?:%3F)?vero_id",
+        "(?:%3F)?wickedid",
+        "(?:%3F)?twclid"
+      ]
+    },
+    {
+      "id": "globalRules-referral",
+      "regexFilter": ".*",
+      "removeParams": [
+        "(?:%3F)?ref_?",
+        "(?:%3F)?referrer"
+      ]
+    },
+    {
+      "id": "youtube-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?(youtube\\.com|youtu\\.be)",
+      "removeParams": [
+        "feature",
+        "gclid",
+        "kw",
+        "si",
+        "pp"
+      ]
+    },
+    {
+      "id": "facebook-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?facebook\\.com",
+      "removeParams": [
+        "hc_[a-z_%\\[\\]0-9]*",
+        "[a-z]*ref[a-z]*",
+        "__tn__",
+        "eid",
+        "__(?:xts|cft)__(?:\\[|%5B)\\d(?:\\]|%5D)",
+        "comment_tracking",
+        "dti",
+        "app",
+        "video_source",
+        "ftentidentifier",
+        "pageid",
+        "padding",
+        "ls_ref",
+        "action_history",
+        "tracking",
+        "referral_code",
+        "referral_story_type",
+        "eav",
+        "sfnsn",
+        "idorvanity",
+        "wtsid",
+        "rdc",
+        "rdr",
+        "paipv",
+        "_nc_x",
+        "_rdr",
+        "mibextid"
+      ]
+    },
+    {
+      "id": "twitter-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?twitter.com",
+      "removeParams": [
+        "(?:ref_?)?src",
+        "s",
+        "cn",
+        "ref_url",
+        "t"
+      ]
+    },
+    {
+      "id": "x-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?x.com",
+      "removeParams": [
+        "(?:ref_?)?src",
+        "s",
+        "cn",
+        "ref_url",
+        "t"
+      ]
+    },
+    {
+      "id": "reddit-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?reddit.com",
+      "removeParams": [
+        "%24deep_link",
+        "\\$deep_link",
+        "correlation_id",
+        "ref_campaign",
+        "ref_source",
+        "%243p",
+        "rdt",
+        "\\$3p",
+        "%24original_url",
+        "\\$original_url",
+        "_branch_match_id",
+        "share_id"
+      ]
+    },
+    {
+      "id": "netflix-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?netflix.com",
+      "removeParams": [
+        "trackId",
+        "tctx",
+        "jb[a-z]*?"
+      ]
+    },
+    {
+      "id": "techcrunch-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?techcrunch\\.com",
+      "removeParams": [
+        "ncid",
+        "sr",
+        "sr_share",
+        "guccounter",
+        "guce_referrer",
+        "guce_referrer_sig"
+      ]
+    },
+    {
+      "id": "bing-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bing(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "cvid",
+        "sk",
+        "sp",
+        "sc",
+        "qs",
+        "qp"
+      ]
+    },
+    {
+      "id": "bing-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bing(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "form"
+      ]
+    },
+    {
+      "id": "tweakers-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tweakers\\.net",
+      "removeParams": [
+        "nb",
+        "u"
+      ]
+    },
+    {
+      "id": "twitch-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?twitch\\.com",
+      "removeParams": [
+        "tt_medium",
+        "tt_content"
+      ]
+    },
+    {
+      "id": "vivaldi-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?vivaldi\\.com",
+      "removeParams": [
+        "pk_campaign",
+        "pk_kwd"
+      ]
+    },
+    {
+      "id": "indeed-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?indeed\\.com",
+      "removeParams": [
+        "from",
+        "alid",
+        "[a-z]*tk"
+      ]
+    },
+    {
+      "id": "hhdotru-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?hh\\.ru",
+      "removeParams": [
+        "vss",
+        "t",
+        "swnt",
+        "grpos",
+        "ptl",
+        "stl",
+        "exp",
+        "plim"
+      ]
+    },
+    {
+      "id": "ebay-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?ebay(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "_trkparms",
+        "_trksid",
+        "_from",
+        "hash"
+      ]
+    },
+    {
+      "id": "cnet-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?cnet\\.com",
+      "removeParams": [
+        "ftag"
+      ]
+    },
+    {
+      "id": "imdb.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?imdb\\.com",
+      "removeParams": [
+        "ref_",
+        "pf_rd_[a-z]*"
+      ]
+    },
+    {
+      "id": "walmart.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?walmart\\.com",
+      "removeParams": [
+        "u1",
+        "ath[a-z]*"
+      ]
+    },
+    {
+      "id": "net-parade.it-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?net\\-parade\\.it",
+      "removeParams": [
+        "pl"
+      ]
+    },
+    {
+      "id": "prvnizpravy.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?prvnizpravy\\.cz",
+      "removeParams": [
+        "xid"
+      ]
+    },
+    {
+      "id": "youku.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?youku\\.com",
+      "removeParams": [
+        "tpa"
+      ]
+    },
+    {
+      "id": "nytimes.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?nytimes\\.com",
+      "removeParams": [
+        "smid"
+      ]
+    },
+    {
+      "id": "tchibo.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tchibo\\.de",
+      "removeParams": [
+        "wbdcd"
+      ]
+    },
+    {
+      "id": "steampowered-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?steampowered\\.com",
+      "removeParams": [
+        "snr"
+      ]
+    },
+    {
+      "id": "shutterstock.com-params",
+      "regexFilter": "https?:\\/\\/([a-z0-9-.]*\\.)shutterstock\\.com",
+      "removeParams": [
+        "src"
+      ]
+    },
+    {
+      "id": "mozilla.org-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?mozilla\\.org",
+      "removeParams": [
+        "src",
+        "platform",
+        "redirect_source"
+      ]
+    },
+    {
+      "id": "readdc.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?readdc\\.com",
+      "removeParams": [
+        "ref"
+      ]
+    },
+    {
+      "id": "dailycodingproblem.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?dailycodingproblem\\.com",
+      "removeParams": [
+        "email"
+      ]
+    },
+    {
+      "id": "github.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?github\\.com",
+      "removeParams": [
+        "email_token",
+        "email_source"
+      ]
+    },
+    {
+      "id": "aliexpress-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?aliexpress(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "ws_ab_test",
+        "btsid",
+        "algo_expid",
+        "algo_pvid",
+        "gps-id",
+        "scm[_a-z-]*",
+        "cv",
+        "af",
+        "mall_affr",
+        "sk",
+        "dp",
+        "terminal_id",
+        "aff_request_id"
+      ]
+    },
+    {
+      "id": "mozillazine.org-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?mozillazine\\.org",
+      "removeParams": [
+        "sid"
+      ]
+    },
+    {
+      "id": "9gag.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?9gag\\.com",
+      "removeParams": [
+        "ref"
+      ]
+    },
+    {
+      "id": "giphy.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?giphy\\.com",
+      "removeParams": [
+        "ref"
+      ]
+    },
+    {
+      "id": "woot.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?woot\\.com",
+      "removeParams": [
+        "ref_?"
+      ]
+    },
+    {
+      "id": "vitamix.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?vitamix\\.com",
+      "removeParams": [
+        "_requestid",
+        "cid",
+        "dl",
+        "di",
+        "sd",
+        "bi"
+      ]
+    },
+    {
+      "id": "nypost.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?nypost\\.com",
+      "removeParams": [
+        "__twitter_impression"
+      ]
+    },
+    {
+      "id": "ozon.ru-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?ozon\\.ru",
+      "removeParams": [
+        "partner"
+      ]
+    },
+    {
+      "id": "norml.org-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?norml\\.org",
+      "removeParams": [
+        "link_id",
+        "can_id",
+        "source",
+        "email_referrer",
+        "email_subject"
+      ]
+    },
+    {
+      "id": "LinkedIn-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?linkedin\\.com",
+      "removeParams": [
+        "refId",
+        "trk",
+        "li[a-z]{2}",
+        "trackingId"
+      ]
+    },
+    {
+      "id": "LinkedIn Learning-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?linkedin\\.com\\/learning",
+      "removeParams": [
+        "u"
+      ]
+    },
+    {
+      "id": "SPIEGEL ONLINE-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?spiegel\\.de",
+      "removeParams": [
+        "b"
+      ]
+    },
+    {
+      "id": "instagram-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?instagram\\.com",
+      "removeParams": [
+        "igshid",
+        "igsh"
+      ]
+    },
+    {
+      "id": "boredpanda.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?boredpanda\\.com",
+      "removeParams": [
+        "h"
+      ]
+    },
+    {
+      "id": "bahn.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bahn\\.de",
+      "removeParams": [
+        "dbkanal_[0-9]{3}"
+      ]
+    },
+    {
+      "id": "disq.us-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?disq\\.us",
+      "removeParams": [
+        "cuid"
+      ]
+    },
+    {
+      "id": "moosejaw.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?moosejaw\\.com",
+      "removeParams": [
+        "cm_lm",
+        "cm_mmc",
+        "webUserId",
+        "spMailingID",
+        "spUserID",
+        "spJobID",
+        "spReportId"
+      ]
+    },
+    {
+      "id": "80000hours.org-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?80000hours\\.org",
+      "removeParams": [
+        "int_campaign"
+      ]
+    },
+    {
+      "id": "spotify.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?spotify\\.com",
+      "removeParams": [
+        "si"
+      ]
+    },
+    {
+      "id": "yandex-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?(?:yandex(?:\\.[a-z]{2,}){1,}|ya\\.ru)",
+      "removeParams": [
+        "lr",
+        "redircnt"
+      ]
+    },
+    {
+      "id": "healio.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?healio\\.com",
+      "removeParams": [
+        "ecp",
+        "m_bt"
+      ]
+    },
+    {
+      "id": "zoho.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?zoho\\.com",
+      "removeParams": [
+        "iref"
+      ]
+    },
+    {
+      "id": "snapchat.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?snapchat\\.com",
+      "removeParams": [
+        "sc_referrer",
+        "sc_ua"
+      ]
+    },
+    {
+      "id": "medium.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?medium\\.com",
+      "removeParams": [
+        "source"
+      ]
+    },
+    {
+      "id": "swp.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?swp\\.de",
+      "removeParams": [
+        "source"
+      ]
+    },
+    {
+      "id": "wps.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?wps\\.com",
+      "removeParams": [
+        "from"
+      ]
+    },
+    {
+      "id": "accounts.firefox.com-params",
+      "regexFilter": "^https?:\\/\\/(?:accounts\\.)?firefox\\.com",
+      "removeParams": [
+        "entrypoint",
+        "form_type"
+      ]
+    },
+    {
+      "id": "support.mozilla.org-params",
+      "regexFilter": "^https?:\\/\\/(?:support\\.)?mozilla\\.org",
+      "removeParams": [
+        "as"
+      ]
+    },
+    {
+      "id": "ClearURLsTest-params",
+      "regexFilter": "^https?:\\/\\/kevinroebert\\.gitlab\\.io\\/ClearUrls\\/void\\/index\\.html",
+      "removeParams": [
+        "test"
+      ]
+    },
+    {
+      "id": "ClearURLsTest2-params",
+      "regexFilter": "^https?:\\/\\/test\\.clearurls\\.xyz\\/void\\/index\\.html",
+      "removeParams": [
+        "test"
+      ]
+    },
+    {
+      "id": "diepresse.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?diepresse\\.com",
+      "removeParams": [
+        "from",
+        "xtor",
+        "xt_at"
+      ]
+    },
+    {
+      "id": "newsletter.lidl.com-params",
+      "regexFilter": "^https?:\\/\\/newsletter\\.lidl(?:\\.[a-z]{2,}){1,}",
+      "removeParams": [
+        "x"
+      ]
+    },
+    {
+      "id": "allegro.pl-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?allegro\\.pl",
+      "removeParams": [
+        "reco_id",
+        "sid"
+      ]
+    },
+    {
+      "id": "backcountry.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?backcountry\\.com",
+      "removeParams": [
+        "CMP_SKU",
+        "MER",
+        "mr:trackingCode",
+        "mr:device",
+        "mr:adType",
+        "iv_",
+        "CMP_ID",
+        "k_clickid",
+        "rmatt",
+        "INT_ID",
+        "ti",
+        "fl"
+      ]
+    },
+    {
+      "id": "backcountry.com-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?backcountry\\.com",
+      "removeParams": [
+        "mr:referralID"
+      ]
+    },
+    {
+      "id": "meetup.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?meetup\\.com",
+      "removeParams": [
+        "rv",
+        "_xtd"
+      ]
+    },
+    {
+      "id": "apple.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?apple\\.com",
+      "removeParams": [
+        "app",
+        "ign-itsc[a-z]+"
+      ]
+    },
+    {
+      "id": "newyorker.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?newyorker\\.com",
+      "removeParams": [
+        "source",
+        "bxid",
+        "cndid",
+        "esrc",
+        "mbid"
+      ]
+    },
+    {
+      "id": "gog.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?gog\\.com",
+      "removeParams": [
+        "track_click",
+        "link_id"
+      ]
+    },
+    {
+      "id": "theguardian.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?theguardian\\.com",
+      "removeParams": [
+        "CMP"
+      ]
+    },
+    {
+      "id": "taobao.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?taobao\\.com",
+      "removeParams": [
+        "price",
+        "sourceType",
+        "suid",
+        "ut_sk",
+        "un",
+        "share_crt_v",
+        "sp_tk",
+        "cpp",
+        "shareurl",
+        "short_name",
+        "app",
+        "scm[_a-z-]*",
+        "pvid",
+        "algo_expid",
+        "algo_pvid",
+        "ns",
+        "abbucket",
+        "ali_refid",
+        "ali_trackid",
+        "acm",
+        "utparam",
+        "pos",
+        "abtest",
+        "trackInfo",
+        "utkn",
+        "scene",
+        "mytmenu",
+        "turing_bucket",
+        "lygClk",
+        "impid",
+        "bftTag",
+        "bftRwd",
+        "spm",
+        "_u"
+      ]
+    },
+    {
+      "id": "tmall.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tmall\\.com",
+      "removeParams": [
+        "price",
+        "sourceType",
+        "suid",
+        "ut_sk",
+        "un",
+        "share_crt_v",
+        "sp_tk",
+        "cpp",
+        "shareurl",
+        "short_name",
+        "app",
+        "scm[_a-z-]*",
+        "pvid",
+        "algo_expid",
+        "algo_pvid",
+        "ns",
+        "abbucket",
+        "ali_refid",
+        "ali_trackid",
+        "acm",
+        "utparam",
+        "pos",
+        "abtest",
+        "trackInfo",
+        "user_number_id",
+        "utkn",
+        "scene",
+        "mytmenu",
+        "turing_bucket",
+        "lygClk",
+        "impid",
+        "bftTag",
+        "bftRwd",
+        "activity_id"
+      ]
+    },
+    {
+      "id": "tb.cn-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tb\\.cn",
+      "removeParams": [
+        "sm"
+      ]
+    },
+    {
+      "id": "bilibili.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bilibili\\.com",
+      "removeParams": [
+        "callback",
+        "spm_id_from",
+        "from_source",
+        "from",
+        "seid",
+        "mid",
+        "share_source",
+        "msource",
+        "refer_from",
+        "share_from",
+        "share_medium",
+        "share_source",
+        "share_plat",
+        "share_tag",
+        "share_session_id",
+        "timestamp",
+        "unique_k",
+        "vd_source",
+        "plat_id",
+        "buvid",
+        "is_story_h5",
+        "up_id"
+      ]
+    },
+    {
+      "id": "space.bilibili.com-params",
+      "regexFilter": "^https?:\\/\\/space\\.bilibili\\.com",
+      "removeParams": [
+        "spm_id_from"
+      ]
+    },
+    {
+      "id": "m.bilibili.com-params",
+      "regexFilter": "^https?:\\/\\/m\\.bilibili\\.com",
+      "removeParams": [
+        "bbid",
+        "ts"
+      ]
+    },
+    {
+      "id": "live.bilibili.com-params",
+      "regexFilter": "^https?:\\/\\/live\\.bilibili\\.com",
+      "removeParams": [
+        "visit_id",
+        "session_id",
+        "broadcast_type",
+        "is_room_feed"
+      ]
+    },
+    {
+      "id": "marketscreener.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?marketscreener\\.com",
+      "removeParams": [
+        "type_recherche",
+        "mots",
+        "noredirect",
+        "RewriteLast",
+        "lien",
+        "aComposeInputSearch",
+        "type_recherche_forum",
+        "add_mots",
+        "countview"
+      ]
+    },
+    {
+      "id": "marketscreener.com search-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?marketscreener\\.com\\/search\\/\\?",
+      "removeParams": [
+        "type_recherche",
+        "noredirect",
+        "RewriteLast",
+        "lien",
+        "aComposeInputSearch",
+        "type_recherche_forum",
+        "countview"
+      ]
+    },
+    {
+      "id": "bestbuy.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bestbuy\\.com",
+      "removeParams": [
+        "irclickid",
+        "irgwc",
+        "loc",
+        "acampID",
+        "mpid",
+        "intl"
+      ]
+    },
+    {
+      "id": "tiktok.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tiktok\\.com",
+      "removeParams": [
+        "u_code",
+        "preview_pb",
+        "_d",
+        "_t",
+        "_r",
+        "timestamp",
+        "user_id",
+        "share_app_name",
+        "share_iid",
+        "source"
+      ]
+    },
+    {
+      "id": "xiaohongshu.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?xiaohongshu\\.com",
+      "removeParams": [
+        "xhsshare",
+        "author_share",
+        "type",
+        "xsec_source",
+        "share_from_user_hidden",
+        "app_version",
+        "ignoreEngage",
+        "app_platform",
+        "apptime",
+        "appuid",
+        "shareRedId",
+        "share_id",
+        "exSource",
+        "verifyUuid",
+        "verifyType",
+        "verifyBiz"
+      ]
+    },
+    {
+      "id": "autoplus.fr-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?autoplus\\.fr",
+      "removeParams": [
+        "idprob",
+        "hash",
+        "sending_id",
+        "site_id",
+        "dr_tracker"
+      ]
+    },
+    {
+      "id": "bigfishgames.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bigfishgames\\.com",
+      "removeParams": [
+        "pc",
+        "npc",
+        "npv[0-9]+",
+        "npi"
+      ]
+    },
+    {
+      "id": "humblebundle.com-referral",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?humblebundle\\.com",
+      "removeParams": [
+        "partner"
+      ]
+    },
+    {
+      "id": "cafepedagogique.net-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?cafepedagogique\\.net",
+      "removeParams": [
+        "actId",
+        "actCampaignType",
+        "actSource"
+      ]
+    },
+    {
+      "id": "bloculus.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bloculus\\.com",
+      "removeParams": [
+        "tl_[a-z_]+"
+      ]
+    },
+    {
+      "id": "zillow.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?zillow\\.com",
+      "removeParams": [
+        "rtoken"
+      ]
+    },
+    {
+      "id": "realtor.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?realtor\\.com",
+      "removeParams": [
+        "ex",
+        "identityID",
+        "MID",
+        "RID"
+      ]
+    },
+    {
+      "id": "redfin.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?redfin\\.com",
+      "removeParams": [
+        "riftinfo"
+      ]
+    },
+    {
+      "id": "epicgames.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?epicgames\\.com",
+      "removeParams": [
+        "epic_affiliate",
+        "epic_gameId"
+      ]
+    },
+    {
+      "id": "onet.pl-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?onet\\.pl",
+      "removeParams": [
+        "srcc",
+        "utm_v",
+        "utm_medium",
+        "utm_source"
+      ]
+    },
+    {
+      "id": "allrecipes.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?allrecipes\\.com",
+      "removeParams": [
+        "internalSource",
+        "referringId",
+        "referringContentType",
+        "clickId"
+      ]
+    },
+    {
+      "id": "europe1.fr-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?europe1\\.fr",
+      "removeParams": [
+        "xtor"
+      ]
+    },
+    {
+      "id": "argos.co.uk-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?argos\\.co\\.uk",
+      "removeParams": [
+        "istCompanyId",
+        "istFeedId",
+        "istItemId",
+        "istBid",
+        "clickOrigin"
+      ]
+    },
+    {
+      "id": "thunderbird.net-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?thunderbird\\.net",
+      "removeParams": [
+        "src"
+      ]
+    },
+    {
+      "id": "cnbc.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?cnbc\\.com",
+      "removeParams": [
+        "__source"
+      ]
+    },
+    {
+      "id": "roblox.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?roblox\\.com",
+      "removeParams": [
+        "refPageId"
+      ]
+    },
+    {
+      "id": "cell.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?cell\\.com",
+      "removeParams": [
+        "_returnURL"
+      ]
+    },
+    {
+      "id": "academic.oup.com-params",
+      "regexFilter": "^https?:\\/\\/academic\\.oup\\.com",
+      "removeParams": [
+        "redirectedFrom"
+      ]
+    },
+    {
+      "id": "agata88.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?agata88\\.com",
+      "removeParams": [
+        "source"
+      ]
+    },
+    {
+      "id": "hs.fi-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?hs\\.fi",
+      "removeParams": [
+        "share"
+      ]
+    },
+    {
+      "id": "yle.fi-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?yle\\.fi",
+      "removeParams": [
+        "origin"
+      ]
+    },
+    {
+      "id": "flipkart-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?flipkart\\.com",
+      "removeParams": [
+        "otracker.?",
+        "ssid",
+        "[cilp]id",
+        "marketplace",
+        "store",
+        "srno",
+        "store",
+        "ppn",
+        "ppt",
+        "fm",
+        "collection-tab-name",
+        "sattr\\[\\]",
+        "p\\[\\]",
+        "st",
+        "qH",
+        "hpid",
+        "ctx",
+        "nnc"
+      ]
+    },
+    {
+      "id": "idealo.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?idealo\\.de",
+      "removeParams": [
+        "sid",
+        "src",
+        "siteId",
+        "lcb",
+        "leadOutUrl",
+        "offerListId",
+        "osId",
+        "cancelUrl",
+        "disc"
+      ]
+    },
+    {
+      "id": "teletrader.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?teletrader\\.com",
+      "removeParams": [
+        "internal"
+      ]
+    },
+    {
+      "id": "deeplearning.ai-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?deeplearning\\.ai",
+      "removeParams": [
+        "ecid",
+        "_hsmi",
+        "_hsenc"
+      ]
+    },
+    {
+      "id": "gamespot.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?gamespot\\.com",
+      "removeParams": [
+        "PostType",
+        "ServiceType",
+        "ftag",
+        "UniqueID",
+        "TheTime"
+      ]
+    },
+    {
+      "id": "tokopedia.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?tokopedia\\.com",
+      "removeParams": [
+        "src",
+        "trkid",
+        "whid"
+      ]
+    },
+    {
+      "id": "wkorea.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?wkorea\\.com",
+      "removeParams": [
+        "ddw",
+        "ds_ch"
+      ]
+    },
+    {
+      "id": "eonline.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?eonline\\.com",
+      "removeParams": [
+        "source",
+        "medium",
+        "content"
+      ]
+    },
+    {
+      "id": "reuters.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?reuters\\.com",
+      "removeParams": [
+        "taid"
+      ]
+    },
+    {
+      "id": "change.org-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?change\\.org",
+      "removeParams": [
+        "source_location",
+        "psf_variant",
+        "share_intent"
+      ]
+    },
+    {
+      "id": "ceneo.pl-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?ceneo\\.pl",
+      "removeParams": [
+        "tag"
+      ]
+    },
+    {
+      "id": "wired.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?wired\\.com",
+      "removeParams": [
+        "intcid"
+      ]
+    },
+    {
+      "id": "alibaba cloud arms-params",
+      "regexFilter": "^https?:\\/\\/arms-retcode\\.aliyuncs\\.com",
+      "removeParams": [
+        "pid",
+        "uid",
+        "tag",
+        "release",
+        "environment",
+        "sample",
+        "behavior",
+        "enableSPA",
+        "enableLinkTrace",
+        "page",
+        "begin",
+        "c2",
+        "c3",
+        "success",
+        "code",
+        "msg",
+        "api",
+        "traceId",
+        "pv_id",
+        "flag",
+        "sr",
+        "vp",
+        "ct",
+        "_v",
+        "sampling",
+        "dl",
+        "post_res"
+      ]
+    },
+    {
+      "id": "nikkei-params",
+      "regexFilter": "^https?://(?:[a-z0-9-]+\\.)*?nikkei\\.co(?:m|\\.jp)",
+      "removeParams": [
+        "adid",
+        "i_cid",
+        "n_cid",
+        "waad"
+      ]
+    },
+    {
+      "id": "weibo-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?weibo\\.(cn|com)",
+      "removeParams": [
+        "weibo_id",
+        "dt_dapp"
+      ]
+    },
+    {
+      "id": "fiverr.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?fiverr\\.com",
+      "removeParams": [
+        "context_referrer",
+        "source",
+        "ref_ctx_id",
+        "funnel"
+      ]
+    },
+    {
+      "id": "etsy.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?etsy\\.com",
+      "removeParams": [
+        "click_key",
+        "click_sum",
+        "organic_search_click"
+      ]
+    },
+    {
+      "id": "magento.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?magento\\.com",
+      "removeParams": [
+        "itm_campaign",
+        "itm_medium",
+        "itm_source",
+        "itm_term"
+      ]
+    },
+    {
+      "id": "novinky.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?novinky\\.cz",
+      "removeParams": [
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id",
+        "source",
+        "seq_no"
+      ]
+    },
+    {
+      "id": "aktualne.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?aktualne\\.cz",
+      "removeParams": [
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id"
+      ]
+    },
+    {
+      "id": "seznamzpravy.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?seznamzpravy\\.cz",
+      "removeParams": [
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id",
+        "source",
+        "seq_no"
+      ]
+    },
+    {
+      "id": "billiger.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?billiger\\.de",
+      "removeParams": [
+        "log",
+        "p"
+      ]
+    },
+    {
+      "id": "respekt.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?respekt\\.cz",
+      "removeParams": [
+        "sznclid",
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id"
+      ]
+    },
+    {
+      "id": "faei.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?faei\\.cz",
+      "removeParams": [
+        "sznclid",
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id"
+      ]
+    },
+    {
+      "id": "iprima.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?iprima\\.cz",
+      "removeParams": [
+        "sznclid",
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id"
+      ]
+    },
+    {
+      "id": "nova.cz-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?nova\\.cz",
+      "removeParams": [
+        "sznclid",
+        "dop_ab_variant",
+        "dop_source_zone_name",
+        "dop_req_id",
+        "dop_id"
+      ]
+    },
+    {
+      "id": "mercadolibre-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?mercadoli[bv]re\\.com",
+      "removeParams": [
+        "DEAL_ID",
+        "L",
+        "S",
+        "T",
+        "V",
+        "pdp_filters",
+        "position",
+        "search_layout",
+        "tracking_id",
+        "type",
+        "c_[_a-zA-Z]+",
+        "me\\.[_a-zA-Z]+",
+        "reco_[_a-zA-Z]+",
+        "ad_click_id"
+      ]
+    },
+    {
+      "id": "quizlet-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?quizlet\\.com",
+      "removeParams": [
+        "funnelUUID"
+      ]
+    },
+    {
+      "id": "bbc-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?bbc\\.com",
+      "removeParams": [
+        "xtor",
+        "at_[a-z_]+"
+      ]
+    },
+    {
+      "id": "airbnb-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?airbnb\\.(com|ae|ca|co\\.in|co\\.nz|co\\.uk|co\\.za|com\\.au|com\\.mt|com\\.sg|de|gy|ie)",
+      "removeParams": [
+        "federated_search_id",
+        "search_type",
+        "source",
+        "source_impression_id"
+      ]
+    },
+    {
+      "id": "kahoot.it-params",
+      "regexFilter": "^https?://(?:[a-z0-9-]+\\.)*?kahoot\\.it",
+      "removeParams": [
+        "refer_method"
+      ]
+    },
+    {
+      "id": "goodreads.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?goodreads\\.com",
+      "removeParams": [
+        "from_search",
+        "from_srp",
+        "qid",
+        "rank",
+        "ac"
+      ]
+    },
+    {
+      "id": "sohu-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?sohu\\.com",
+      "removeParams": [
+        "pvid",
+        "scm"
+      ]
+    },
+    {
+      "id": "shopee-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?shopee\\.(com|co\\.th|tw)",
+      "removeParams": [
+        "publish_id",
+        "sp_atk",
+        "xptdk"
+      ]
+    },
+    {
+      "id": "lazada-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?lazada\\.(com|co\\.th|co\\.id|com\\.my|com\\.ph|sg|vn)",
+      "removeParams": [
+        "clickTrackInfo",
+        "abid",
+        "pvid",
+        "ad_src",
+        "spm",
+        "src",
+        "from",
+        "scm",
+        "pa",
+        "pid_pvid",
+        "did",
+        "mp",
+        "cid",
+        "impsrc",
+        "pos"
+      ]
+    },
+    {
+      "id": "office-partner.de-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?office-partner\\.de",
+      "removeParams": [
+        "sPartner",
+        "campaign"
+      ]
+    },
+    {
+      "id": "thetimes.co.uk-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?thetimes\\.co\\.uk",
+      "removeParams": [
+        "shareToken"
+      ]
+    },
+    {
+      "id": "metro.co.uk-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?metro\\.co\\.uk",
+      "removeParams": [
+        "ito"
+      ]
+    },
+    {
+      "id": "forbes.com-params",
+      "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?forbes\\.com",
+      "removeParams": [
+        "sh"
+      ]
+    }
+  ]
+}

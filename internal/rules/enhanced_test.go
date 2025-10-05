@@ -77,7 +77,9 @@ func TestEnhancedReplace(t *testing.T) {
 				return
 			}
 
-			result, err := enhancedReplace(re, tt.input, tt.replacement)
+			result, err := enhancedReplace(re, tt.input, CommonRule{
+				RegexSubstitution: tt.replacement,
+			})
 			if err != nil {
 				t.Fatalf("enhancedReplace failed: %v", err)
 			}
@@ -92,18 +94,17 @@ func TestEnhancedReplace(t *testing.T) {
 func TestMatchRuleWithResultEnhanced(t *testing.T) {
 	tests := []struct {
 		name     string
-		rule     Rule
+		rule     CommonRule
 		input    string
 		expected string
 		match    bool
 	}{
 		{
 			name: "Google search with encoded query",
-			rule: Rule{
-				ID:      "1",
-				From:    `^https://www\.google\.com/search\?q=(.*)$`,
-				To:      `https://duckduckgo.com/?q=$1`,
-				Enabled: true,
+			rule: CommonRule{
+				ID:                "1",
+				RegexFilter:       `^https://www\.google\.com/search\?q=(.*)$`,
+				RegexSubstitution: `https://duckduckgo.com/?q=$1`,
 			},
 			input:    "https://www.google.com/search?q=golang%20tutorial",
 			expected: "https://duckduckgo.com/?q=golang tutorial",
@@ -111,27 +112,14 @@ func TestMatchRuleWithResultEnhanced(t *testing.T) {
 		},
 		{
 			name: "YouTube shorts with encoded ID",
-			rule: Rule{
-				ID:      "2",
-				From:    `https://www\.youtube\.com/shorts/([\w-]+)`,
-				To:      `https://www.youtube.com/watch?v=$1`,
-				Enabled: true,
+			rule: CommonRule{
+				ID:                "2",
+				RegexFilter:       `https://www\.youtube\.com/shorts/([\w-]+)`,
+				RegexSubstitution: `https://www.youtube.com/watch?v=$1`,
 			},
 			input:    "https://www.youtube.com/shorts/dQw4w9WgXcQ",
 			expected: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 			match:    true,
-		},
-		{
-			name: "Disabled rule should not match",
-			rule: Rule{
-				ID:      "3",
-				From:    `^https://example\.com/(.*)$`,
-				To:      `https://newsite.com/$1`,
-				Enabled: false,
-			},
-			input:    "https://example.com/page",
-			expected: "",
-			match:    false,
 		},
 	}
 
@@ -147,5 +135,27 @@ func TestMatchRuleWithResultEnhanced(t *testing.T) {
 				t.Errorf("URL mismatch.\nExpected: %q\nGot:      %q", tt.expected, result.URL)
 			}
 		})
+	}
+}
+
+func TestRemoveParams(t *testing.T) {
+	rule := CommonRule{
+		ID:                "3",
+		RegexFilter:       `^https://example\.com/page\?id=(.*)&utm_source=(.*)$`,
+		RegexSubstitution: `https://example.com/page?id=$1`,
+		RemoveParams:      []string{"utm_source"},
+	}
+
+	input := "https://example.com/page?id=123&utm_source=newsletter"
+	expected := "https://example.com/page?id=123"
+
+	result := MatchRuleWithResult(rule, input)
+
+	if !result.Match {
+		t.Errorf("Expected a match but got none")
+	}
+
+	if result.URL != expected {
+		t.Errorf("URL mismatch.\nExpected: %q\nGot:      %q", expected, result.URL)
 	}
 }

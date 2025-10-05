@@ -13,7 +13,7 @@ export function CheckNotificationPermission(): $CancellablePromise<boolean> {
     return $Call.ByID(3722011932);
 }
 
-export function CheckRuleChain(list: rules$0.Rule[], $from: string): $CancellablePromise<rules$0.CheckResult> {
+export function CheckRuleChain(list: rules$0.LocalRule[], $from: string): $CancellablePromise<rules$0.CheckResult> {
     return $Call.ByID(3728189383, list, $from).then(($result: any) => {
         return $$createType0($result);
     });
@@ -27,13 +27,13 @@ export function GetNotificationEnabled(): $CancellablePromise<boolean> {
     return $Call.ByID(1881535628);
 }
 
-export function GetRules(): $CancellablePromise<rules$0.Rule[]> {
+export function GetRules(): $CancellablePromise<rules$0.LocalRule[]> {
     return $Call.ByID(741420447).then(($result: any) => {
         return $$createType2($result);
     });
 }
 
-export function NewRule(rule: rules$0.Rule): $CancellablePromise<void> {
+export function NewRule(rule: rules$0.LocalRule): $CancellablePromise<void> {
     return $Call.ByID(2857478412, rule);
 }
 
@@ -53,11 +53,11 @@ export function SetNotificationEnabled(enabled: boolean): $CancellablePromise<vo
     return $Call.ByID(1189743600, enabled);
 }
 
-export function UpdateRule(rule: rules$0.Rule): $CancellablePromise<void> {
+export function UpdateRule(rule: rules$0.LocalRule): $CancellablePromise<void> {
     return $Call.ByID(2895923195, rule);
 }
 
 // Private type creation functions
 const $$createType0 = rules$0.CheckResult.createFrom;
-const $$createType1 = rules$0.Rule.createFrom;
+const $$createType1 = rules$0.LocalRule.createFrom;
 const $$createType2 = $Create.Array($$createType1);

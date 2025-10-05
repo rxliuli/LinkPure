@@ -9,7 +9,10 @@
       "Bash(qlmanage:*)",
       "Bash(mdls:*)",
       "Bash(iconutil:*)",
-      "Bash(wails3 generate:*)"
+      "Bash(wails3 generate:*)",
+      "Bash(go run:*)",
+      "Bash(pnpm run:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

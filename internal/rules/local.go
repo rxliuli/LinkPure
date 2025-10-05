@@ -19,24 +19,22 @@ func SetConfName(filename string) {
 	config, err = conf.GetConf(filename)
 	if err != nil {
 		logger.Error("Failed to get conf: %v", err)
-	} else {
-		logger.Info("Config initialized successfully for: %s", filename)
 	}
 }
 
-type Rule struct {
+type LocalRule struct {
 	ID      string `json:"id"`
 	From    string `json:"from"`
 	To      string `json:"to"`
 	Enabled bool   `json:"enabled"`
 }
 
-func GetRules() []Rule {
+func GetLocalRules() []LocalRule {
 	if config == nil {
 		logger.Error("Config is nil, rules.SetConfName() may not have been called")
 		return nil
 	}
-	var rules []Rule
+	var rules []LocalRule
 	err := config.Get("rules", &rules)
 	if err != nil {
 		logger.Error("Failed to get rules: %v", err)
@@ -46,14 +44,14 @@ func GetRules() []Rule {
 	return rules
 }
 
-func NewRule(rule Rule) error {
-	rules := GetRules()
-	rules = append([]Rule{rule}, rules...)
+func NewRule(rule LocalRule) error {
+	rules := GetLocalRules()
+	rules = append([]LocalRule{rule}, rules...)
 	return config.Set("rules", rules)
 }
 
-func UpdateRule(updated Rule) error {
-	rules := GetRules()
+func UpdateRule(updated LocalRule) error {
+	rules := GetLocalRules()
 	for i, rule := range rules {
 		if rule.ID == updated.ID {
 			rules[i] = updated
@@ -64,7 +62,7 @@ func UpdateRule(updated Rule) error {
 }
 
 func DeleteRule(id string) error {
-	rules := GetRules()
+	rules := GetLocalRules()
 	for i, rule := range rules {
 		if rule.ID == id {
 			rules = append(rules[:i], rules[i+1:]...)

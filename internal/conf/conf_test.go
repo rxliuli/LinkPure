@@ -1,8 +1,14 @@
 package conf
 
 import (
+	"linkpure/internal/logger"
+	"os"
 	"testing"
 )
+
+func init() {
+	logger.Init(os.TempDir())
+}
 
 func TestConfForString(t *testing.T) {
 	conf, err := GetConf("test")

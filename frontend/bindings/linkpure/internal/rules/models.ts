@@ -52,14 +52,14 @@ export enum CheckStatus {
     StatusInfiniteRedirect = "infinite-redirect",
 };
 
-export class Rule {
+export class LocalRule {
     "id": string;
     "from": string;
     "to": string;
     "enabled": boolean;
 
-    /** Creates a new Rule instance. */
-    constructor($$source: Partial<Rule> = {}) {
+    /** Creates a new LocalRule instance. */
+    constructor($$source: Partial<LocalRule> = {}) {
         if (!("id" in $$source)) {
             this["id"] = "";
         }
@@ -77,11 +77,11 @@ export class Rule {
     }
 
     /**
-     * Creates a new Rule instance from a string or object.
+     * Creates a new LocalRule instance from a string or object.
      */
-    static createFrom($$source: any = {}): Rule {
+    static createFrom($$source: any = {}): LocalRule {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new Rule($$parsedSource as Partial<Rule>);
+        return new LocalRule($$parsedSource as Partial<LocalRule>);
     }
 }
 

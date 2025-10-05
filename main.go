@@ -16,7 +16,6 @@ import (
 	"linkpure/internal/setting"
 	"linkpure/internal/tray"
 	"linkpure/internal/util"
-	"linkpure/internal/window"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -67,16 +66,6 @@ func main() {
 	tray := tray.CreateTray(app)
 
 	ctx.Init(app, tray, notifier)
-
-	// Create a new window with the necessary options.
-	// 'Title' is the title of the window.
-	// 'Mac' options tailor the window when running on macOS.
-	// 'BackgroundColour' is the background colour of the window.
-	// 'URL' is the URL that will be loaded into the webview.
-	if len(rules.GetRules()) == 0 {
-		logger.Info("No rules configured, opening preferences window")
-		window.OpenPreferencesWindow(app)
-	}
 
 	// Create a goroutine that emits an event containing the current time every second.
 	// The frontend can listen to this event and update the UI accordingly.
@@ -136,7 +125,7 @@ func monitorClipboard(notifier *notifications.NotificationService) {
 		logger.Info("New URL detected in clipboard: %s", content)
 
 		// Load rules from storage
-		rulesList := rules.GetRules()
+		rulesList := rules.GetEnabledRules()
 		if rulesList == nil {
 			logger.Info("No rules configured, skipping URL rewrite")
 			continue

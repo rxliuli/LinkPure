@@ -13,17 +13,17 @@ import (
 
 type GreetService struct{}
 
-func (g *GreetService) GetRules() []rules.Rule {
+func (g *GreetService) GetRules() []rules.LocalRule {
 	logger.Info("GreetService.GetRules() called")
-	result := rules.GetRules()
+	result := rules.GetLocalRules()
 	return result
 }
 
-func (g *GreetService) NewRule(rule rules.Rule) error {
+func (g *GreetService) NewRule(rule rules.LocalRule) error {
 	return rules.NewRule(rule)
 }
 
-func (g *GreetService) UpdateRule(rule rules.Rule) error {
+func (g *GreetService) UpdateRule(rule rules.LocalRule) error {
 	return rules.UpdateRule(rule)
 }
 
@@ -31,8 +31,8 @@ func (g *GreetService) DeleteRule(id string) error {
 	return rules.DeleteRule(id)
 }
 
-func (g *GreetService) CheckRuleChain(list []rules.Rule, from string) rules.CheckResult {
-	return rules.CheckRuleChain(list, from, &rules.CheckOptions{MaxRedirects: 5})
+func (g *GreetService) CheckRuleChain(list []rules.LocalRule, from string) rules.CheckResult {
+	return rules.CheckRuleChain(rules.GetEnabledRules(), from, &rules.CheckOptions{MaxRedirects: 5})
 }
 
 func (g *GreetService) SaveJsonFile(content string, fileName string) bool {

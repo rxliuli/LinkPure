@@ -5,14 +5,15 @@ import (
 )
 
 func TestCheckRuleChainValidRule(t *testing.T) {
-	rule := Rule{
-		ID:      "test-rule",
-		From:    `^https://duckduckgo\.com/\?.*&q=(.*?)(&.*)?$`,
-		To:      "https://www.google.com/search?q=$1",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "test-rule",
+		RegexFilter:       `^https://duckduckgo\.com/\?.*&q=(.*?)(&.*)?$`,
+		RegexSubstitution: "https://www.google.com/search?q=$1",
+		RemoveParams:      []string{},
+		Test:              []string{},
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://duckduckgo.com/?t=h_&q=js&ia=web", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://duckduckgo.com/?t=h_&q=js&ia=web", nil)
 
 	expected := CheckResult{
 		Status: StatusMatched,
@@ -33,14 +34,13 @@ func TestCheckRuleChainValidRule(t *testing.T) {
 }
 
 func TestCheckRuleChainNoMatch(t *testing.T) {
-	rule := Rule{
-		ID:      "test-rule",
-		From:    "https://www.reddit.com/r/(.*?)/",
-		To:      "https://www.reddit.com/r/$1/top/",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "test-rule",
+		RegexFilter:       "https://www.reddit.com/r/(.*?)/",
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://www.google.com/", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://www.google.com/", nil)
 
 	expected := CheckResult{
 		Status: StatusNotMatched,
@@ -57,14 +57,13 @@ func TestCheckRuleChainNoMatch(t *testing.T) {
 }
 
 func TestCheckRuleChainInfiniteRedirect(t *testing.T) {
-	rule := Rule{
-		ID:      "test-rule",
-		From:    "https://www.reddit.com/r/(.*)/(.*)",
-		To:      "https://www.reddit.com/r/$1/top/$2",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "test-rule",
+		RegexFilter:       "https://www.reddit.com/r/(.*)/(.*)",
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/$2",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://www.reddit.com/r/MadeMeSmile/test", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://www.reddit.com/r/MadeMeSmile/test", nil)
 
 	if result.Status != StatusInfiniteRedirect {
 		t.Errorf("Expected Status to be %v, got %v", StatusInfiniteRedirect, result.Status)
@@ -76,14 +75,13 @@ func TestCheckRuleChainInfiniteRedirect(t *testing.T) {
 }
 
 func TestCheckRuleChainSelfRedirect(t *testing.T) {
-	rule := Rule{
-		ID:      "test-rule",
-		From:    "(.*)",
-		To:      "$1",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "test-rule",
+		RegexFilter:       "(.*)",
+		RegexSubstitution: "$1",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://example.com/", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://example.com/", nil)
 
 	expected := CheckResult{
 		Status: StatusCircularRedirect,
@@ -100,24 +98,21 @@ func TestCheckRuleChainSelfRedirect(t *testing.T) {
 }
 
 func TestCheckRuleChainCircularRedirectInChain(t *testing.T) {
-	rules := []Rule{
+	rules := []CommonRule{
 		{
-			ID:      "rule1",
-			From:    "https://a.com/(.*)",
-			To:      "https://b.com/$1",
-			Enabled: true,
+			ID:                "rule1",
+			RegexFilter:       "https://a.com/(.*)",
+			RegexSubstitution: "https://b.com/$1",
 		},
 		{
-			ID:      "rule2",
-			From:    "https://b.com/(.*)",
-			To:      "https://c.com/$1",
-			Enabled: true,
+			ID:                "rule2",
+			RegexFilter:       "https://b.com/(.*)",
+			RegexSubstitution: "https://c.com/$1",
 		},
 		{
-			ID:      "rule3",
-			From:    "https://c.com/(.*)",
-			To:      "https://a.com/$1",
-			Enabled: true,
+			ID:                "rule3",
+			RegexFilter:       "https://c.com/(.*)",
+			RegexSubstitution: "https://a.com/$1",
 		},
 	}
 
@@ -148,14 +143,13 @@ func TestCheckRuleChainRedditExample(t *testing.T) {
 	// Problematic rule with non-greedy regex (.*?)
 	// The non-greedy pattern only captures "MadeMeSmile", not "MadeMeSmile/top"
 	// So after first redirect, it keeps matching the same pattern and produces circular redirect
-	rule := Rule{
-		ID:      "reddit-rule",
-		From:    "https://www.reddit.com/r/(.*?)/",
-		To:      "https://www.reddit.com/r/$1/top/",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "reddit-rule",
+		RegexFilter:       "https://www.reddit.com/r/(.*?)/",
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://www.reddit.com/r/MadeMeSmile/", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://www.reddit.com/r/MadeMeSmile/", nil)
 
 	// The pattern (.*?) is non-greedy, so it only matches up to the first /
 	// Flow:
@@ -176,21 +170,19 @@ func TestCheckRuleChainRedditExample(t *testing.T) {
 
 func TestCheckRuleChainTwoStepCircularRedirect(t *testing.T) {
 	// Use different domains to avoid rule overlap
-	rule1 := Rule{
-		ID:      "circular-rule-1",
-		From:    "^https://a\\.example\\.com/(.*)$",
-		To:      "https://b.example.com/$1",
-		Enabled: true,
+	rule1 := CommonRule{
+		ID:                "circular-rule-1",
+		RegexFilter:       "^https://a\\.example\\.com/(.*)$",
+		RegexSubstitution: "https://b.example.com/$1",
 	}
 
-	rule2 := Rule{
-		ID:      "circular-rule-2",
-		From:    "^https://b\\.example\\.com/(.*)$",
-		To:      "https://a.example.com/$1",
-		Enabled: true,
+	rule2 := CommonRule{
+		ID:                "circular-rule-2",
+		RegexFilter:       "^https://b\\.example\\.com/(.*)$",
+		RegexSubstitution: "https://a.example.com/$1",
 	}
 
-	result := CheckRuleChain([]Rule{rule1, rule2}, "https://a.example.com/test", nil)
+	result := CheckRuleChain([]CommonRule{rule1, rule2}, "https://a.example.com/test", nil)
 
 	// This should be detected as circular redirect
 	// Flow: a.example.com/test -> b.example.com/test -> a.example.com/test (circular)
@@ -211,14 +203,13 @@ func TestCheckRuleChainTwoStepCircularRedirect(t *testing.T) {
 
 func TestCheckRuleChainRedditCorrectedExample(t *testing.T) {
 	// Corrected rule to avoid circular redirect
-	rule := Rule{
-		ID:      "reddit-rule-fixed",
-		From:    "https://www.reddit.com/r/([^/]+)/$",
-		To:      "https://www.reddit.com/r/$1/top/",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "reddit-rule-fixed",
+		RegexFilter:       "https://www.reddit.com/r/([^/]+)/$",
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://www.reddit.com/r/MadeMeSmile/", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://www.reddit.com/r/MadeMeSmile/", nil)
 
 	expected := CheckResult{
 		Status: StatusMatched,
@@ -239,14 +230,13 @@ func TestCheckRuleChainRedditCorrectedExample(t *testing.T) {
 }
 
 func TestCheckRuleChainYouTubeExample(t *testing.T) {
-	rule := Rule{
-		ID:      "youtube-rule",
-		From:    "https://youtu.be/(.*)",
-		To:      "https://www.youtube.com/watch?v=$1",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "youtube-rule",
+		RegexFilter:       "https://youtu.be/(.*)",
+		RegexSubstitution: "https://www.youtube.com/watch?v=$1",
 	}
 
-	result := CheckRuleChain([]Rule{rule}, "https://youtu.be/dQw4w9WgXcQ", nil)
+	result := CheckRuleChain([]CommonRule{rule}, "https://youtu.be/dQw4w9WgXcQ", nil)
 
 	expected := CheckResult{
 		Status: StatusMatched,
@@ -267,15 +257,14 @@ func TestCheckRuleChainYouTubeExample(t *testing.T) {
 }
 
 func TestCheckRuleChainWithOptions(t *testing.T) {
-	rule := Rule{
-		ID:      "test-rule",
-		From:    "https://www.reddit.com/r/(.*)/(.*)",
-		To:      "https://www.reddit.com/r/$1/top/$2",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "test-rule",
+		RegexFilter:       "https://www.reddit.com/r/(.*)/(.*)",
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/$2",
 	}
 
 	options := &CheckOptions{MaxRedirects: 3}
-	result := CheckRuleChain([]Rule{rule}, "https://www.reddit.com/r/MadeMeSmile/test", options)
+	result := CheckRuleChain([]CommonRule{rule}, "https://www.reddit.com/r/MadeMeSmile/test", options)
 
 	if result.Status != StatusInfiniteRedirect {
 		t.Errorf("Expected Status to be %v, got %v", StatusInfiniteRedirect, result.Status)
@@ -289,11 +278,10 @@ func TestCheckRuleChainWithOptions(t *testing.T) {
 func TestRegexp2NegativeLookahead(t *testing.T) {
 	// Test negative lookahead functionality that's only available in regexp2
 	// This rule matches URLs that contain "reddit.com" but NOT followed by "/top"
-	rule := Rule{
-		ID:      "negative-lookahead-rule",
-		From:    `^https://www\.reddit\.com/r/([^/]+)/(?!top)(.*)$`,
-		To:      "https://www.reddit.com/r/$1/top/$2",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "negative-lookahead-rule",
+		RegexFilter:       `^https://www\.reddit\.com/r/([^/]+)/(?!top)(.*)$`,
+		RegexSubstitution: "https://www.reddit.com/r/$1/top/$2",
 	}
 
 	// This should match (no "/top" after subreddit)
@@ -326,11 +314,10 @@ func TestRegexp2NegativeLookahead(t *testing.T) {
 func TestRegexp2PositiveLookahead(t *testing.T) {
 	// Test positive lookahead functionality
 	// This rule matches GitHub URLs that are followed by "/issues"
-	rule := Rule{
-		ID:      "positive-lookahead-rule",
-		From:    `^https://github\.com/([^/]+/[^/]+)(?=/issues)(.*)$`,
-		To:      "https://github.com/$1/issues?state=open",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "positive-lookahead-rule",
+		RegexFilter:       `^https://github\.com/([^/]+/[^/]+)(?=/issues)(.*)$`,
+		RegexSubstitution: "https://github.com/$1/issues?state=open",
 	}
 
 	// This should match (has "/issues")
@@ -360,31 +347,11 @@ func TestRegexp2PositiveLookahead(t *testing.T) {
 	}
 }
 
-func TestDisabledRule(t *testing.T) {
-	rule := Rule{
-		ID:      "disabled-rule",
-		From:    `^https://www\.reddit\.com/r/(.*)/(.*)$`,
-		To:      "https://www.reddit.com/r/$1/top/$2",
-		Enabled: false,
-	}
-
-	// This should NOT match (rule is disabled)
-	result := MatchRuleWithResult(rule, "https://www.reddit.com/r/golang/posts")
-	expected := MatchResult{
-		Match: false,
-	}
-
-	if result.Match != expected.Match {
-		t.Errorf("Expected Match to be %v, got %v", expected.Match, result.Match)
-	}
-}
-
 func TestRealCase1(t *testing.T) {
-	rule := Rule{
-		ID:      "positive-lookahead-rule",
-		From:    `^(https://www.google.com/search\?q=.+?)&.*$`,
-		To:      "$1",
-		Enabled: true,
+	rule := CommonRule{
+		ID:                "positive-lookahead-rule",
+		RegexFilter:       `^(https://www.google.com/search\?q=.+?)&.*$`,
+		RegexSubstitution: "$1",
 	}
 
 	result := MatchRuleWithResult(rule, "https://www.google.com/search?q=%E6%B5%8B%E8%AF%95+JavaScript&newwindow=1&sxsrf=AE3TifMQ-KQvqyycI31J3_atlTT5jlc9Fg%3A1759421656393&uact=5")

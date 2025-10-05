@@ -8,3 +8,4 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 .DS_Store
 *.p8
 *.p12
+node_modules

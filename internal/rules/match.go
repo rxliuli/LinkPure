@@ -14,6 +14,14 @@ type MatchResult struct {
 	URL   string `json:"url"`
 }
 
+type CommonRule struct {
+	ID                string   `json:"id"`
+	RegexFilter       string   `json:"regexFilter"`
+	RegexSubstitution string   `json:"regexSubstitution"`
+	RemoveParams      []string `json:"removeParams"`
+	Test              []string `json:"test"`
+}
+
 // CheckStatus represents the status of rule chain checking
 type CheckStatus string
 
@@ -37,42 +45,69 @@ type CheckOptions struct {
 
 // enhancedReplace performs URL-decoding aware replacement
 // It decodes captured groups before replacing them in the output
-func enhancedReplace(re *regexp2.Regexp, from string, replacement string) (string, error) {
+func enhancedReplace(re *regexp2.Regexp, from string, rule CommonRule) (string, error) {
 	// Get the match with capture groups
 	match, err := re.FindStringMatch(from)
 	if err != nil || match == nil {
 		return "", err
 	}
 
-	result := replacement
-	groups := match.Groups()
+	if rule.RegexSubstitution != "" {
+		result := rule.RegexSubstitution
+		groups := match.Groups()
 
-	// Iterate through captured groups (skip group 0 which is the full match)
-	for i := 1; i < len(groups); i++ {
-		capturedValue := groups[i].String()
+		// Iterate through captured groups (skip group 0 which is the full match)
+		for i := 1; i < len(groups); i++ {
+			capturedValue := groups[i].String()
 
-		// Try to decode the URL component
-		decodedValue, err := url.QueryUnescape(capturedValue)
+			// Try to decode the URL component
+			decodedValue, err := url.QueryUnescape(capturedValue)
+			if err != nil {
+				// If decoding fails, use the original value
+				decodedValue = capturedValue
+			}
+
+			// Replace $1, $2, etc. with the decoded value
+			placeholder := "$" + strconv.Itoa(i)
+			result = strings.ReplaceAll(result, placeholder, decodedValue)
+		}
+		return result, nil
+	}
+	if len(rule.RemoveParams) > 0 {
+		parsedURL, err := url.Parse(from)
 		if err != nil {
-			// If decoding fails, use the original value
-			decodedValue = capturedValue
+			return "", err
+		}
+		query := parsedURL.Query()
+
+		// Match params using regex patterns
+		for paramName := range query {
+			for _, pattern := range rule.RemoveParams {
+				re, err := regexp2.Compile(pattern, 0)
+				if err != nil {
+					continue
+				}
+				matched, err := re.MatchString(paramName)
+				if err == nil && matched {
+					query.Del(paramName)
+					break
+				}
+			}
 		}
 
-		// Replace $1, $2, etc. with the decoded value
-		placeholder := "$" + strconv.Itoa(i)
-		result = strings.ReplaceAll(result, placeholder, decodedValue)
+		parsedURL.RawQuery = query.Encode()
+		result := parsedURL.String()
+		if result == from {
+			return "", nil
+		}
+		return result, nil
 	}
-
-	return result, nil
+	return "", nil
 }
 
 // MatchRuleWithResult checks if any rule matches the given URL and returns the rewritten URL
-func MatchRuleWithResult(rule Rule, from string) MatchResult {
-	if !rule.Enabled {
-		return MatchResult{Match: false, URL: ""}
-	}
-
-	re, err := regexp2.Compile(rule.From, 0)
+func MatchRuleWithResult(rule CommonRule, from string) MatchResult {
+	re, err := regexp2.Compile(rule.RegexFilter, 0)
 	if err != nil {
 		return MatchResult{Match: false, URL: ""}
 	}
@@ -84,23 +119,50 @@ func MatchRuleWithResult(rule Rule, from string) MatchResult {
 
 	if matched {
 		// Use enhanced replace with URL decoding
-		rewrittenURL, err := enhancedReplace(re, from, rule.To)
+		rewrittenURL, err := enhancedReplace(re, from, rule)
 		if err != nil {
 			return MatchResult{Match: false, URL: ""}
 		}
+
+		// Special case: if rule has RegexSubstitution, always consider it a match (even if URL doesn't change)
+		// This is needed to detect self-redirect loops
+		if rule.RegexSubstitution != "" {
+			return MatchResult{Match: true, URL: rewrittenURL}
+		}
+
+		// For RemoveParams rules, only match if the URL actually changed
+		if len(rule.RemoveParams) > 0 {
+			if rewrittenURL == "" || rewrittenURL == from {
+				return MatchResult{Match: false, URL: ""}
+			}
+			return MatchResult{Match: true, URL: rewrittenURL}
+		}
+
 		return MatchResult{Match: true, URL: rewrittenURL}
 	}
 
 	return MatchResult{Match: false, URL: ""}
 }
 
-// getEnabledRules filters and returns only enabled rules
-func getEnabledRules(rules []Rule) []Rule {
-	var enabledRules []Rule
-	for _, rule := range rules {
+// GetEnabledRules filters and returns only enabled rules
+func GetEnabledRules() []CommonRule {
+	var enabledRules []CommonRule
+	for _, rule := range GetLocalRules() {
 		if rule.Enabled {
-			enabledRules = append(enabledRules, rule)
+			enabledRules = append(enabledRules, CommonRule{
+				ID:                rule.ID,
+				RegexFilter:       rule.From,
+				RegexSubstitution: rule.To,
+			})
 		}
+	}
+	for _, rule := range GetShareRules() {
+		enabledRules = append(enabledRules, CommonRule{
+			ID:                rule.ID,
+			RegexFilter:       rule.RegexFilter,
+			RegexSubstitution: rule.RegexSubstitution,
+			RemoveParams:      rule.RemoveParams,
+		})
 	}
 	return enabledRules
 }
@@ -116,21 +178,20 @@ func contains(slice []string, item string) bool {
 }
 
 // CheckRuleChain checks a chain of rules and detects circular redirects and infinite redirects
-func CheckRuleChain(rules []Rule, url string, options *CheckOptions) CheckResult {
+func CheckRuleChain(rules []CommonRule, url string, options *CheckOptions) CheckResult {
 	maxRedirects := 5
 	if options != nil && options.MaxRedirects > 0 {
 		maxRedirects = options.MaxRedirects
 	}
 
-	enabledRules := getEnabledRules(rules)
-	println("Enabled rules count:", len(enabledRules))
+	println("Enabled rules count:", len(rules))
 	var redirectURLs []string
 	currentURL := url
 
 	for i := 0; i < maxRedirects; i++ {
 		// Find matching rule
-		var matchingRule *Rule
-		for _, rule := range enabledRules {
+		var matchingRule *CommonRule
+		for _, rule := range rules {
 			result := MatchRuleWithResult(rule, currentURL)
 			if result.Match {
 				matchingRule = &rule
