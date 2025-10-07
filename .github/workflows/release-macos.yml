@@ -59,6 +59,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ensure build scripts are executable
+        run: chmod +x build/darwin/build-app-store.sh build/darwin/build-dmg.sh
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
