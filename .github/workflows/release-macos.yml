@@ -99,15 +99,17 @@ jobs:
           security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
           security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
           security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
 
           # Import certificate
           security import certificate.p12 -P "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
 
-          # Set keychain search list to include new keychain
-          security list-keychain -d user -s $RUNNER_TEMP/app-signing.keychain-db $(security list-keychains -d user | sed s/\"//g)
-
           # Set the partition list to allow codesign to use the key
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+
+          # Verify certificates are available
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
 
           # Setup API key
           mkdir -p $HOME/private_keys
