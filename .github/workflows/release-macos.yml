@@ -89,7 +89,7 @@ jobs:
 
       - name: Build and package DMG
         run: |
-          # Create .env file for task from environment variables
+          # Create .env file for DMG build
           cat > .env << EOF
           APP_NAME=${{ vars.APP_NAME }}
           BIN_DIR=${{ vars.BIN_DIR }}
@@ -109,6 +109,33 @@ jobs:
           VERSION="${{ needs.Version.outputs.version }}"
           mv bin/LinkPure-Installer.dmg bin/LinkPure-${VERSION}.dmg
 
+      - name: Build and package App Store version
+        run: |
+          # Clean previous build
+          rm -rf bin/LinkPure.app bin/LinkPure
+
+          # Create .env file for App Store build
+          cat > .env << EOF
+          APP_NAME=${{ vars.APP_NAME }}
+          BIN_DIR=${{ vars.BIN_DIR }}
+          SIGNING_IDENTITY_APPSTORE="${{ vars.SIGNING_IDENTITY_APPSTORE }}"
+          SIGNING_IDENTITY_INSTALLER="${{ vars.SIGNING_IDENTITY_INSTALLER }}"
+          TEAM_ID=${{ vars.TEAM_ID }}
+          APP_BUNDLE_ID=${{ vars.APP_BUNDLE_ID }}
+          APPLE_CERTIFICATE_BASE64=${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD=${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_KEY=${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER=${{ secrets.APPLE_API_ISSUER }}
+          EOF
+
+          task darwin:release:appstore
+
+      - name: Rename PKG with version
+        run: |
+          VERSION="${{ needs.Version.outputs.version }}"
+          mv bin/LinkPure.pkg bin/LinkPure-${VERSION}.pkg
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -118,6 +145,7 @@ jobs:
           prerelease: false
           files: |
             bin/LinkPure-${{ needs.Version.outputs.version }}.dmg
+            bin/LinkPure-${{ needs.Version.outputs.version }}.pkg
 
       - name: Cleanup
         if: always()
