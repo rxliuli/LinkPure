@@ -92,19 +92,23 @@ jobs:
 
       - name: Setup certificates and API key
         run: |
-          # Decode and import certificate
-          echo "${{ secrets.APPLE_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
-
           # Create keychain
           security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
           security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
           security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
           security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
 
-          # Import certificate
-          security import certificate.p12 -P "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          # Import App Store certificate (Apple Distribution)
+          echo "${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}" | base64 --decode > appstore_cert.p12
+          security import appstore_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          rm appstore_cert.p12
 
-          # Set the partition list to allow codesign to use the key
+          # Import Developer ID certificate (for DMG)
+          echo "${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_BASE64 }}" | base64 --decode > developerid_cert.p12
+          security import developerid_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          rm developerid_cert.p12
+
+          # Set the partition list to allow codesign to use the keys
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
 
           # Verify certificates are available
@@ -114,9 +118,6 @@ jobs:
           # Setup API key
           mkdir -p $HOME/private_keys
           echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > $HOME/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
-
-          # Cleanup certificate file
-          rm certificate.p12
 
       - name: Build and package App Store version
         run: |
