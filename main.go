@@ -35,7 +35,7 @@ var assets embed.FS
 // and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
 // logs any error that might occur.
 func main() {
-	paths, _ := envpaths.EnvPaths("com.rxliuli.linkpure")
+	paths, _ := envpaths.EnvPaths("com.rxliuli.linkpure2")
 	logger.Init(paths.Log)
 	logger.Info("Application started")
 	rules.SetConfName("LinkPure")

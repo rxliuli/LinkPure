@@ -15,7 +15,7 @@ type Conf struct {
 }
 
 func GetConf(name string) (*Conf, error) {
-	paths, err := envpaths.EnvPaths("com.rxliuli.linkpure")
+	paths, err := envpaths.EnvPaths("com.rxliuli.linkpure2")
 	if err != nil {
 		return nil, err
 	}

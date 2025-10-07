@@ -5,7 +5,7 @@ import (
 )
 
 func TestEnvPaths(t *testing.T) {
-	paths, err := EnvPaths("com.rxliuli.linkpure")
+	paths, err := EnvPaths("com.rxliuli.linkpure2")
 	if err != nil {
 		t.Fatal(err)
 		return
