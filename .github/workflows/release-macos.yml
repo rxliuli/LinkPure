@@ -73,7 +73,7 @@ jobs:
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.31
 
 
       - name: Install Node.js
