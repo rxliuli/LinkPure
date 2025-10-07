@@ -88,10 +88,6 @@ jobs:
         run: |
           brew install create-dmg
 
-      - name: Generate bindings
-        run: |
-          task common:generate:bindings
-
       - name: Setup certificates and API key
         run: |
           # Create keychain
