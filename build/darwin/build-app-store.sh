@@ -17,14 +17,10 @@ APP_PATH="${BIN_DIR}/${APP_NAME}.app"
 PKG_FILE_NAME="${BIN_DIR}/${APP_NAME}.pkg"
 ASC_PROVIDER="${TEAM_ID}"
 
-# API Key configuration (from base64)
+# API Key configuration (from file path)
 APPLE_API_KEY_ID=${APPLE_API_KEY_ID:-""}
 APPLE_API_ISSUER=${APPLE_API_ISSUER:-""}
-APPLE_API_KEY=${APPLE_API_KEY:-""}
-
-# Certificate configuration (from base64)
-APPLE_CERTIFICATE_BASE64=${APPLE_CERTIFICATE_BASE64:-""}
-APPLE_CERTIFICATE_PASSWORD=${APPLE_CERTIFICATE_PASSWORD:-""}
+APPLE_API_KEY_PATH=${APPLE_API_KEY_PATH:-""}
 
 # Helpers -------------------------------------------------------------------
 log() {
@@ -50,37 +46,6 @@ require_non_empty() {
   [[ -n "$value" ]] || fail "Environment variable $var_name is required"
 }
 
-setup_certificate() {
-  if [[ -n "$APPLE_CERTIFICATE_BASE64" && -n "$APPLE_CERTIFICATE_PASSWORD" ]]; then
-    log "Setting up certificate from base64"
-    local temp_cert_path=$(mktemp)
-    local temp_keychain_path=$(mktemp -d)/build.keychain
-
-    echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$temp_cert_path"
-
-    # Create temporary keychain
-    security create-keychain -p actions "$temp_keychain_path"
-    security set-keychain-settings -lut 21600 "$temp_keychain_path"
-    security unlock-keychain -p actions "$temp_keychain_path"
-
-    # Import certificate
-    security import "$temp_cert_path" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$temp_keychain_path"
-    security list-keychain -d user -s "$temp_keychain_path"
-
-    # Cleanup on exit
-    trap "security delete-keychain $temp_keychain_path 2>/dev/null || true; rm -f $temp_cert_path 2>/dev/null || true" EXIT
-  fi
-}
-
-setup_api_key() {
-  if [[ -n "$APPLE_API_KEY" ]]; then
-    log "Setting up API key from base64"
-    TEMP_API_KEY_PATH=$(mktemp)
-    echo "$APPLE_API_KEY" | base64 --decode > "$TEMP_API_KEY_PATH"
-    trap "rm -f $TEMP_API_KEY_PATH 2>/dev/null || true; $(trap -p EXIT | sed 's/trap -- //')" EXIT
-  fi
-}
-
 # Pre-flight -----------------------------------------------------------------
 log "Checking prerequisites"
 require_command task
@@ -96,28 +61,17 @@ require_non_empty SIGNING_IDENTITY_APPSTORE
 require_non_empty SIGNING_IDENTITY_INSTALLER
 require_non_empty TEAM_ID
 require_non_empty APP_BUNDLE_ID
-require_non_empty APPLE_CERTIFICATE_BASE64
-require_non_empty APPLE_CERTIFICATE_PASSWORD
-ALTOOL_AUTH_ARGS=()
+require_non_empty APPLE_API_KEY_ID
+require_non_empty APPLE_API_ISSUER
+require_non_empty APPLE_API_KEY_PATH
 
-select_altool_auth() {
-  if [[ -n "$APPLE_API_KEY_ID" ]]; then
-    require_non_empty APPLE_API_ISSUER
-    require_non_empty APPLE_API_KEY
-    setup_api_key
-    require_file "$TEMP_API_KEY_PATH"
-    ALTOOL_AUTH_ARGS=(
-      --apiKey "$APPLE_API_KEY_ID"
-      --apiIssuer "$APPLE_API_ISSUER"
-      --private-key-file "$TEMP_API_KEY_PATH"
-    )
-  else
-    fail "APPLE_API_KEY_ID, APPLE_API_ISSUER, and APPLE_API_KEY are required"
-  fi
-}
+require_file "$APPLE_API_KEY_PATH"
 
-setup_certificate
-select_altool_auth
+ALTOOL_AUTH_ARGS=(
+  --apiKey "$APPLE_API_KEY_ID"
+  --apiIssuer "$APPLE_API_ISSUER"
+  --private-key-file "$APPLE_API_KEY_PATH"
+)
 
 # Build ----------------------------------------------------------------------
 log "Building application bundle via task"

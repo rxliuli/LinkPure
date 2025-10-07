@@ -75,7 +75,6 @@ tasks:
     dotenv:
       - .env
     cmds:
-      - task: package
       - '{{.TASKFILE_DIR}}/build-dmg.sh'
 
   release:appstore:
@@ -83,7 +82,6 @@ tasks:
     dotenv:
       - .env
     cmds:
-      - task: package
       - '{{.TASKFILE_DIR}}/build-app-store.sh'
 
   run:

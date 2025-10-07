@@ -17,40 +17,10 @@ DMG_FILE_NAME="${BIN_DIR}/${APP_NAME}-Installer.dmg"
 VOLUME_NAME="${APP_NAME} Installer"
 APP_PATH="${BIN_DIR}/${APP_NAME}.app"
 
-# API Key configuration (from base64)
+# API Key configuration (from file path)
 APPLE_API_KEY_ID="${APPLE_API_KEY_ID:-}"
 APPLE_API_ISSUER="${APPLE_API_ISSUER:-}"
-APPLE_API_KEY="${APPLE_API_KEY:-}"
-
-# Certificate configuration (from base64)
-APPLE_CERTIFICATE_BASE64="${APPLE_CERTIFICATE_BASE64:-}"
-APPLE_CERTIFICATE_PASSWORD="${APPLE_CERTIFICATE_PASSWORD:-}"
-
-# Decode and setup API key if provided
-TEMP_API_KEY_PATH=""
-if [[ -n "$APPLE_API_KEY" ]]; then
-  TEMP_API_KEY_PATH=$(mktemp)
-  echo "$APPLE_API_KEY" | base64 --decode > "$TEMP_API_KEY_PATH"
-  trap "rm -f $TEMP_API_KEY_PATH" EXIT
-fi
-
-# Decode and import certificate if provided
-if [[ -n "$APPLE_CERTIFICATE_BASE64" && -n "$APPLE_CERTIFICATE_PASSWORD" ]]; then
-  TEMP_CERT_PATH=$(mktemp)
-  TEMP_KEYCHAIN_PATH=$(mktemp -d)/build.keychain
-  echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$TEMP_CERT_PATH"
-
-  # Create temporary keychain
-  security create-keychain -p actions "$TEMP_KEYCHAIN_PATH"
-  security set-keychain-settings -lut 21600 "$TEMP_KEYCHAIN_PATH"
-  security unlock-keychain -p actions "$TEMP_KEYCHAIN_PATH"
-
-  # Import certificate
-  security import "$TEMP_CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$TEMP_KEYCHAIN_PATH"
-  security list-keychain -d user -s "$TEMP_KEYCHAIN_PATH"
-
-  trap "security delete-keychain $TEMP_KEYCHAIN_PATH 2>/dev/null || true; rm -f $TEMP_CERT_PATH $TEMP_API_KEY_PATH 2>/dev/null || true" EXIT
-fi
+APPLE_API_KEY_PATH="${APPLE_API_KEY_PATH:-}"
 
 # Build the application
 task package
@@ -88,14 +58,14 @@ codesign --force --sign "${SIGNING_IDENTITY_DMG}" "${DMG_FILE_NAME}"
 
 # Submit for notarization
 echo "Submitting for notarization..."
-if [[ -n "$APPLE_API_KEY_ID" && -n "$APPLE_API_ISSUER" && -n "$TEMP_API_KEY_PATH" ]]; then
+if [[ -n "$APPLE_API_KEY_ID" && -n "$APPLE_API_ISSUER" && -n "$APPLE_API_KEY_PATH" ]]; then
   xcrun notarytool submit "${DMG_FILE_NAME}" \
-    --key "$TEMP_API_KEY_PATH" \
+    --key "$APPLE_API_KEY_PATH" \
     --key-id "$APPLE_API_KEY_ID" \
     --issuer "$APPLE_API_ISSUER" \
     --wait
 else
-  echo "ERROR: APPLE_API_KEY_ID, APPLE_API_ISSUER, and APPLE_API_KEY are required for notarization"
+  echo "ERROR: APPLE_API_KEY_ID, APPLE_API_ISSUER, and APPLE_API_KEY_PATH are required for notarization"
   exit 1
 fi
 

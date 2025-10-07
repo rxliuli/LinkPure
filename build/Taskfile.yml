@@ -31,10 +31,11 @@ tasks:
       - dist/**/*
     deps:
       - task: install:frontend:deps
-      - task: generate:bindings
-        vars:
-          BUILD_FLAGS:
-            ref: .BUILD_FLAGS
+      # TODO: temp disable
+      # - task: generate:bindings
+      #   vars:
+      #     BUILD_FLAGS:
+      #       ref: .BUILD_FLAGS
     cmds:
       - pnpm run {{.BUILD_COMMAND}}
     env:
