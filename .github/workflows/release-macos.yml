@@ -90,6 +90,27 @@ jobs:
         run: |
           brew install create-dmg
 
+      - name: Setup certificates and API key for DMG
+        run: |
+          # Decode and import certificate
+          echo "${{ secrets.APPLE_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
+
+          # Create keychain
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+
+          # Import certificate
+          security import certificate.p12 -P "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          security list-keychain -d user -s $RUNNER_TEMP/app-signing.keychain-db
+
+          # Setup API key
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+          # Cleanup certificate file
+          rm certificate.p12
+
       - name: Build and package DMG
         run: |
           # Create .env file for DMG build
@@ -98,9 +119,7 @@ jobs:
           BIN_DIR=${{ vars.BIN_DIR }}
           SIGNING_IDENTITY_DMG="${{ vars.SIGNING_IDENTITY_DMG }}"
           TEAM_ID=${{ vars.TEAM_ID }}
-          APPLE_CERTIFICATE_BASE64=${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD=${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_API_KEY=${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER=${{ secrets.APPLE_API_ISSUER }}
           EOF
@@ -111,6 +130,27 @@ jobs:
         run: |
           VERSION="${{ needs.Version.outputs.version }}"
           mv bin/LinkPure-Installer.dmg bin/LinkPure-${VERSION}.dmg
+
+      - name: Setup certificates and API key for App Store
+        run: |
+          # Decode and import certificate
+          echo "${{ secrets.APPLE_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
+
+          # Create keychain
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+
+          # Import certificate
+          security import certificate.p12 -P "${{ secrets.APPLE_CERTIFICATE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          security list-keychain -d user -s $RUNNER_TEMP/app-signing.keychain-db
+
+          # Setup API key
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+          # Cleanup certificate file
+          rm certificate.p12
 
       - name: Build and package App Store version
         run: |
@@ -125,9 +165,7 @@ jobs:
           SIGNING_IDENTITY_INSTALLER="${{ vars.SIGNING_IDENTITY_INSTALLER }}"
           TEAM_ID=${{ vars.TEAM_ID }}
           APP_BUNDLE_ID=${{ vars.APP_BUNDLE_ID }}
-          APPLE_CERTIFICATE_BASE64=${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD=${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_API_KEY=${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER=${{ secrets.APPLE_API_ISSUER }}
           EOF
