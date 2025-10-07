@@ -25,9 +25,9 @@ tasks:
       GOOS: darwin
       CGO_ENABLED: 1
       GOARCH: '{{.ARCH | default ARCH}}'
-      CGO_CFLAGS: "-mmacosx-version-min=10.15"
-      CGO_LDFLAGS: "-mmacosx-version-min=10.15"
-      MACOSX_DEPLOYMENT_TARGET: "10.15"
+      CGO_CFLAGS: '-mmacosx-version-min=10.15'
+      CGO_LDFLAGS: '-mmacosx-version-min=10.15'
+      MACOSX_DEPLOYMENT_TARGET: '10.15'
       PRODUCTION: '{{.PRODUCTION | default "false"}}'
 
   build:universal:
@@ -36,11 +36,11 @@ tasks:
       - task: build
         vars:
           ARCH: amd64
-          OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}-amd64"
+          OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}-amd64'
       - task: build
         vars:
           ARCH: arm64
-          OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}-arm64"
+          OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}-arm64'
     cmds:
       - lipo -create -output "{{.BIN_DIR}}/{{.APP_NAME}}" "{{.BIN_DIR}}/{{.APP_NAME}}-amd64" "{{.BIN_DIR}}/{{.APP_NAME}}-arm64"
       - rm "{{.BIN_DIR}}/{{.APP_NAME}}-amd64" "{{.BIN_DIR}}/{{.APP_NAME}}-arm64"
@@ -50,7 +50,7 @@ tasks:
     deps:
       - task: build
         vars:
-          PRODUCTION: "true"
+          PRODUCTION: 'true'
     cmds:
       - task: create:app:bundle
 
@@ -61,7 +61,6 @@ tasks:
     cmds:
       - task: create:app:bundle
 
-
   create:app:bundle:
     summary: Creates an `.app` bundle
     cmds:
@@ -70,6 +69,22 @@ tasks:
       - cp {{.BIN_DIR}}/{{.APP_NAME}} {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS
       - cp build/darwin/Info.plist {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents
       - codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app
+
+  release:dmg:
+    summary: Builds and packages the application for macOS (DMG)
+    dotenv:
+      - .env
+    cmds:
+      - task: package
+      - '{{.TASKFILE_DIR}}/build-dmg.sh'
+
+  release:appstore:
+    summary: Builds and packages the application for macOS (App Store)
+    dotenv:
+      - .env
+    cmds:
+      - task: package
+      - '{{.TASKFILE_DIR}}/build-app-store.sh'
 
   run:
     cmds:

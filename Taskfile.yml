@@ -36,9 +36,3 @@ tasks:
     summary: Runs the tests
     cmds:
       - go test -v ./...
-
-  release:dmg:
-    summary: Builds and packages the application for macOS (DMG)
-    cmds:
-      - task: package
-      - ./build-dmg.sh

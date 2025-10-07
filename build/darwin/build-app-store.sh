@@ -3,24 +3,28 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Configuration --------------------------------------------------------------
-APP_NAME=${APP_NAME:-"LinkPure"}
-BIN_DIR=${BIN_DIR:-"bin"}
-APP_PATH=${APP_PATH:-"${BIN_DIR}/${APP_NAME}.app"}
-PKG_FILE_NAME=${PKG_FILE_NAME:-"${BIN_DIR}/${APP_NAME}.pkg"}
+APP_NAME=${APP_NAME:-""}
+BIN_DIR=${BIN_DIR:-""}
 ENTITLEMENTS=${ENTITLEMENTS:-"build/darwin/entitlements.plist"}
 
-SIGNING_IDENTITY_APP=${SIGNING_IDENTITY_APP:-"Apple Distribution: KAI WANG (N2X78TUUFG)"}
-SIGNING_IDENTITY_INSTALLER=${SIGNING_IDENTITY_INSTALLER:-"Apple Distribution: KAI WANG (N2X78TUUFG)"}
-TEAM_ID=${TEAM_ID:-"N2X78TUUFG"}
-APP_BUNDLE_ID=${APP_BUNDLE_ID:-"com.rxliuli.linkpure2"}
-ASC_PROVIDER=${ASC_PROVIDER:-"${TEAM_ID}"}
+SIGNING_IDENTITY_APPSTORE=${SIGNING_IDENTITY_APPSTORE:-""}
+SIGNING_IDENTITY_INSTALLER=${SIGNING_IDENTITY_INSTALLER:-""}
+TEAM_ID=${TEAM_ID:-""}
+APP_BUNDLE_ID=${APP_BUNDLE_ID:-""}
 
-APPLE_ID=${APPLE_ID:-""}
-APP_STORE_CONNECT_PASSWORD=${APP_STORE_CONNECT_PASSWORD:-""}
-APP_STORE_CONNECT_KEYCHAIN_ITEM=${APP_STORE_CONNECT_KEYCHAIN_ITEM:-""}
-ASC_API_KEY_ID=${ASC_API_KEY_ID:-""}
-ASC_API_KEY_ISSUER_ID=${ASC_API_KEY_ISSUER_ID:-""}
-ASC_API_KEY_PATH=${ASC_API_KEY_PATH:-""}
+# Derived configuration
+APP_PATH="${BIN_DIR}/${APP_NAME}.app"
+PKG_FILE_NAME="${BIN_DIR}/${APP_NAME}.pkg"
+ASC_PROVIDER="${TEAM_ID}"
+
+# API Key configuration (from base64)
+APPLE_API_KEY_ID=${APPLE_API_KEY_ID:-""}
+APPLE_API_ISSUER=${APPLE_API_ISSUER:-""}
+APPLE_API_KEY=${APPLE_API_KEY:-""}
+
+# Certificate configuration (from base64)
+APPLE_CERTIFICATE_BASE64=${APPLE_CERTIFICATE_BASE64:-""}
+APPLE_CERTIFICATE_PASSWORD=${APPLE_CERTIFICATE_PASSWORD:-""}
 
 # Helpers -------------------------------------------------------------------
 log() {
@@ -42,17 +46,38 @@ require_file() {
 
 require_non_empty() {
   local var_name="$1"
-  local value="${!var_name:-}" 
+  local value="${!var_name:-}"
   [[ -n "$value" ]] || fail "Environment variable $var_name is required"
 }
 
-select_altool_password() {
-  if [[ -n "$APP_STORE_CONNECT_PASSWORD" ]]; then
-    printf '%s' "$APP_STORE_CONNECT_PASSWORD"
-  elif [[ -n "$APP_STORE_CONNECT_KEYCHAIN_ITEM" ]]; then
-    printf '@keychain:%s' "$APP_STORE_CONNECT_KEYCHAIN_ITEM"
-  else
-    fail "Provide either APP_STORE_CONNECT_PASSWORD or APP_STORE_CONNECT_KEYCHAIN_ITEM"
+setup_certificate() {
+  if [[ -n "$APPLE_CERTIFICATE_BASE64" && -n "$APPLE_CERTIFICATE_PASSWORD" ]]; then
+    log "Setting up certificate from base64"
+    local temp_cert_path=$(mktemp)
+    local temp_keychain_path=$(mktemp -d)/build.keychain
+
+    echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$temp_cert_path"
+
+    # Create temporary keychain
+    security create-keychain -p actions "$temp_keychain_path"
+    security set-keychain-settings -lut 21600 "$temp_keychain_path"
+    security unlock-keychain -p actions "$temp_keychain_path"
+
+    # Import certificate
+    security import "$temp_cert_path" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$temp_keychain_path"
+    security list-keychain -d user -s "$temp_keychain_path"
+
+    # Cleanup on exit
+    trap "security delete-keychain $temp_keychain_path 2>/dev/null || true; rm -f $temp_cert_path 2>/dev/null || true" EXIT
+  fi
+}
+
+setup_api_key() {
+  if [[ -n "$APPLE_API_KEY" ]]; then
+    log "Setting up API key from base64"
+    TEMP_API_KEY_PATH=$(mktemp)
+    echo "$APPLE_API_KEY" | base64 --decode > "$TEMP_API_KEY_PATH"
+    trap "rm -f $TEMP_API_KEY_PATH 2>/dev/null || true; $(trap -p EXIT | sed 's/trap -- //')" EXIT
   fi
 }
 
@@ -64,36 +89,34 @@ require_command productbuild
 require_command pkgutil
 require_command xcrun
 
+require_non_empty APP_NAME
+require_non_empty BIN_DIR
 require_file "$ENTITLEMENTS"
-require_non_empty SIGNING_IDENTITY_APP
+require_non_empty SIGNING_IDENTITY_APPSTORE
 require_non_empty SIGNING_IDENTITY_INSTALLER
 require_non_empty TEAM_ID
 require_non_empty APP_BUNDLE_ID
+require_non_empty APPLE_CERTIFICATE_BASE64
+require_non_empty APPLE_CERTIFICATE_PASSWORD
 ALTOOL_AUTH_ARGS=()
 
 select_altool_auth() {
-  if [[ -n "$ASC_API_KEY_ID" ]]; then
-    require_non_empty ASC_API_KEY_ISSUER_ID
-    local key_path="${ASC_API_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8}"
-    require_file "$key_path"
+  if [[ -n "$APPLE_API_KEY_ID" ]]; then
+    require_non_empty APPLE_API_ISSUER
+    require_non_empty APPLE_API_KEY
+    setup_api_key
+    require_file "$TEMP_API_KEY_PATH"
     ALTOOL_AUTH_ARGS=(
-      --apiKey "$ASC_API_KEY_ID"
-      --apiIssuer "$ASC_API_KEY_ISSUER_ID"
-      --private-key-file "$key_path"
+      --apiKey "$APPLE_API_KEY_ID"
+      --apiIssuer "$APPLE_API_ISSUER"
+      --private-key-file "$TEMP_API_KEY_PATH"
     )
   else
-    require_non_empty APPLE_ID
-    require_non_empty ASC_PROVIDER
-    local password
-    password=$(select_altool_password)
-    ALTOOL_AUTH_ARGS=(
-      --username "$APPLE_ID"
-      --password "$password"
-      --asc-provider "$ASC_PROVIDER"
-    )
+    fail "APPLE_API_KEY_ID, APPLE_API_ISSUER, and APPLE_API_KEY are required"
   fi
 }
 
+setup_certificate
 select_altool_auth
 
 # Build ----------------------------------------------------------------------
@@ -106,7 +129,7 @@ task darwin:package:universal
 log "Signing app bundle with entitlements"
 codesign --force --deep --options runtime --timestamp \
   --entitlements "$ENTITLEMENTS" \
-  --sign "$SIGNING_IDENTITY_APP" \
+  --sign "$SIGNING_IDENTITY_APPSTORE" \
   "$APP_PATH"
 
 log "Verifying app signature"

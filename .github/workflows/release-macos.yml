@@ -127,8 +127,7 @@ jobs:
 
       - name: Build and package DMG
         run: |
-          chmod +x build-dmg.sh
-          ./build-dmg.sh
+          task darwin:release:dmg
 
       - name: Rename DMG with version
         run: |
