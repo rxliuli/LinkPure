@@ -73,7 +73,7 @@ jobs:
 
       - name: Install Wails
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/@latest
+          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
 
 
       - name: Install Node.js
@@ -100,11 +100,6 @@ jobs:
           echo "${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}" | base64 --decode > appstore_cert.p12
           security import appstore_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
           rm appstore_cert.p12
-
-          # Import Installer certificate (3rd Party Mac Developer Installer)
-          echo "${{ secrets.APPLE_CERTIFICATE_INSTALLER_BASE64 }}" | base64 --decode > installer_cert.p12
-          security import installer_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_INSTALLER_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
-          rm installer_cert.p12
 
           # Import Developer ID certificate (for DMG)
           echo "${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_BASE64 }}" | base64 --decode > developerid_cert.p12
