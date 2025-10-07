@@ -7,7 +7,7 @@ version: '3'
 info:
   companyName: "com.rxliuli" # The name of the company
   productName: "LinkPure" # The name of the application
-  productIdentifier: "com.rxliuli.linkpure" # The unique product identifier
+  productIdentifier: "com.rxliuli.linkpure2" # The unique product identifier
   description: "A cross-platform application that automatically monitors clipboard URL changes and rewrites them according to rules." # The application description
   copyright: "(c) 2025, rxliuli" # Copyright text
   comments: "URL clipboard rewriting tool" # Comments

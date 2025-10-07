@@ -8,13 +8,13 @@
         <key>CFBundleExecutable</key>
             <string>LinkPure</string>
         <key>CFBundleIdentifier</key>
-            <string>com.rxliuli.linkpure</string>
+            <string>com.rxliuli.linkpure2</string>
         <key>CFBundleVersion</key>
-            <string>0.0.1</string>
+            <string>0.2.3</string>
         <key>CFBundleGetInfoString</key>
             <string>URL clipboard rewriting tool</string>
         <key>CFBundleShortVersionString</key>
-            <string>0.0.1</string>
+            <string>0.2.3</string>
         <key>CFBundleIconFile</key>
             <string>icons</string>
         <key>LSMinimumSystemVersion</key>
