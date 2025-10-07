@@ -105,8 +105,8 @@ jobs:
           security list-keychain -d user -s $RUNNER_TEMP/app-signing.keychain-db
 
           # Setup API key
-          mkdir -p ~/private_keys
-          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+          mkdir -p $HOME/private_keys
+          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > $HOME/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
           # Cleanup certificate file
           rm certificate.p12
@@ -119,7 +119,7 @@ jobs:
           BIN_DIR=${{ vars.BIN_DIR }}
           SIGNING_IDENTITY_DMG="${{ vars.SIGNING_IDENTITY_DMG }}"
           TEAM_ID=${{ vars.TEAM_ID }}
-          APPLE_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+          APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER=${{ secrets.APPLE_API_ISSUER }}
           EOF
@@ -144,7 +144,7 @@ jobs:
           SIGNING_IDENTITY_INSTALLER="${{ vars.SIGNING_IDENTITY_INSTALLER }}"
           TEAM_ID=${{ vars.TEAM_ID }}
           APP_BUNDLE_ID=${{ vars.APP_BUNDLE_ID }}
-          APPLE_API_KEY_PATH=~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+          APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
           APPLE_API_KEY_ID=${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER=${{ secrets.APPLE_API_ISSUER }}
           EOF
