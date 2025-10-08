@@ -4,7 +4,7 @@ A cross-platform application that monitors clipboard URL changes and rewrites th
 
 ## Download
 
-Download the latest version from [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
+Download the latest version from [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest) or [App Store](https://apps.apple.com/app/id6753670551)
 
 ## Features
 
