@@ -176,7 +176,7 @@ jobs:
           prerelease: false
           files: |
             bin/LinkPure-${{ needs.Version.outputs.version }}.dmg
-            bin/LinkPure-${{ needs.Version.outputs.version }}.pkg
+            # bin/LinkPure-${{ needs.Version.outputs.version }}.pkg
 
       - name: Cleanup
         if: always()
