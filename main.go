@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"embed"
 	"log"
+	"strings"
 	"time"
 
 	"linkpure/internal/conf"
@@ -110,7 +111,7 @@ func monitorClipboard(notifier *notifications.NotificationService) {
 		if data == nil {
 			continue
 		}
-		content := string(data)
+		content := strings.TrimSpace(string(data))
 		if content == "" {
 			continue
 		}
