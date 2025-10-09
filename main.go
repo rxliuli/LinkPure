@@ -168,6 +168,12 @@ func monitorClipboard(notifier *notifications.NotificationService) {
 					})
 					if err != nil {
 						logger.Info("Failed to send notification: %v", err)
+					} else {
+						// Auto-dismiss notification after 3 seconds
+						go func(id string) {
+							time.Sleep(3 * time.Second)
+							notifier.RemoveDeliveredNotification(id)
+						}(notificationID)
 					}
 				}
 			}
