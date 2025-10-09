@@ -83,13 +83,8 @@ func TestCheckRuleChainSelfRedirect(t *testing.T) {
 
 	result := CheckRuleChain([]CommonRule{rule}, "https://example.com/", nil)
 
-	expected := CheckResult{
-		Status: StatusCircularRedirect,
-		URLs:   []string{"https://example.com/"},
-	}
-
-	if result.Status != expected.Status {
-		t.Errorf("Expected Status to be %v, got %v", expected.Status, result.Status)
+	if result.Status != StatusCircularRedirect {
+		t.Errorf("Expected Status to be %v, got %v", StatusCircularRedirect, result.Status)
 	}
 
 	if len(result.URLs) != 1 {
@@ -378,5 +373,24 @@ func TestRealCase2(t *testing.T) {
 	}
 	if result.URL != "https://apps.apple.com/app/id6752027292" {
 		t.Errorf("Expected URL to be %s, got %s", "https://apps.apple.com/app/id6752027292", result.URL)
+	}
+}
+
+func TestRealCase3(t *testing.T) {
+	rule := CommonRule{
+		ID:          "real-case-3",
+		RegexFilter: "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?x.com",
+		RemoveParams: []string{
+			"(?:ref_?)?src",
+			"s",
+			"cn",
+			"ref_url",
+			"t",
+		},
+	}
+
+	result := MatchRuleWithResult(rule, "https://x.com/compose/post?text=hello")
+	if result.Match {
+		t.Errorf("Expected Not Match to be %v, got %v", true, result.Match)
 	}
 }

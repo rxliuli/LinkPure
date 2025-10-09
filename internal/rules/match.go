@@ -83,7 +83,15 @@ func enhancedReplace(re *regexp2.Regexp, from string, rule CommonRule) (string, 
 		// Match params using regex patterns
 		for paramName := range query {
 			for _, pattern := range rule.RemoveParams {
-				re, err := regexp2.Compile(pattern, 0)
+				// For exact parameter name matching, add anchors if not present
+				// This prevents "t" from matching "text"
+				finalPattern := pattern
+				if !strings.ContainsAny(pattern, "^$()[]{}*+?|\\") {
+					// Simple string without regex special chars - match exactly
+					finalPattern = "^" + pattern + "$"
+				}
+
+				re, err := regexp2.Compile(finalPattern, 0)
 				if err != nil {
 					continue
 				}
@@ -122,12 +130,6 @@ func MatchRuleWithResult(rule CommonRule, from string) MatchResult {
 		rewrittenURL, err := enhancedReplace(re, from, rule)
 		if err != nil {
 			return MatchResult{Match: false, URL: ""}
-		}
-
-		// Special case: if rule has RegexSubstitution, always consider it a match (even if URL doesn't change)
-		// This is needed to detect self-redirect loops
-		if rule.RegexSubstitution != "" {
-			return MatchResult{Match: true, URL: rewrittenURL}
 		}
 
 		// For RemoveParams rules, only match if the URL actually changed
@@ -184,7 +186,6 @@ func CheckRuleChain(rules []CommonRule, url string, options *CheckOptions) Check
 		maxRedirects = options.MaxRedirects
 	}
 
-	println("Enabled rules count:", len(rules))
 	var redirectURLs []string
 	currentURL := url
 
