@@ -42,6 +42,12 @@ jobs:
       - name: Install NSIS
         run: |
           choco install nsis -y
+          # 添加 NSIS 到 PATH
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Verify NSIS installation
+        run: |
+          makensis /VERSION
 
       - name: Build Windows ${{ matrix.arch }}
         run: |
