@@ -42,12 +42,14 @@ jobs:
       - name: Install NSIS
         run: |
           choco install nsis -y
-          # 添加 NSIS 到 PATH
+          # 刷新环境变量
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          # 添加 NSIS 到 GITHUB_PATH 供后续步骤使用
           echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Verify NSIS installation
-        run: |
-          makensis /VERSION
+          # 同时为当前步骤添加到 PATH
+          $env:Path += ";C:\Program Files (x86)\NSIS"
+          # 验证安装
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /VERSION
 
       - name: Build Windows ${{ matrix.arch }}
         run: |
