@@ -39,6 +39,10 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
 
+      - name: Install NSIS
+        run: |
+          choco install nsis -y
+
       - name: Build Windows ${{ matrix.arch }}
         run: |
           task windows:create:nsis:installer ARCH=${{ matrix.arch }}
