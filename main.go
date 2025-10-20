@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"linkpure/internal/conf"
 	"linkpure/internal/ctx"
 	"linkpure/internal/envpaths"
 	"linkpure/internal/logger"
@@ -61,6 +60,9 @@ func main() {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: false,
 			ActivationPolicy: application.ActivationPolicyAccessory,
+		},
+		Windows: application.WindowsOptions{
+			DisableQuitOnLastWindowClosed: true,
 		},
 	})
 
@@ -141,7 +143,6 @@ func monitorClipboard(notifier *notifications.NotificationService) {
 			rewrittenURL = result.URLs[len(result.URLs)-1]
 			matched = true
 			logger.Info("Rule chain matched: %v", result.URLs)
-			logger.Info("URL rewritten: %s -> %s", content, rewrittenURL)
 		} else if result.Status == rules.StatusCircularRedirect {
 			logger.Info("Circular redirect detected for URL: %s, chain: %v", content, result.URLs)
 		} else if result.Status == rules.StatusInfiniteRedirect {
@@ -150,34 +151,32 @@ func monitorClipboard(notifier *notifications.NotificationService) {
 			logger.Info("No matching rule found for URL: %s", content)
 		}
 
-		if matched && rewrittenURL != "" && rewrittenURL != content {
-			// Update clipboard with rewritten URL
-			clipboard.Write(clipboard.FmtText, []byte(rewrittenURL))
-			lastContent = rewrittenURL // Update lastURL to avoid re-processing
+		if !matched || rewrittenURL == "" || rewrittenURL == content {
+			continue
+		}
+		// Update clipboard with rewritten URL
+		clipboard.Write(clipboard.FmtText, []byte(rewrittenURL))
+		lastContent = rewrittenURL // Update lastURL to avoid re-processing
+		logger.Info("URL rewritten: %s -> %s", content, rewrittenURL)
 
-			// Send notification about the rewrite only if enabled
-			c, err := conf.GetConf("linkpure")
-			if err == nil {
-				var enabled bool
-				c.Get("notificationEnabled", &enabled)
-				if enabled {
-					notificationID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
-					err := notifier.SendNotification(notifications.NotificationOptions{
-						ID:    notificationID,
-						Title: "URL Rewritten",
-						Body:  rewrittenURL,
-					})
-					if err != nil {
-						logger.Info("Failed to send notification: %v", err)
-					} else {
-						// Auto-dismiss notification after 3 seconds
-						go func(id string) {
-							time.Sleep(3 * time.Second)
-							notifier.RemoveDeliveredNotification(id)
-						}(notificationID)
-					}
-				}
-			}
+		// Send notification about the rewrite only if enabled
+		if !setting.GetNotificationEnabled() {
+			continue
+		}
+		notificationID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+		err := notifier.SendNotification(notifications.NotificationOptions{
+			ID:    notificationID,
+			Title: "URL Rewritten",
+			Body:  rewrittenURL,
+		})
+		if err != nil {
+			logger.Info("Failed to send notification: %v", err)
+		} else {
+			// Auto-dismiss notification after 3 seconds
+			go func(id string) {
+				time.Sleep(3 * time.Second)
+				notifier.RemoveDeliveredNotification(id)
+			}(notificationID)
 		}
 	}
 
