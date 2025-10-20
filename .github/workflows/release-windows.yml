@@ -1,0 +1,85 @@
+name: Release Windows
+
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  Build:
+    runs-on: windows-latest
+    environment: release-Windows
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    env:
+      VERSION: 0.3.2-beta
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.1'
+
+      - name: Install Task
+        run: |
+          choco install go-task
+
+      - name: Install Wails
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.31
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Build Windows ${{ matrix.arch }}
+        run: |
+          task windows:create:nsis:installer ARCH=${{ matrix.arch }}
+
+      - name: Rename installer with version
+        shell: bash
+        run: |
+          ARCH="${{ matrix.arch }}"
+          # NSIS creates: bin/link-pure-${ARCH}-installer.exe
+          mv bin/link-pure-${ARCH}-installer.exe bin/LinkPure-${{ env.VERSION }}-${ARCH}-installer.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinkPure-${{ env.VERSION }}-${{ matrix.arch }}-installer
+          path: bin/LinkPure-${{ env.VERSION }}-${{ matrix.arch }}-installer.exe
+
+  Release:
+    needs: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: 0.3.2-beta
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 'v${{ env.VERSION }}'
+          name: 'LinkPure v${{ env.VERSION }}'
+          draft: false
+          prerelease: true
+          files: |
+            artifacts/LinkPure-${{ env.VERSION }}-amd64-installer/LinkPure-${{ env.VERSION }}-amd64-installer.exe
+            artifacts/LinkPure-${{ env.VERSION }}-arm64-installer/LinkPure-${{ env.VERSION }}-arm64-installer.exe
