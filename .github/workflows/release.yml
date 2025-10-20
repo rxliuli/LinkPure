@@ -1,10 +1,11 @@
-name: Release macOS DMG
+name: Release
 
 on:
   push:
     branches: ['main']
     paths:
       - 'build/config.yml'
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   Version:
@@ -48,9 +49,9 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Detected version: $VERSION"
 
-  Build:
+  Build-macOS:
     needs: Version
-    if: needs.Version.outputs.version_changed == '1'
+    if: needs.Version.outputs.version_changed == '1' || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     environment: release-macOS
     permissions:
@@ -74,7 +75,6 @@ jobs:
       - name: Install Wails
         run: |
           go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.31
-
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -167,6 +167,98 @@ jobs:
           VERSION="${{ needs.Version.outputs.version }}"
           mv bin/LinkPure-Installer.dmg bin/LinkPure-${VERSION}.dmg
 
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: bin/LinkPure-${{ needs.Version.outputs.version }}.dmg
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+
+  Build-Windows:
+    needs: Version
+    if: needs.Version.outputs.version_changed == '1' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    environment: release-Windows
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.1'
+
+      - name: Install Task
+        run: |
+          choco install go-task -y
+
+      - name: Install Wails
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.31
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install NSIS
+        run: |
+          choco install nsis -y
+          # 刷新环境变量
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          # 添加 NSIS 到 GITHUB_PATH 供后续步骤使用
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          # 同时为当前步骤添加到 PATH
+          $env:Path += ";C:\Program Files (x86)\NSIS"
+          # 验证安装
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /VERSION
+
+      - name: Build Windows ${{ matrix.arch }}
+        run: |
+          task windows:create:nsis:installer ARCH=${{ matrix.arch }}
+
+      - name: Rename installer with version
+        shell: bash
+        run: |
+          VERSION="${{ needs.Version.outputs.version }}"
+          ARCH="${{ matrix.arch }}"
+          # NSIS creates: bin/LinkPure-${ARCH}-installer.exe (with capital L)
+          mv bin/LinkPure-${ARCH}-installer.exe bin/LinkPure-${VERSION}-${ARCH}-installer.exe
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: bin/LinkPure-${{ needs.Version.outputs.version }}-${{ matrix.arch }}-installer.exe
+
+  Release:
+    needs: [Version, Build-macOS, Build-Windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -175,11 +267,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            bin/LinkPure-${{ needs.Version.outputs.version }}.dmg
-            # bin/LinkPure-${{ needs.Version.outputs.version }}.pkg
-
-      - name: Cleanup
-        if: always()
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
-          rm -rf ~/private_keys || true
+            artifacts/macos-dmg/LinkPure-${{ needs.Version.outputs.version }}.dmg
+            artifacts/windows-amd64/LinkPure-${{ needs.Version.outputs.version }}-amd64-installer.exe
+            artifacts/windows-arm64/LinkPure-${{ needs.Version.outputs.version }}-arm64-installer.exe
