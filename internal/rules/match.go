@@ -80,6 +80,9 @@ func enhancedReplace(re *regexp2.Regexp, from string, rule CommonRule) (string, 
 		}
 		query := parsedURL.Query()
 
+		// Track which params to remove
+		paramsToRemove := make([]string, 0)
+
 		// Match params using regex patterns
 		for paramName := range query {
 			for _, pattern := range rule.RemoveParams {
@@ -97,13 +100,65 @@ func enhancedReplace(re *regexp2.Regexp, from string, rule CommonRule) (string, 
 				}
 				matched, err := re.MatchString(paramName)
 				if err == nil && matched {
-					query.Del(paramName)
+					paramsToRemove = append(paramsToRemove, paramName)
 					break
 				}
 			}
 		}
 
-		parsedURL.RawQuery = query.Encode()
+		// If no params to remove, return empty
+		if len(paramsToRemove) == 0 {
+			return "", nil
+		}
+
+		// Remove the matched params
+		for _, param := range paramsToRemove {
+			query.Del(param)
+		}
+
+		// Manually rebuild the query string to preserve existing encoding
+		// Instead of using query.Encode() which re-encodes everything
+		if len(query) == 0 {
+			parsedURL.RawQuery = ""
+		} else {
+			// Build query string manually from the original RawQuery
+			// by removing only the matched parameters
+			originalQuery := parsedURL.RawQuery
+			newQueryParts := make([]string, 0)
+
+			// Split by & and filter out removed params
+			for _, part := range strings.Split(originalQuery, "&") {
+				if part == "" {
+					continue
+				}
+				// Get param name (before = or the whole part if no =)
+				paramName := part
+				if idx := strings.Index(part, "="); idx != -1 {
+					paramName = part[:idx]
+				}
+				// Decode param name to match against our removed list
+				decodedName, err := url.QueryUnescape(paramName)
+				if err != nil {
+					decodedName = paramName
+				}
+
+				// Check if this param should be kept
+				shouldKeep := true
+				for _, removeParam := range paramsToRemove {
+					if decodedName == removeParam {
+						shouldKeep = false
+						break
+					}
+				}
+
+				if shouldKeep {
+					newQueryParts = append(newQueryParts, part)
+				}
+			}
+
+			parsedURL.RawQuery = strings.Join(newQueryParts, "&")
+		}
+
 		result := parsedURL.String()
 		if result == from {
 			return "", nil

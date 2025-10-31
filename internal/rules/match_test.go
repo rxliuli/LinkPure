@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -392,5 +393,54 @@ func TestRealCase3(t *testing.T) {
 	result := MatchRuleWithResult(rule, "https://x.com/compose/post?text=hello")
 	if result.Match {
 		t.Errorf("Expected Not Match to be %v, got %v", true, result.Match)
+	}
+}
+
+func TestDollarSignNotEncoded(t *testing.T) {
+	// Test that $1 placeholder in URLs is not encoded to %241
+	rule := CommonRule{
+		ID:                "duckduckgo-to-google",
+		RegexFilter:       `^https://duckduckgo\.com/\?.*&q=(.*?)(&.*)?$`,
+		RegexSubstitution: "https://www.google.com/search?q=$1",
+	}
+
+	result := MatchRuleWithResult(rule, "https://duckduckgo.com/?t=h_&q=test&ia=web")
+	if !result.Match {
+		t.Errorf("Expected Match to be true, got false")
+	}
+
+	expected := "https://www.google.com/search?q=test"
+	if result.URL != expected {
+		t.Errorf("Expected URL to be %s, got %s", expected, result.URL)
+	}
+
+	// Verify that $ is not encoded to %24
+	if strings.Contains(result.URL, "%24") {
+		t.Errorf("URL should not contain %%24 (encoded $), got %s", result.URL)
+	}
+}
+
+func TestRemoveParamsWithDollarSign(t *testing.T) {
+	// Test that query parameters containing $ are not incorrectly encoded
+	rule := CommonRule{
+		ID:           "remove-tracking",
+		RegexFilter:  `^https://www\.google\.com/search\?`,
+		RemoveParams: []string{"utm_source", "utm_medium"},
+	}
+
+	// Test URL with $ in query parameter value
+	result := MatchRuleWithResult(rule, "https://www.google.com/search?q=$1&utm_source=test&utm_medium=email")
+	if !result.Match {
+		t.Errorf("Expected Match to be true, got false")
+	}
+
+	expected := "https://www.google.com/search?q=$1"
+	if result.URL != expected {
+		t.Errorf("Expected URL to be %s, got %s", expected, result.URL)
+	}
+
+	// Verify that $ is not encoded to %24
+	if strings.Contains(result.URL, "%24") {
+		t.Errorf("URL should not contain %%24 (encoded $), got %s", result.URL)
 	}
 }
