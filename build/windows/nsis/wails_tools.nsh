@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "LinkPure"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.3.3"
+    !define INFO_PRODUCTVERSION "0.3.4"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "(c) 2025, rxliuli"
@@ -208,5 +208,29 @@ RequestExecutionLevel "${REQUEST_EXECUTION_LEVEL}"
 
 !macro wails.unassociateFiles
     ; Delete app associations
+    
+!macroend
+
+!macro CUSTOM_PROTOCOL_ASSOCIATE PROTOCOL DESCRIPTION ICON COMMAND
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\${PROTOCOL}"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}" "" "${DESCRIPTION}"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}" "URL Protocol" ""
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}\DefaultIcon" "" "${ICON}"
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}\shell" "" ""
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}\shell\open" "" ""
+  WriteRegStr SHELL_CONTEXT "Software\Classes\${PROTOCOL}\shell\open\command" "" "${COMMAND}"
+!macroend
+
+!macro CUSTOM_PROTOCOL_UNASSOCIATE PROTOCOL
+  DeleteRegKey SHELL_CONTEXT "Software\Classes\${PROTOCOL}"
+!macroend
+
+!macro wails.associateCustomProtocols
+    ; Create custom protocols associations
+    
+!macroend
+
+!macro wails.unassociateCustomProtocols
+    ; Delete app custom protocol associations
     
 !macroend
