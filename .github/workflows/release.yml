@@ -26,7 +26,7 @@ jobs:
 
   Build-macOS:
     needs: Version
-    if: needs.Version.outputs.version_changed == '1' || github.event_name == 'workflow_dispatch'
+    if: needs.Version.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     environment: release-macOS
     permissions:
