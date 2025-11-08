@@ -5,49 +5,24 @@ on:
     branches: ['main']
     paths:
       - 'build/config.yml'
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   Version:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.get_version.outputs.version }}
-      version_changed: ${{ steps.check_version.outputs.version_changed }}
+      changed: ${{ steps.version.outputs.changed }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Check for version change
-        id: check_version
-        run: |
-          if git diff --name-only HEAD~1..HEAD | grep -q '^build/config\.yml$'; then
-            # Extract version from current and previous commit (grep with 2 spaces to match indented version field)
-            CURRENT_VERSION=$(git show HEAD:build/config.yml | grep '^  version:' | sed 's/.*version: "\(.*\)".*/\1/')
-            PREV_VERSION=$(git show HEAD~1:build/config.yml | grep '^  version:' | sed 's/.*version: "\(.*\)".*/\1/')
-
-            echo "Current version: $CURRENT_VERSION"
-            echo "Previous version: $PREV_VERSION"
-
-            if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
-              echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
-              echo "version_changed=1" >> "$GITHUB_OUTPUT"
-            else
-              echo "Version field not changed"
-              echo "version_changed=0" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "build/config.yml not modified"
-            echo "version_changed=0" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Get version
-        if: steps.check_version.outputs.version_changed == '1'
-        id: get_version
-        run: |
-          VERSION=$(grep '^  version:' build/config.yml | sed 's/.*version: "\(.*\)".*/\1/')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Detected version: $VERSION"
+          fetch-depth: 2
+      - name: Check version change
+        id: version
+        uses: rxliuli/version-check@v1
+        with:
+          file: build/config.yml
+          query: info.version
 
   Build-macOS:
     needs: Version
