@@ -1,0 +1,16 @@
+{
+  "name": "linkpure",
+  "compatibility_date": "2025-11-26",
+  "assets": {
+    "directory": "./build/web/"
+  },
+  "routes": [
+    {
+      "custom_domain": true,
+      "pattern": "linkpure.rxliuli.com"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
