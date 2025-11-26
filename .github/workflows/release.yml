@@ -145,9 +145,6 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build macOS
-        run: flutter build macos --release
-
       - name: Setup certificates and API key
         run: |
           # Create keychain
@@ -172,16 +169,44 @@ jobs:
           mkdir -p ~/private_keys
           echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: Build macOS (without signing)
+        run: |
+          # Configure Flutter to build without code signing
+          flutter build macos --release --config-only
+          
+          # Build with xcodebuild, disabling code signing
+          cd macos
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -derivedDataPath ../build/macos \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+          
+          # Move the built app to expected location
+          mkdir -p ../build/macos/Build/Products/Release
+          cp -R ../build/macos/Build/Products/Release/link_pure.app ../build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app || true
+
       - name: Sign Application
         env:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
           
+          # If app name is different, handle it
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="build/macos/Build/Products/Release/link_pure.app"
+          fi
+          
+          echo "Signing app at: $APP_PATH"
+          
           # Sign the main executable
           codesign --force --options runtime --timestamp \
             --sign "$SIGNING_IDENTITY" \
-            "$APP_PATH/Contents/MacOS/${{ vars.APP_NAME }}"
+            "$APP_PATH/Contents/MacOS/link_pure"
           
           # Sign all frameworks and dylibs
           find "$APP_PATH" -name "*.framework" -o -name "*.dylib" | while read framework; do
@@ -195,15 +220,20 @@ jobs:
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Create DMG
+        env:
+          SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
+          if [ ! -d "$APP_PATH" ]; then
+            APP_PATH="build/macos/Build/Products/Release/link_pure.app"
+          fi
           DMG_PATH="LinkPure-macos.dmg"
           
           # Create DMG
           hdiutil create -volname "${{ vars.APP_NAME }}" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_PATH"
           
           # Sign DMG
-          codesign --force --sign "${{ vars.SIGNING_IDENTITY_DMG }}" "$DMG_PATH"
+          codesign --force --sign "$SIGNING_IDENTITY" "$DMG_PATH"
 
       - name: Notarize DMG
         run: |
@@ -249,9 +279,6 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Build macOS
-        run: flutter build macos --release
-
       - name: Setup certificates and API key
         run: |
           # Create keychain
@@ -281,12 +308,31 @@ jobs:
           mkdir -p ~/private_keys
           echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
 
+      - name: Build macOS (without signing)
+        run: |
+          # Configure Flutter to build without code signing
+          flutter build macos --release --config-only
+          
+          # Build with xcodebuild, disabling code signing
+          cd macos
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -derivedDataPath ../build/macos \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
       - name: Sign Application for App Store
         env:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_APPSTORE }}
         run: |
-          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
+          APP_PATH="build/macos/Build/Products/Release/link_pure.app"
           ENTITLEMENTS="macos/Runner/Release.entitlements"
+          
+          echo "Signing app at: $APP_PATH"
           
           # Sign app bundle with entitlements
           codesign --force --deep --options runtime --timestamp \
@@ -301,7 +347,7 @@ jobs:
         env:
           INSTALLER_IDENTITY: ${{ vars.SIGNING_IDENTITY_INSTALLER }}
         run: |
-          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
+          APP_PATH="build/macos/Build/Products/Release/link_pure.app"
           PKG_PATH="LinkPure-macos.pkg"
           
           # Create signed installer package
