@@ -132,8 +132,37 @@ jobs:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
+    environment: build-web
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify secrets exist
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "❌ CLOUDFLARE_API_TOKEN is not set"
+            exit 1
+          else
+            echo "✅ CLOUDFLARE_API_TOKEN is set"
+          fi
+          if [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ]; then
+            echo "❌ CLOUDFLARE_ACCOUNT_ID is not set"
+            exit 1
+          else
+            echo "✅ CLOUDFLARE_ACCOUNT_ID is set"
+          fi
+
+      - name: Verify Cloudflare API Token
+        run: |
+          response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json")
+          echo "$response"
+          if echo "$response" | grep -q '"success":true'; then
+            echo "✅ Cloudflare API Token is valid"
+          else
+            echo "❌ Cloudflare API Token is invalid"
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@v3
         with:
@@ -162,6 +191,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   release:
     needs: [check-version, build-linux, build-windows-x64, build-android]
