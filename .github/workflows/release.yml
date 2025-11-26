@@ -454,6 +454,288 @@ jobs:
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
           rm -rf ~/private_keys || true
 
+  build-macos-app:
+    needs: check-version
+    if: needs.check-version.outputs.changed == 'true'
+    runs-on: macos-latest
+    environment: release-macOS
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Setup certificates and API key
+        run: |
+          # Create keychain
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
+
+          # Import Developer ID certificate (for notarized .app)
+          echo "${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_BASE64 }}" | base64 --decode > developerid_cert.p12
+          security import developerid_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          rm developerid_cert.p12
+
+          # Set the partition list to allow codesign to use the keys
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+
+          # Verify certificates are available
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+
+          # Setup API key
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      - name: Build macOS (without signing)
+        run: |
+          # Configure Flutter to build without code signing
+          flutter build macos --release --config-only
+          
+          # Build with xcodebuild, disabling code signing
+          cd macos
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -derivedDataPath ../build/macos \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+          
+          # List the built products to verify
+          echo "Built products:"
+          ls -la ../build/macos/Build/Products/Release/
+
+      - name: Sign Application
+        env:
+          SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
+        run: |
+          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
+          
+          echo "Signing app at: $APP_PATH"
+          
+          # Sign in correct order: deepest components first, then work outward
+          
+          # 1. Sign all dylibs inside frameworks first
+          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" {} \;
+          
+          # 2. Sign all frameworks
+          for framework in "$APP_PATH/Contents/Frameworks"/*.framework; do
+            if [ -d "$framework" ]; then
+              echo "Signing framework: $framework"
+              codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$framework"
+            fi
+          done
+          
+          # 3. Sign the main executable
+          EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
+          echo "Signing executable: $APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
+          codesign --force --options runtime --timestamp \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
+          
+          # 4. Sign the main app bundle
+          echo "Signing app bundle: $APP_PATH"
+          codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_PATH"
+          
+          # Verify signature
+          echo "Verifying signature..."
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Notarize Application
+        run: |
+          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
+          
+          # Create a zip for notarization
+          ditto -c -k --keepParent "$APP_PATH" "LinkPure-macos-app.zip"
+          
+          # Submit for notarization
+          xcrun notarytool submit "LinkPure-macos-app.zip" \
+            --key ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 \
+            --key-id "${{ secrets.APPLE_API_KEY_ID }}" \
+            --issuer "${{ secrets.APPLE_API_ISSUER }}" \
+            --wait
+          
+          # Staple the notarization ticket to the app
+          xcrun stapler staple "$APP_PATH"
+          
+          # Re-create the zip with stapled app
+          rm "LinkPure-macos-app.zip"
+          ditto -c -k --keepParent "$APP_PATH" "LinkPure-macos-app.zip"
+          
+          # Verify notarization
+          spctl -a -t exec -vv "$APP_PATH"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+
+      - name: Upload macOS App artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app-build
+          path: LinkPure-macos-app.zip
+
+  build-ios-appstore:
+    needs: check-version
+    if: needs.check-version.outputs.changed == 'true'
+    runs-on: macos-latest
+    environment: release-macOS
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Setup certificates and API key
+        run: |
+          # Create keychain
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
+
+          # Import iOS Distribution certificate
+          echo "${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}" | base64 --decode > appstore_cert.p12
+          security import appstore_cert.p12 -P "${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          rm appstore_cert.p12
+
+          # Set the partition list to allow codesign to use the keys
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+
+          # Verify certificates are available
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+
+          # Setup API key
+          mkdir -p ~/private_keys
+          echo "${{ secrets.APPLE_API_KEY }}" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      - name: Install iOS Provisioning Profile
+        run: |
+          # Create directory for provisioning profiles
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          
+          # Decode and install provisioning profile
+          echo "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/ios_appstore.mobileprovision
+          
+          # Get the UUID of the profile
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/ios_appstore.mobileprovision))
+          echo "Provisioning Profile UUID: $PROFILE_UUID"
+          
+          # Rename to UUID.mobileprovision (required by Xcode)
+          mv ~/Library/MobileDevice/Provisioning\ Profiles/ios_appstore.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.mobileprovision
+          
+          echo "IOS_PROVISIONING_PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
+      - name: Build iOS (without signing)
+        run: |
+          # Configure Flutter to build without code signing
+          flutter build ios --release --no-codesign
+
+      - name: Create ExportOptions.plist
+        run: |
+          cat > ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>teamID</key>
+              <string>${{ vars.TEAM_ID }}</string>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <true/>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>${{ vars.APP_BUNDLE_ID }}</key>
+                  <string>${{ env.IOS_PROVISIONING_PROFILE_UUID }}</string>
+              </dict>
+              <key>signingCertificate</key>
+              <string>${{ vars.SIGNING_IDENTITY_APPSTORE }}</string>
+          </dict>
+          </plist>
+          EOF
+          
+          echo "ExportOptions.plist content:"
+          cat ExportOptions.plist
+
+      - name: Sign and Archive iOS App
+        env:
+          SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_APPSTORE }}
+        run: |
+          cd ios
+          
+          # Archive the app
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -archivePath ../build/ios/Runner.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
+            DEVELOPMENT_TEAM="${{ vars.TEAM_ID }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ env.IOS_PROVISIONING_PROFILE_UUID }}"
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/Runner.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/ios/ipa
+          
+          # List exported files
+          echo "Exported files:"
+          ls -la build/ios/ipa/
+
+      - name: Upload to App Store Connect
+        run: |
+          # Find the IPA file
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa" | head -1)
+          echo "Uploading IPA: $IPA_PATH"
+          
+          # Validate the IPA
+          xcrun altool --validate-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "${{ secrets.APPLE_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPLE_API_ISSUER }}"
+          
+          # Upload to App Store Connect
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "${{ secrets.APPLE_API_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPLE_API_ISSUER }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+          rm -rf ~/Library/MobileDevice/Provisioning\ Profiles || true
+
   build-web:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
@@ -520,7 +802,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   release:
-    needs: [check-version, build-linux, build-windows-x64, build-android, build-macos-dmg]
+    needs: [check-version, build-linux, build-windows-x64, build-android, build-macos-dmg, build-macos-app]
     if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -549,3 +831,4 @@ jobs:
             artifacts/windows-x64-build/LinkPure-windows-x64-installer.exe
             artifacts/android-build/LinkPure-android.apk
             artifacts/macos-dmg-build/LinkPure-macos.dmg
+            artifacts/macos-app-build/LinkPure-macos-app.zip
