@@ -353,6 +353,21 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Generate build number from version
+        id: build_number
+        run: |
+          VERSION="${{ needs.check-version.outputs.version }}"
+          # Convert version x.y.z to build number: x*10000 + y*100 + z
+          IFS='.' read -r -a parts <<< "$VERSION"
+          BUILD_NUMBER=$((${parts[0]} * 10000 + ${parts[1]} * 100 + ${parts[2]}))
+          echo "Build number: $BUILD_NUMBER (from version $VERSION)"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
+          # Update pubspec.yaml with build number
+          sed -i '' "s/^version: .*/version: $VERSION+$BUILD_NUMBER/" pubspec.yaml
+          echo "Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -523,6 +538,21 @@ jobs:
         with:
           channel: stable
           cache: true
+
+      - name: Generate build number from version
+        id: build_number
+        run: |
+          VERSION="${{ needs.check-version.outputs.version }}"
+          # Convert version x.y.z to build number: x*10000 + y*100 + z
+          IFS='.' read -r -a parts <<< "$VERSION"
+          BUILD_NUMBER=$((${parts[0]} * 10000 + ${parts[1]} * 100 + ${parts[2]}))
+          echo "Build number: $BUILD_NUMBER (from version $VERSION)"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
+          # Update pubspec.yaml with build number
+          sed -i '' "s/^version: .*/version: $VERSION+$BUILD_NUMBER/" pubspec.yaml
+          echo "Updated pubspec.yaml:"
+          grep "^version:" pubspec.yaml
 
       - name: Get dependencies
         run: flutter pub get
