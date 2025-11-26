@@ -186,9 +186,9 @@ jobs:
             DEVELOPMENT_TEAM="" \
             PROVISIONING_PROFILE_SPECIFIER=""
           
-          # Move the built app to expected location
-          mkdir -p ../build/macos/Build/Products/Release
-          cp -R ../build/macos/Build/Products/Release/link_pure.app ../build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app || true
+          # List the built products to verify
+          echo "Built products:"
+          ls -la ../build/macos/Build/Products/Release/
 
       - name: Sign Application
         env:
@@ -196,17 +196,18 @@ jobs:
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
           
-          # If app name is different, handle it
-          if [ ! -d "$APP_PATH" ]; then
-            APP_PATH="build/macos/Build/Products/Release/link_pure.app"
-          fi
-          
           echo "Signing app at: $APP_PATH"
+          echo "Contents of app bundle:"
+          ls -la "$APP_PATH/Contents/MacOS/"
+          
+          # Get the actual executable name from the bundle
+          EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
+          echo "Executable name: $EXECUTABLE_NAME"
           
           # Sign the main executable
           codesign --force --options runtime --timestamp \
             --sign "$SIGNING_IDENTITY" \
-            "$APP_PATH/Contents/MacOS/link_pure"
+            "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
           
           # Sign all frameworks and dylibs
           find "$APP_PATH" -name "*.framework" -o -name "*.dylib" | while read framework; do
@@ -224,9 +225,6 @@ jobs:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
-          if [ ! -d "$APP_PATH" ]; then
-            APP_PATH="build/macos/Build/Products/Release/link_pure.app"
-          fi
           DMG_PATH="LinkPure-macos.dmg"
           
           # Create DMG
@@ -329,7 +327,7 @@ jobs:
         env:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_APPSTORE }}
         run: |
-          APP_PATH="build/macos/Build/Products/Release/link_pure.app"
+          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
           ENTITLEMENTS="macos/Runner/Release.entitlements"
           
           echo "Signing app at: $APP_PATH"
@@ -347,7 +345,7 @@ jobs:
         env:
           INSTALLER_IDENTITY: ${{ vars.SIGNING_IDENTITY_INSTALLER }}
         run: |
-          APP_PATH="build/macos/Build/Products/Release/link_pure.app"
+          APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
           PKG_PATH="LinkPure-macos.pkg"
           
           # Create signed installer package
