@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev libayatana-appindicator3-dev
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -92,7 +92,7 @@ jobs:
   build-windows-arm64:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
-    runs-on: windows-latest
+    runs-on: windows-11-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -106,7 +106,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows ARM64
-        run: flutter build windows --release --target-platform=windows-arm64
+        run: flutter build windows --release
 
       - name: Archive Windows ARM64 build
         run: |
