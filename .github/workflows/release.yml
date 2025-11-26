@@ -143,6 +143,9 @@ jobs:
           node-version: 24
           cache: 'pnpm'
 
+      - name: Install Node dependencies
+        run: pnpm install
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
