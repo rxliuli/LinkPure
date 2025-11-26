@@ -336,23 +336,71 @@ jobs:
             DEVELOPMENT_TEAM="" \
             PROVISIONING_PROFILE_SPECIFIER=""
 
+      - name: Install Provisioning Profile
+        run: |
+          # Create directory for provisioning profiles
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          
+          # Decode and install provisioning profile
+          echo "${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/appstore.provisionprofile
+          
+          # Get the UUID of the profile
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i ~/Library/MobileDevice/Provisioning\ Profiles/appstore.provisionprofile))
+          echo "Provisioning Profile UUID: $PROFILE_UUID"
+          
+          # Rename to UUID.provisionprofile (required by Xcode)
+          mv ~/Library/MobileDevice/Provisioning\ Profiles/appstore.provisionprofile ~/Library/MobileDevice/Provisioning\ Profiles/$PROFILE_UUID.provisionprofile
+          
+          echo "PROVISIONING_PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+
       - name: Sign Application for App Store
         env:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_APPSTORE }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
           ENTITLEMENTS="macos/Runner/Release.entitlements"
+          PROFILE_PATH=~/Library/MobileDevice/Provisioning\ Profiles/${{ env.PROVISIONING_PROFILE_UUID }}.provisionprofile
           
           echo "Signing app at: $APP_PATH"
+          echo "Using provisioning profile: $PROFILE_PATH"
+          
+          # Copy provisioning profile into app bundle (REQUIRED for TestFlight/App Store)
+          mkdir -p "$APP_PATH/Contents"
+          cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
+          
+          # Sign all frameworks and dylibs first
+          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY" {} \;
+          
+          for framework in "$APP_PATH/Contents/Frameworks"/*.framework; do
+            if [ -d "$framework" ]; then
+              echo "Signing framework: $framework"
+              codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY" "$framework"
+            fi
+          done
+          
+          # Sign the main executable
+          EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
+          codesign --force --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS" \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
           
           # Sign app bundle with entitlements
-          codesign --force --deep --options runtime --timestamp \
+          codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH"
           
           # Verify signature
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          
+          # Verify embedded provisioning profile exists
+          if [ -f "$APP_PATH/Contents/embedded.provisionprofile" ]; then
+            echo "✅ Provisioning profile embedded successfully"
+          else
+            echo "❌ Provisioning profile not found in app bundle"
+            exit 1
+          fi
 
       - name: Create PKG for App Store
         env:
