@@ -199,25 +199,38 @@ jobs:
           echo "Signing app at: $APP_PATH"
           echo "Contents of app bundle:"
           ls -la "$APP_PATH/Contents/MacOS/"
+          echo "Frameworks:"
+          ls -la "$APP_PATH/Contents/Frameworks/" || true
           
           # Get the actual executable name from the bundle
           EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
           echo "Executable name: $EXECUTABLE_NAME"
           
-          # Sign the main executable
+          # Sign in correct order: deepest components first, then work outward
+          
+          # 1. Sign all dylibs inside frameworks first
+          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" {} \;
+          
+          # 2. Sign all frameworks (must sign the framework bundle, not just contents)
+          for framework in "$APP_PATH/Contents/Frameworks"/*.framework; do
+            if [ -d "$framework" ]; then
+              echo "Signing framework: $framework"
+              codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$framework"
+            fi
+          done
+          
+          # 3. Sign the main executable
+          echo "Signing executable: $APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
           codesign --force --options runtime --timestamp \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
           
-          # Sign all frameworks and dylibs
-          find "$APP_PATH" -name "*.framework" -o -name "*.dylib" | while read framework; do
-            codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$framework"
-          done
-          
-          # Sign the main app bundle
+          # 4. Sign the main app bundle
+          echo "Signing app bundle: $APP_PATH"
           codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_PATH"
           
           # Verify signature
+          echo "Verifying signature..."
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
       - name: Create DMG
