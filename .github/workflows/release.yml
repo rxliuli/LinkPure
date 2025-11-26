@@ -139,6 +139,51 @@ jobs:
           name: android-build
           path: LinkPure-android.apk
 
+  build-android-aab:
+    needs: check-version
+    if: needs.check-version.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment: build-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Setup Android signing
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build Android App Bundle
+        run: flutter build appbundle --release
+
+      - name: Rename AAB
+        run: mv build/app/outputs/bundle/release/app-release.aab LinkPure-android.aab
+
+      - name: Upload Android AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab-build
+          path: LinkPure-android.aab
+
   build-macos-dmg:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
@@ -680,7 +725,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   release:
-    needs: [check-version, build-linux, build-windows-x64, build-android, build-macos-dmg]
+    needs: [check-version, build-linux, build-windows-x64, build-android, build-android-aab, build-macos-dmg]
     if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -708,4 +753,5 @@ jobs:
             artifacts/linux-build/LinkPure-linux-x64.tar.gz
             artifacts/windows-x64-build/LinkPure-windows-x64-installer.exe
             artifacts/android-build/LinkPure-android.apk
+            artifacts/android-aab-build/LinkPure-android.aab
             artifacts/macos-dmg-build/LinkPure-macos.dmg

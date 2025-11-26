@@ -7,6 +7,7 @@
     "build:macos": "flutter build macos --release && open macos/Runner.xcworkspace",
     "build:ios": "flutter build ios --release && open ios/Runner.xcworkspace",
     "build:apk": "flutter build apk --release",
+    "build:aab": "flutter build appbundle --release",
     "build:windows": "flutter build windows --release",
     "build:linux": "flutter build linux --release"
   },
