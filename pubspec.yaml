@@ -4,7 +4,7 @@ description: 'A cross-platform application that monitors clipboard URL changes a
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 0.3.26
+version: 0.3.27
 
 environment:
   sdk: ^3.9.2

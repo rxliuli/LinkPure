@@ -98,6 +98,7 @@ jobs:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
+    environment: build-android
     steps:
       - uses: actions/checkout@v4
 
@@ -115,6 +116,16 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Setup Android signing
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
 
       - name: Build Android APK
         run: flutter build apk --release
