@@ -79,15 +79,20 @@ jobs:
       - name: Build Windows x64
         run: flutter build windows --release
 
-      - name: Archive Windows x64 build
+      - name: Install NSIS
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath LinkPure-windows-x64.zip
+          choco install nsis -y
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Create NSIS installer
+        run: |
+          makensis /DVERSION=${{ needs.check-version.outputs.version }} windows/installer.nsi
 
       - name: Upload Windows x64 artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-x64-build
-          path: LinkPure-windows-x64.zip
+          path: LinkPure-windows-x64-installer.exe
 
   build-android:
     needs: check-version
@@ -150,5 +155,5 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/linux-build/LinkPure-linux-x64.tar.gz
-            artifacts/windows-x64-build/LinkPure-windows-x64.zip
+            artifacts/windows-x64-build/LinkPure-windows-x64-installer.exe
             artifacts/android-build/LinkPure-android.apk
