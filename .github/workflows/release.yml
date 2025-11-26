@@ -89,38 +89,6 @@ jobs:
           name: windows-x64-build
           path: LinkPure-windows-x64.zip
 
-  build-windows-arm64:
-    needs: check-version
-    if: needs.check-version.outputs.changed == 'true'
-    runs-on: windows-11-arm
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        shell: pwsh
-        run: |
-          git clone https://github.com/flutter/flutter.git -b stable --depth 1 C:\flutter
-          echo "C:\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Flutter doctor
-        run: flutter doctor -v
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Build Windows ARM64
-        run: flutter build windows --release
-
-      - name: Archive Windows ARM64 build
-        run: |
-          Compress-Archive -Path build\windows\arm64\runner\Release\* -DestinationPath LinkPure-windows-arm64.zip
-
-      - name: Upload Windows ARM64 artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-arm64-build
-          path: LinkPure-windows-arm64.zip
-
   build-android:
     needs: check-version
     if: needs.check-version.outputs.changed == 'true'
@@ -156,7 +124,7 @@ jobs:
           path: LinkPure-android.apk
 
   release:
-    needs: [check-version, build-linux, build-windows-x64, build-windows-arm64, build-android]
+    needs: [check-version, build-linux, build-windows-x64, build-android]
     if: needs.check-version.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -183,5 +151,4 @@ jobs:
           files: |
             artifacts/linux-build/LinkPure-linux-x64.tar.gz
             artifacts/windows-x64-build/LinkPure-windows-x64.zip
-            artifacts/windows-arm64-build/LinkPure-windows-arm64.zip
             artifacts/android-build/LinkPure-android.apk
