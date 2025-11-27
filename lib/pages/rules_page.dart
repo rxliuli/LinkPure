@@ -72,12 +72,11 @@ class _RulesPageState extends State<RulesPage> {
       final jsonContent = _rulesManager.exportToJson(null);
 
       // Generate default filename with timestamp
-      final formattedTimestamp = DateTime.now()
-          .toIso8601String()
-          .replaceAll(':', '-')
-          .replaceAll('.', '-')
-          .substring(0, 19);
-      final defaultFileName = 'LinkPure_rules_$formattedTimestamp.json';
+      final formattedTimestamp = DateTime.now().toIso8601String().substring(
+        0,
+        10,
+      );
+      final defaultFileName = 'LinkPure_$formattedTimestamp.json';
 
       // Convert string to Uint8List for mobile platforms
       final bytes = Uint8List.fromList(utf8.encode(jsonContent));
@@ -116,6 +115,7 @@ class _RulesPageState extends State<RulesPage> {
         type: FileType.custom,
         allowedExtensions: ['json'],
         allowMultiple: false,
+        withData: true, // Important for web platform
       );
 
       if (result == null || result.files.isEmpty) {
@@ -123,12 +123,15 @@ class _RulesPageState extends State<RulesPage> {
       }
 
       final file = result.files.first;
-      if (file.path == null) {
-        throw Exception('File path is null');
+
+      // Use bytes for all platforms (unified approach)
+      if (file.bytes == null) {
+        throw Exception('Unable to read file: bytes not available');
       }
 
-      // Import rules with merge mode (default)
-      await _rulesManager.importFromFile(file.path!, merge: true);
+      final jsonString = utf8.decode(file.bytes!);
+      await _rulesManager.importFromJson(jsonString, merge: true);
+
       await _loadRules();
 
       if (mounted) {

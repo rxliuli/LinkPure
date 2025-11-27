@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../models/rule.dart';
 
@@ -123,27 +122,6 @@ class LocalRuleManager {
     return jsonEncode(exportedRules.map((e) => e.toJson()).toList());
   }
 
-  /// Export rules to file
-  /// If [useTemporaryDirectory] is true, creates a file in the temporary directory for sharing
-  /// Otherwise, creates a file in the application documents directory
-  Future<String> exportToFile(
-    List<LocalRule>? rules, {
-    bool useTemporaryDirectory = false,
-  }) async {
-    final jsonString = exportToJson(rules);
-    final directory = useTemporaryDirectory
-        ? await getTemporaryDirectory()
-        : await getApplicationDocumentsDirectory();
-    final formattedTimestamp = DateTime.now()
-        .toIso8601String()
-        .replaceAll(':', '-')
-        .replaceAll('.', '-')
-        .substring(0, 19);
-    final file = File('${directory.path}/LinkPure_$formattedTimestamp.json');
-    await file.writeAsString(jsonString);
-    return file.path;
-  }
-
   /// Import rules from JSON string (plain array format only)
   Future<void> importFromJson(String jsonString, {bool merge = false}) async {
     try {
@@ -176,13 +154,6 @@ class LocalRuleManager {
     } catch (e) {
       throw Exception('Failed to import rules: $e');
     }
-  }
-
-  /// Import rules from file
-  Future<void> importFromFile(String filePath, {bool merge = false}) async {
-    final file = File(filePath);
-    final jsonString = await file.readAsString();
-    await importFromJson(jsonString, merge: merge);
   }
 
   /// Clear all rules
