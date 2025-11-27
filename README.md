@@ -2,11 +2,11 @@
 
 A cross-platform application that monitors clipboard URL changes and rewrites them based on user-defined rules.
 
+<img width="1830" height="1158" alt="image" src="https://github.com/user-attachments/assets/2d39acbc-01a4-42d8-bf7f-0b3cc6ec0d40" />
+
 ## Download
 
-### Supported Platforms
-
-#### Desktop
+### Desktop
 
 - **macOS**: Intel (AMD64) and Apple Silicon (ARM64)
   - [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
@@ -16,12 +16,12 @@ A cross-platform application that monitors clipboard URL changes and rewrites th
 - **Linux**: AMD64 and ARM64
   - [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
 
-#### Mobile
+### Mobile
 
 - **Android**: [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
 - **iOS**: [App Store](https://apps.apple.com/app/id6753670551)
 
-#### Web
+### Web
 
 - **Web App**: [linkpure.rxliuli.com](https://linkpure.rxliuli.com)
 
