@@ -251,40 +251,46 @@ jobs:
           SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
         run: |
           APP_PATH="build/macos/Build/Products/Release/${{ vars.APP_NAME }}.app"
-          
+          ENTITLEMENTS="macos/Runner/Release.entitlements"
+
           echo "Signing app at: $APP_PATH"
+          echo "Using entitlements: $ENTITLEMENTS"
           echo "Contents of app bundle:"
           ls -la "$APP_PATH/Contents/MacOS/"
           echo "Frameworks:"
           ls -la "$APP_PATH/Contents/Frameworks/" || true
-          
+
           # Get the actual executable name from the bundle
           EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
           echo "Executable name: $EXECUTABLE_NAME"
-          
+
           # Sign in correct order: deepest components first, then work outward
-          
-          # 1. Sign all dylibs inside frameworks first
+
+          # 1. Sign all dylibs inside frameworks first (WITHOUT entitlements)
           find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" {} \;
-          
-          # 2. Sign all frameworks (must sign the framework bundle, not just contents)
+
+          # 2. Sign all frameworks (WITHOUT entitlements)
           for framework in "$APP_PATH/Contents/Frameworks"/*.framework; do
             if [ -d "$framework" ]; then
               echo "Signing framework: $framework"
               codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$framework"
             fi
           done
-          
-          # 3. Sign the main executable
+
+          # 3. Sign the main executable (WITH entitlements)
           echo "Signing executable: $APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
           codesign --force --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
-          
-          # 4. Sign the main app bundle
+
+          # 4. Sign the main app bundle (WITH entitlements)
           echo "Signing app bundle: $APP_PATH"
-          codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_PATH"
-          
+          codesign --force --options runtime --timestamp \
+            --entitlements "$ENTITLEMENTS" \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH"
+
           # Verify signature
           echo "Verifying signature..."
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
@@ -449,23 +455,23 @@ jobs:
           mkdir -p "$APP_PATH/Contents"
           cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
           
-          # Sign all frameworks and dylibs first
-          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY" {} \;
-          
+          # Sign all frameworks and dylibs first (WITHOUT entitlements - they only apply to main executable)
+          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -exec codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" {} \;
+
           for framework in "$APP_PATH/Contents/Frameworks"/*.framework; do
             if [ -d "$framework" ]; then
               echo "Signing framework: $framework"
-              codesign --force --options runtime --timestamp --entitlements "$ENTITLEMENTS" --sign "$SIGNING_IDENTITY" "$framework"
+              codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$framework"
             fi
           done
-          
-          # Sign the main executable
+
+          # Sign the main executable (WITH entitlements)
           EXECUTABLE_NAME=$(ls "$APP_PATH/Contents/MacOS/" | head -1)
           codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH/Contents/MacOS/$EXECUTABLE_NAME"
-          
+
           # Sign app bundle with entitlements
           codesign --force --options runtime --timestamp \
             --entitlements "$ENTITLEMENTS" \
