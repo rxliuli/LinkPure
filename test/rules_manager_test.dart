@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:link_pure/core/url_cleaner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,22 +13,22 @@ void main() {
     late RulesManager rulesManager;
 
     setUp(() async {
-      // 清除 SharedPreferences
+      // Clear SharedPreferences
       SharedPreferences.setMockInitialValues({});
       rulesManager = RulesManager();
       await rulesManager.init();
     });
 
     tearDown(() async {
-      // 清理
+      // Cleanup
       await rulesManager.localRules.clearAll();
     });
 
-    test('初始化后应该没有本地规则', () {
+    test('should have no local rules after initialization', () {
       expect(rulesManager.localRules.getLocalRules().length, 0);
     });
 
-    test('应该能够创建新规则', () async {
+    test('should be able to create new rule', () async {
       final rule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -44,7 +46,7 @@ void main() {
       );
     });
 
-    test('应该能够更新规则', () async {
+    test('should be able to update rule', () async {
       final rule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -64,7 +66,7 @@ void main() {
       expect(rules.first.enabled, false);
     });
 
-    test('应该能够删除规则', () async {
+    test('should be able to delete rule', () async {
       final rule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -81,7 +83,7 @@ void main() {
       expect(rulesManager.localRules.getLocalRules().length, 0);
     });
 
-    test('应该能够导出规则为 JSON', () async {
+    test('should be able to export rules to JSON', () async {
       final rule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -95,23 +97,103 @@ void main() {
 
       final json = rulesManager.localRules.exportToJson(null);
       expect(json.contains('test-rule'), true);
-      expect(json.contains('version'), true);
+      // Should not contain wrapper fields anymore
+      expect(json.contains('version'), false);
+      expect(json.contains('exportDate'), false);
     });
 
-    test('应该能够从 JSON 导入规则（替换模式）', () async {
+    test('should export rules as plain array format', () async {
+      final rule1 = LocalRule(
+        rule: Rule(
+          id: 'rule-1',
+          regexFilter: r'^https://example\.com',
+          regexSubstitution: r'https://example.org',
+        ),
+        enabled: true,
+      );
+      final rule2 = LocalRule(
+        rule: Rule(
+          id: 'rule-2',
+          regexFilter: r'^https://test\.com',
+          regexSubstitution: r'https://test.org',
+        ),
+        enabled: false,
+      );
+
+      await rulesManager.localRules.newRule(rule1);
+      await rulesManager.localRules.newRule(rule2);
+
+      final jsonString = rulesManager.localRules.exportToJson(null);
+      final decoded = jsonDecode(jsonString);
+
+      // Should be a plain array, not an object
+      expect(decoded, isA<List<dynamic>>());
+      expect(decoded.length, 2);
+
+      // Verify first rule
+      expect(decoded[0]['id'], 'rule-1');
+      expect(decoded[0]['from'], r'^https://example\.com');
+      expect(decoded[0]['to'], r'https://example.org');
+      expect(decoded[0]['enabled'], true);
+
+      // Verify second rule
+      expect(decoded[1]['id'], 'rule-2');
+      expect(decoded[1]['from'], r'^https://test\.com');
+      expect(decoded[1]['to'], r'https://test.org');
+      expect(decoded[1]['enabled'], false);
+    });
+
+    test('should be able to import plain array format exported JSON', () async {
+      // Export rules
+      final rule1 = LocalRule(
+        rule: Rule(
+          id: 'exported-rule-1',
+          regexFilter: r'^https://example\.com',
+          regexSubstitution: r'https://example.org',
+        ),
+        enabled: true,
+      );
+      final rule2 = LocalRule(
+        rule: Rule(
+          id: 'exported-rule-2',
+          regexFilter: r'^https://test\.com',
+          regexSubstitution: r'https://test.org',
+        ),
+        enabled: false,
+      );
+
+      await rulesManager.localRules.newRule(rule1);
+      await rulesManager.localRules.newRule(rule2);
+
+      final exportedJson = rulesManager.localRules.exportToJson(null);
+
+      // Clear all rules
+      await rulesManager.localRules.clearAll();
+      expect(rulesManager.localRules.getLocalRules().length, 0);
+
+      // Import the exported JSON
+      await rulesManager.localRules.importFromJson(exportedJson, merge: false);
+
+      final importedRules = rulesManager.localRules.getLocalRules();
+      expect(importedRules.length, 2);
+      expect(importedRules[0].rule.id, 'exported-rule-1');
+      expect(importedRules[0].rule.regexFilter, r'^https://example\.com');
+      expect(importedRules[0].rule.regexSubstitution, r'https://example.org');
+      expect(importedRules[0].enabled, true);
+      expect(importedRules[1].rule.id, 'exported-rule-2');
+      expect(importedRules[1].enabled, false);
+    });
+
+    test('should be able to import rules from JSON (replace mode)', () async {
       const jsonString = '''
-      {
-        "version": "1.0",
-        "exportDate": "2024-01-01T00:00:00.000Z",
-        "rules": [
-          {
-            "id": "imported-rule",
-            "from": ".*",
-            "to": "https://example.com",
-            "enabled": true
-          }
-        ]
-      }
+      [
+        {
+          "id": "imported-rule",
+          "from": ".*",
+          "to": "https://example.com",
+          "enabled": true
+        }
+      ]
       ''';
 
       await rulesManager.localRules.importFromJson(jsonString, merge: false);
@@ -122,8 +204,8 @@ void main() {
       expect(rules.first.rule.regexSubstitution, 'https://example.com');
     });
 
-    test('应该能够从 JSON 导入规则（合并模式）', () async {
-      // 先添加一个规则
+    test('should be able to import rules from JSON (merge mode)', () async {
+      // Add an existing rule first
       final existingRule = LocalRule(
         rule: Rule(
           id: 'existing-rule',
@@ -134,20 +216,16 @@ void main() {
       );
       await rulesManager.localRules.newRule(existingRule);
 
-      // 导入新规则
+      // Import new rule
       const jsonString = '''
-      {
-        "version": "1.0",
-        "exportDate": "2024-01-01T00:00:00.000Z",
-        "rules": [
-          {
-            "id": "imported-rule",
-            "from": ".*",
-            "to": "https://imported.com",
-            "enabled": true
-          }
-        ]
-      }
+      [
+        {
+          "id": "imported-rule",
+          "from": ".*",
+          "to": "https://imported.com",
+          "enabled": true
+        }
+      ]
       ''';
 
       await rulesManager.localRules.importFromJson(jsonString, merge: true);
@@ -158,7 +236,7 @@ void main() {
       expect(rules.any((r) => r.rule.id == 'imported-rule'), true);
     });
 
-    test('合并模式导入时应该跳过重复的 ID', () async {
+    test('should skip duplicate IDs when importing in merge mode', () async {
       final existingRule = LocalRule(
         rule: Rule(
           id: 'same-id',
@@ -170,29 +248,47 @@ void main() {
       await rulesManager.localRules.newRule(existingRule);
 
       const jsonString = '''
-      {
-        "version": "1.0",
-        "exportDate": "2024-01-01T00:00:00.000Z",
-        "rules": [
-          {
-            "id": "same-id",
-            "from": ".*different.*",
-            "to": "https://different.com",
-            "enabled": false
-          }
-        ]
-      }
+      [
+        {
+          "id": "same-id",
+          "from": ".*different.*",
+          "to": "https://different.com",
+          "enabled": false
+        }
+      ]
       ''';
 
       await rulesManager.localRules.importFromJson(jsonString, merge: true);
 
       final rules = rulesManager.localRules.getLocalRules();
       expect(rules.length, 1);
-      // 应该保留原始规则
+      // Should keep the original rule
       expect(rules.first.rule.regexFilter, r'.*');
     });
 
-    test('应该只导出 regexSubstitution 类型的规则', () async {
+    test('should reject wrapper format when importing', () async {
+      const jsonString = '''
+      {
+        "version": "1.0",
+        "exportDate": "2024-01-01T00:00:00.000Z",
+        "rules": [
+          {
+            "id": "test-rule",
+            "from": ".*",
+            "to": "https://example.com",
+            "enabled": true
+          }
+        ]
+      }
+      ''';
+
+      expect(
+        () async => await rulesManager.localRules.importFromJson(jsonString),
+        throwsException,
+      );
+    });
+
+    test('should only export regexSubstitution type rules', () async {
       final rewriteRule = LocalRule(
         rule: Rule(
           id: 'rewrite-rule',
@@ -218,7 +314,7 @@ void main() {
       expect(json.contains('remove-params-rule'), false);
     });
 
-    test('应该能够清除所有规则', () async {
+    test('should be able to clear all rules', () async {
       final rule1 = LocalRule(
         rule: Rule(
           id: 'rule-1',
@@ -240,7 +336,7 @@ void main() {
       expect(rulesManager.localRules.getLocalRules().length, 0);
     });
 
-    test('规则应该持久化到 SharedPreferences', () async {
+    test('rules should persist to SharedPreferences', () async {
       final rule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -252,7 +348,7 @@ void main() {
 
       await rulesManager.localRules.newRule(rule);
 
-      // 创建新的 RulesManager 实例来模拟重启
+      // Create a new RulesManager instance to simulate restart
       final newRulesManager = RulesManager();
       await newRulesManager.init();
 
@@ -263,7 +359,7 @@ void main() {
   });
 
   group('ExportedRule Tests', () {
-    test('应该能够从 LocalRule 转换为 ExportedRule', () {
+    test('should be able to convert from LocalRule to ExportedRule', () {
       final localRule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -281,7 +377,7 @@ void main() {
       expect(exported.enabled, true);
     });
 
-    test('应该能够从 ExportedRule 转换为 LocalRule', () {
+    test('should be able to convert from ExportedRule to LocalRule', () {
       final exported = ExportedRule(
         id: 'test-rule',
         from: r'^https://example\.com',
@@ -297,7 +393,7 @@ void main() {
       expect(localRule.enabled, true);
     });
 
-    test('从 removeParams 规则创建 ExportedRule 应该抛出异常', () {
+    test('creating ExportedRule from removeParams rule should throw exception', () {
       final localRule = LocalRule(
         rule: Rule(
           id: 'test-rule',
@@ -313,11 +409,11 @@ void main() {
 
   group("Real Tests", () {
     setUp(() async {
-      // 清除 SharedPreferences
+      // Clear SharedPreferences
       SharedPreferences.setMockInitialValues({});
     });
 
-    test("清理 twitter 分享链接", () async {
+    test("clean twitter share link", () async {
       final rulesManager = RulesManager();
       await rulesManager.init();
       final rules = await rulesManager.getEnabledRules();
@@ -328,7 +424,7 @@ void main() {
       expect(result.status, CheckStatus.matched);
       expect(result.url, "https://x.com/viditchess/status/1992583484259643817");
     });
-    test("清理 reddit 分享链接", () async {
+    test("clean reddit share link", () async {
       final rulesManager = RulesManager();
       await rulesManager.init();
       final rules = await rulesManager.getEnabledRules();
@@ -342,7 +438,7 @@ void main() {
         "https://www.reddit.com/r/amphibia/comments/1meq85j/hi_everyone_big_fan_of_amphibia_im_not_feeling/",
       );
     });
-    test("不应该清理非分享链接", () async {
+    test("should not clean non-share link", () async {
       // https://youtu.be/(.*)\?
       final rulesManager = RulesManager();
       final rules = await rulesManager.getEnabledRules();
@@ -352,7 +448,7 @@ void main() {
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, "");
     });
-    test("不应该将 URL 参数 encodeURIComponent", () async {
+    test("should not encodeURIComponent URL parameters", () async {
       final rulesManager = RulesManager();
       await rulesManager.init();
       final rules = await rulesManager.getEnabledRules();

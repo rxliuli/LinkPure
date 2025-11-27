@@ -120,11 +120,7 @@ class LocalRuleManager {
         .where((r) => r.rule.regexSubstitution != null)
         .map((r) => ExportedRule.fromLocalRule(r))
         .toList();
-    return jsonEncode({
-      'version': '1.0',
-      'exportDate': DateTime.now().toIso8601String(),
-      'rules': exportedRules.map((e) => e.toJson()).toList(),
-    });
+    return jsonEncode(exportedRules.map((e) => e.toJson()).toList());
   }
 
   /// Export rules to file
@@ -143,19 +139,22 @@ class LocalRuleManager {
         .replaceAll(':', '-')
         .replaceAll('.', '-')
         .substring(0, 19);
-    final file = File(
-      '${directory.path}/LinkPure_rules_$formattedTimestamp.json',
-    );
+    final file = File('${directory.path}/LinkPure_$formattedTimestamp.json');
     await file.writeAsString(jsonString);
     return file.path;
   }
 
-  /// Import rules from JSON string
+  /// Import rules from JSON string (plain array format only)
   Future<void> importFromJson(String jsonString, {bool merge = false}) async {
     try {
-      final Map<String, dynamic> data = jsonDecode(jsonString);
-      final List<dynamic> rulesJson = data['rules'] as List<dynamic>;
-      final importedRules = rulesJson
+      final jsonData = jsonDecode(jsonString);
+
+      // Only support plain array format
+      if (jsonData is! List<dynamic>) {
+        throw Exception('Invalid JSON format: expected array');
+      }
+
+      final importedRules = jsonData
           .map((e) => ExportedRule.fromJson(e as Map<String, dynamic>))
           .map((e) => ExportedRule.toLocalRule(e))
           .toList();

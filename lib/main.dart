@@ -84,7 +84,7 @@ class _LinkPureAppState extends State<LinkPureApp>
   void initState() {
     super.initState();
 
-    // 监听主题变化
+    // Listen to theme changes
     ThemeService.instance.addListener(_onThemeChanged);
 
     if (isDesktop) {
@@ -96,7 +96,7 @@ class _LinkPureAppState extends State<LinkPureApp>
       // Hide window after initialization
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future.delayed(const Duration(milliseconds: 500));
-        // TODO: 有 bug，无法正确在启动应用后立刻隐藏窗口，会出现闪烁，暂时注释掉
+        // TODO: There's a bug, cannot properly hide window immediately after app launch, causes flickering, temporarily commented out
         // await windowManager.hide();
       });
     } else if (isMobile) {

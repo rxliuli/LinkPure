@@ -203,7 +203,7 @@ void main() {
   });
 
   group("Real Tests", () {
-    test("清理 twitter 分享链接", () async {
+    test("clean twitter share link", () async {
       final cleaner = UrlCleaner(
         rules: List.from([
           Rule(
@@ -219,7 +219,7 @@ void main() {
       expect(result.status, CheckStatus.matched);
       expect(result.url, "https://x.com/viditchess/status/1992583484259643817");
     });
-    test("不应该清理非分享链接", () async {
+    test("should not clean non-share link", () async {
       final cleaner = UrlCleaner(
         rules: List.from([
           Rule(

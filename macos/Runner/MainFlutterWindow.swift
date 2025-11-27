@@ -11,8 +11,8 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
-    
-    // 设置 Method Channel 用于接收主题变化
+
+    // Setup Method Channel for receiving theme changes
     methodChannel = FlutterMethodChannel(
       name: "com.rxliuli.linkpure/theme",
       binaryMessenger: flutterViewController.engine.binaryMessenger
@@ -43,7 +43,7 @@ class MainFlutterWindow: NSWindow {
       case "light":
         self.appearance = NSAppearance(named: .aqua)
       default:
-        // system - 跟随系统
+        // system - follow system theme
         self.appearance = nil
       }
     }

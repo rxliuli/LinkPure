@@ -24,8 +24,8 @@ class ThemeService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final themeModeIndex = prefs.getInt(_themeKey) ?? 0;
     instance._themeMode = ThemeMode.values[themeModeIndex];
-    
-    // 初始化时同步原生窗口外观
+
+    // Sync native window appearance on initialization
     await instance._syncNativeTheme();
   }
   
@@ -37,13 +37,13 @@ class ThemeService extends ChangeNotifier {
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_themeKey, mode.index);
-    
-    // 同步原生窗口外观
+
+    // Sync native window appearance
     await _syncNativeTheme();
   }
   
   Future<void> _syncNativeTheme() async {
-    // 只在 macOS 上同步原生窗口外观
+    // Only sync native window appearance on macOS
     if (kIsWeb || !Platform.isMacOS) return;
     
     try {
