@@ -113,7 +113,7 @@ class ClipboardService with ClipboardListener {
       await rulesManager.init();
       final rules = await rulesManager.getEnabledRules();
       final cleaner = UrlCleaner(rules: rules);
-      final result = cleaner.check(text);
+      final result = await cleaner.check(text);
 
       // Only process if URL was modified
       if (result.status == CheckStatus.matched && result.url != text) {

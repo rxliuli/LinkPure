@@ -1,3 +1,4 @@
+import 'package:http/http.dart' as http;
 import '../models/rule.dart';
 
 enum CheckStatus { matched, notMatched, circularRedirect, infiniteRedirect }
@@ -13,7 +14,7 @@ class UrlCleaner {
   final List<Rule> rules;
   UrlCleaner({required this.rules});
 
-  MatchResult check(String url) {
+  Future<MatchResult> check(String url) async {
     if (!isValidUrl(url)) {
       return MatchResult(status: CheckStatus.notMatched, url: url, chain: []);
     }
@@ -24,8 +25,8 @@ class UrlCleaner {
     for (int i = 0; i < maxRedirects; i++) {
       bool matched = false;
       for (var rule in rules) {
-        String newUrl = matchWithRule(rule, currentUrl);
-        if (newUrl.isNotEmpty && newUrl != currentUrl) {
+        String? newUrl = await matchWithRule(rule, currentUrl);
+        if (newUrl != null && newUrl.isNotEmpty && newUrl != currentUrl) {
           if (chain.contains(newUrl)) {
             return MatchResult(
               status: CheckStatus.circularRedirect,
@@ -54,25 +55,28 @@ class UrlCleaner {
     );
   }
 
-  static String matchWithRule(Rule rule, String url) {
+  static Future<String?> matchWithRule(Rule rule, String url) async {
     final RegExp regex;
     try {
       regex = RegExp(rule.regexFilter);
     } catch (e) {
-      return "";
+      return null;
     }
     if (!regex.hasMatch(url)) {
-      return "";
+      return null;
     }
-    return applyRule(rule, url);
+    return await applyRule(rule, url);
   }
 
-  static String applyRule(Rule rule, String url) {
+  static Future<String?> applyRule(Rule rule, String url) async {
     if (rule.regexSubstitution != null && rule.regexSubstitution!.isNotEmpty) {
       return applyRegexSubstitution(rule, url);
     }
     if (rule.removeParams != null && rule.removeParams!.isNotEmpty) {
       return removeQueryParameters(url, rule.removeParams!);
+    }
+    if (rule.followRedirect == true) {
+      return await followRedirectUrl(url);
     }
     return url;
   }
@@ -168,5 +172,49 @@ class UrlCleaner {
       }
     }
     return false;
+  }
+
+  static Future<String?> followRedirectUrl(String url) async {
+    try {
+      var currentUri = Uri.parse(url);
+      var redirectCount = 0;
+      const maxRedirects = 10;
+
+      final client = http.Client();
+      try {
+        while (redirectCount < maxRedirects) {
+          final request = http.Request('GET', currentUri)
+            ..followRedirects = false;
+          final streamedResponse = await client.send(request).timeout(
+            const Duration(seconds: 5),
+          );
+
+          // Check if this is a redirect response
+          if (streamedResponse.statusCode >= 300 && streamedResponse.statusCode < 400) {
+            final location = streamedResponse.headers['location'];
+            if (location == null) {
+              // No location header, return current URL
+              return currentUri.toString();
+            }
+
+            // Parse the new location (might be relative or absolute)
+            final newUri = Uri.parse(location);
+            currentUri = newUri.hasScheme ? newUri : currentUri.resolve(location);
+            redirectCount++;
+          } else {
+            // Not a redirect, return the current URL
+            return currentUri.toString();
+          }
+        }
+
+        // Hit max redirects
+        return currentUri.toString();
+      } finally {
+        client.close();
+      }
+    } catch (e) {
+      // If any error occurs (network, timeout, etc.), treat as rule not matched
+      return null;
+    }
   }
 }

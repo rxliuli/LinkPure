@@ -420,7 +420,7 @@ void main() {
       final cleaner = UrlCleaner(rules: rules);
       final inputUrl =
           "https://x.com/viditchess/status/1992583484259643817?s=20";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.matched);
       expect(result.url, "https://x.com/viditchess/status/1992583484259643817");
     });
@@ -431,7 +431,7 @@ void main() {
       final cleaner = UrlCleaner(rules: rules);
       final inputUrl =
           "https://www.reddit.com/r/amphibia/comments/1meq85j/hi_everyone_big_fan_of_amphibia_im_not_feeling/?utm_source=share&utm_medium=mweb3x&utm_name=mweb3xcss&utm_term=1&utm_content=share_button";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.matched);
       expect(
         result.url,
@@ -444,7 +444,7 @@ void main() {
       final rules = await rulesManager.getEnabledRules();
       final cleaner = UrlCleaner(rules: rules);
       final inputUrl = "https://youtu.be/(.*)\\?";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, "");
     });
@@ -454,7 +454,7 @@ void main() {
       final rules = await rulesManager.getEnabledRules();
       final cleaner = UrlCleaner(rules: rules);
       final inputUrl = "https://www.youtube.com/watch?v=\$1";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, "");
     });

@@ -21,6 +21,7 @@ class Rule {
   final String regexFilter;
   final String? regexSubstitution;
   final List<String>? removeParams;
+  final bool? followRedirect;
   final List<TestCase>? test;
 
   Rule({
@@ -28,6 +29,7 @@ class Rule {
     required this.regexFilter,
     this.regexSubstitution,
     this.removeParams,
+    this.followRedirect,
     this.test,
   }) {
     if (regexSubstitution != null && removeParams != null) {
@@ -35,9 +37,19 @@ class Rule {
         'A rule cannot have both regexSubstitution and removeParams defined.',
       );
     }
-    if (regexSubstitution == null && removeParams == null) {
+    if (regexSubstitution != null && followRedirect == true) {
       throw ArgumentError(
-        'A rule must have either regexSubstitution or removeParams defined.',
+        'A rule cannot have both regexSubstitution and followRedirect defined.',
+      );
+    }
+    if (removeParams != null && followRedirect == true) {
+      throw ArgumentError(
+        'A rule cannot have both removeParams and followRedirect defined.',
+      );
+    }
+    if (regexSubstitution == null && removeParams == null && followRedirect != true) {
+      throw ArgumentError(
+        'A rule must have either regexSubstitution, removeParams, or followRedirect defined.',
       );
     }
   }
@@ -50,6 +62,7 @@ class Rule {
       removeParams: (json['removeParams'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      followRedirect: json['followRedirect'] as bool?,
       test: (json['test'] as List<dynamic>?)
           ?.map((e) => TestCase.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -62,6 +75,7 @@ class Rule {
       'regexFilter': regexFilter,
       if (regexSubstitution != null) 'regexSubstitution': regexSubstitution,
       if (removeParams != null) 'removeParams': removeParams,
+      if (followRedirect != null) 'followRedirect': followRedirect,
       if (test != null) 'test': test!.map((e) => e.toJson()).toList(),
     };
   }

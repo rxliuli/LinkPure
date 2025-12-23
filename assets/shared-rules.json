@@ -9579,6 +9579,83 @@
       "id": "clearurls-viglink.com-redirect-0",
       "regexFilter": "^https?:\\/\\/redirect\\.viglink\\.com\\/.*?u=([^&]+)",
       "regexSubstitution": "$1"
+    },
+    {
+      "id": "clearurls-t.co-redirect",
+      "regexFilter": "^https://t\\.co/\\w+$",
+      "followRedirect": true,
+      "test": [
+        {
+          "from": "https://t.co/UQrtAuVhHI",
+          "to": "https://rxliuli.com/"
+        }
+      ]
+    },
+    {
+      "id": "clearurls-tiktok.com-redirect",
+      "regexFilter": "^https://www\\.tiktok\\.com/t/\\w+/?$",
+      "followRedirect": true,
+      "test": [
+        {
+          "from": "https://www.tiktok.com/t/ZTrfkd5X5/",
+          "to": "https://www.tiktok.com/@ukiyoe.aiueo/video/7575166853824236822?_r=1&_t=ZT-91thV47MqzX"
+        }
+      ]
+    },
+    {
+      "id": "clearurls-expand-fb.me-redirect",
+      "regexFilter": "^https?://fb\\.me/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-bit.ly-redirect",
+      "regexFilter": "^https?://bit\\.ly/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-ow.ly-redirect",
+      "regexFilter": "^https?://ow\\.ly/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-lnkd.in-redirect",
+      "regexFilter": "^https?://lnkd\\.in/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-tinyurl.com-redirect",
+      "regexFilter": "^https?://tinyurl\\.com/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-goo.gl-redirect",
+      "regexFilter": "^https?://goo\\.gl/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-is.gd-redirect",
+      "regexFilter": "^https?://is\\.gd/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-v.gd-redirect",
+      "regexFilter": "^https?://v\\.gd/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-buff.ly-redirect",
+      "regexFilter": "^https?://buff\\.ly/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-short.io-redirect",
+      "regexFilter": "^https?://[^/]+\\.short\\.io/",
+      "followRedirect": true
+    },
+    {
+      "id": "clearurls-expand-rebrand.ly-redirect",
+      "regexFilter": "^https?://rebrand\\.ly/",
+      "followRedirect": true
     }
   ]
 }

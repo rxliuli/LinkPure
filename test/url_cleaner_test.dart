@@ -97,64 +97,84 @@ void main() {
     });
   });
 
+  group('UrlCleaner.followRedirectUrl', () {
+    test('follows HTTP redirects and returns final URL', () async {
+      // This test requires a real URL that performs a redirect.
+      // For demonstration purposes, we'll use httpbin.org.
+      final url = 'http://httpbin.org/redirect/1';
+      final result = await UrlCleaner.followRedirectUrl(url);
+      expect(result, 'http://httpbin.org/get');
+    });
+    test('handles Twitter t.co redirects', () async {
+      final url = 'https://t.co/UQrtAuVhHI';
+      final result = await UrlCleaner.followRedirectUrl(url);
+      expect(result, 'https://rxliuli.com/');
+    });
+    test('returns original URL if no redirects occur', () async {
+      final url = 'https://example.com';
+      final result = await UrlCleaner.followRedirectUrl(url);
+      expect(result, url);
+    });
+  });
+
   group('UrlCleaner.matchWithRule', () {
-    test('applies regex substitution rule', () {
+    test('applies regex substitution rule', () async {
       final rule = Rule(
         id: 'test',
         regexFilter: r'https://example\.com/redirect\?url=([^&]+)',
         regexSubstitution: r'$1',
       );
       final url = 'https://example.com/redirect?url=https%3A%2F%2Ftarget.com';
-      final result = UrlCleaner.matchWithRule(rule, url);
+      final result = await UrlCleaner.matchWithRule(rule, url);
       expect(result, 'https://target.com');
     });
 
-    test('applies removeParams rule', () {
+    test('applies removeParams rule', () async {
       final rule = Rule(
         id: 'test',
         regexFilter: r'https://example\.com',
         removeParams: ['utm_source', 'utm_medium'],
       );
       final url = 'https://example.com?utm_source=test&foo=bar';
-      final result = UrlCleaner.matchWithRule(rule, url);
+      final result = await UrlCleaner.matchWithRule(rule, url);
       expect(result, 'https://example.com?foo=bar');
     });
 
-    test('returns empty string if regex does not match', () {
+    test('returns null if regex does not match', () async {
       final rule = Rule(
         id: 'test',
         regexFilter: r'https://example\.com',
         regexSubstitution: r'https://newsite.com',
       );
       final url = 'https://different.com';
-      final result = UrlCleaner.matchWithRule(rule, url);
-      expect(result, '');
+      final result = await UrlCleaner.matchWithRule(rule, url);
+      expect(result, null);
     });
   });
 
   group('UrlCleaner.check', () {
-    test('returns notMatched for invalid URLs', () {
+    test('returns notMatched for invalid URLs', () async {
       final cleaner = UrlCleaner(rules: []);
-      final result = cleaner.check('not a url');
+      final result = await cleaner.check('not a url');
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, 'not a url');
     });
 
-    test('applies single rule successfully', () {
+    test('applies single rule successfully', () async {
       final rule = Rule(
         id: 'test',
         regexFilter: r'https://example\.com',
         removeParams: ['utm_source'],
       );
       final cleaner = UrlCleaner(rules: [rule]);
-      final result = cleaner.check(
+      final result = await cleaner.check(
         'https://example.com?utm_source=test&foo=bar',
       );
       expect(result.status, CheckStatus.matched);
       expect(result.url, 'https://example.com?foo=bar');
     });
 
-    test('applies multiple rules in sequence', () {
+    test('applies multiple rules in sequence', () async {
       final rule1 = Rule(
         id: 'test1',
         regexFilter: r'https://redirect\.com\?url=([^&]+)',
@@ -166,14 +186,14 @@ void main() {
         removeParams: ['tracking'],
       );
       final cleaner = UrlCleaner(rules: [rule1, rule2]);
-      final result = cleaner.check(
+      final result = await cleaner.check(
         'https://redirect.com?url=https%3A%2F%2Ftarget.com%3Ftracking%3D123%26foo%3Dbar',
       );
       expect(result.status, CheckStatus.matched);
       expect(result.chain.length, 2);
     });
 
-    test('detects circular redirects', () {
+    test('detects circular redirects', () async {
       final rule1 = Rule(
         id: 'test1',
         regexFilter: r'https://site1\.com',
@@ -185,7 +205,7 @@ void main() {
         regexSubstitution: r'https://site1.com',
       );
       final cleaner = UrlCleaner(rules: [rule1, rule2]);
-      final result = cleaner.check('https://site1.com');
+      final result = await cleaner.check('https://site1.com');
       expect(result.status, CheckStatus.circularRedirect);
     });
   });
@@ -215,7 +235,7 @@ void main() {
       );
       final inputUrl =
           "https://x.com/viditchess/status/1992583484259643817?s=20";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.matched);
       expect(result.url, "https://x.com/viditchess/status/1992583484259643817");
     });
@@ -230,9 +250,24 @@ void main() {
         ]),
       );
       final inputUrl = "https://youtu.be/(.*)\\?";
-      final result = cleaner.check(inputUrl);
+      final result = await cleaner.check(inputUrl);
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, "");
+    });
+    test("follow t.co redirect", () async {
+      final cleaner = UrlCleaner(
+        rules: List.from([
+          Rule(
+            id: 'clearurls-twitter-params',
+            regexFilter: "^https://t\\.co/\\w+\$",
+            followRedirect: true,
+          ),
+        ]),
+      );
+      final inputUrl = "https://t.co/UQrtAuVhHI";
+      final result = await cleaner.check(inputUrl);
+      expect(result.status, CheckStatus.matched);
+      expect(result.url, "https://rxliuli.com/");
     });
   });
 }

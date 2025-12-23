@@ -34,6 +34,7 @@ dependencies:
   clipboard_watcher: ^0.3.0
   tray_manager: ^0.2.4
   window_manager: ^0.5.1
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

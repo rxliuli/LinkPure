@@ -79,7 +79,7 @@ class _ProcessPageState extends State<ProcessPage> {
 
       // Clean URL with rules
       final cleaner = UrlCleaner(rules: rules);
-      final result = cleaner.check(inputText);
+      final result = await cleaner.check(inputText);
 
       switch (result.status) {
         case CheckStatus.matched:

@@ -23,6 +23,10 @@
           },
           "description": "List of query parameters to remove from the URL"
         },
+        "followRedirect": {
+          "type": "boolean",
+          "description": "Indicates whether to follow redirects for the rule"
+        },
         "test": {
           "type": "array",
           "items": {
@@ -41,7 +45,10 @@
           }
         }
       },
-      "required": ["id", "regexFilter"]
+      "required": [
+        "id",
+        "regexFilter"
+      ]
     }
   },
   "properties": {
@@ -60,5 +67,9 @@
       }
     }
   },
-  "required": ["name", "description", "rules"]
+  "required": [
+    "name",
+    "description",
+    "rules"
+  ]
 }
