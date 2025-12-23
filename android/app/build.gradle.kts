@@ -36,8 +36,16 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+
+        // Auto-generate versionCode from versionName (e.g., "0.4.6" -> 406, "1.2.3" -> 10203)
+        val versionNameStr = flutter.versionName ?: "0.0.0"
+        val versionParts = versionNameStr.split(".")
+        versionCode = if (versionParts.size >= 3) {
+            versionParts[0].toInt() * 10000 + versionParts[1].toInt() * 100 + versionParts[2].toInt()
+        } else {
+            flutter.versionCode
+        }
+        versionName = versionNameStr
     }
 
     signingConfigs {
