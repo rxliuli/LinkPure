@@ -1,12 +1,15 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const darwinSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -44,7 +47,7 @@ class NotificationService {
       channelDescription: 'Notifications for URL cleaning',
       importance: Importance.high,
       priority: Priority.high,
-      timeoutAfter: 5000, // Auto-dismiss after 5 seconds
+      timeoutAfter: 3000, // Auto-dismiss after 3 seconds
     );
 
     const darwinDetails = DarwinNotificationDetails(
@@ -59,12 +62,11 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
-    await _notifications.show(
-      0,
-      title,
-      body,
-      details,
-      payload: payload,
-    );
+    await _notifications.show(0, title, body, details, payload: payload);
+
+    // Auto-dismiss notification after 3 seconds (works on all platforms)
+    Timer(const Duration(seconds: 3), () async {
+      await _notifications.cancel(0);
+    });
   }
 }
