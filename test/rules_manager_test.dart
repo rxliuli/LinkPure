@@ -458,5 +458,17 @@ void main() {
       expect(result.status, CheckStatus.notMatched);
       expect(result.url, "");
     });
+    test("should not remove type parameter from Reddit search API", () async {
+      final rulesManager = RulesManager();
+      await rulesManager.init();
+      final rules = await rulesManager.getEnabledRules();
+      final cleaner = UrlCleaner(rules: rules);
+      final inputUrl =
+          "https://www.reddit.com/search?q=javascript&limit=25&sort=new&type=comments";
+      final result = await cleaner.check(inputUrl);
+      // The type parameter should be preserved for search API
+      expect(result.status, CheckStatus.notMatched);
+      expect(result.url, "");
+    });
   });
 }
