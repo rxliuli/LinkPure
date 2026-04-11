@@ -25,7 +25,7 @@ A cross-platform application that monitors clipboard URL changes and rewrites th
 
 ### Mobile
 
-- **Android**: [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest)
+- **Android**: [GitHub Releases](https://github.com/rxliuli/LinkPure/releases/latest) ([video demo](https://x.com/moeruri/status/1993282555739881898))
 - **iOS**: [App Store](https://apps.apple.com/app/id6753670551)
 
 ### Web
