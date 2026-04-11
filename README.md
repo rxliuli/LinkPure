@@ -97,3 +97,10 @@ Create your own URL rewriting rules using regular expressions.
 - **Enable/Disable**: Use the toggle switch to change rule status
 - **Test Rules**: Click "Test Rules" and enter a URL to see redirect results
 - **Delete Rule**: Click the delete icon to remove a rule
+
+## License
+
+LinkPure is licensed under the [GNU General Public License v3](./LICENSE),
+with the following exception:
+
+- `assets/shared-rules.json` is licensed under the [GNU Lesser General Public License v3](./assets/LICENSE).
