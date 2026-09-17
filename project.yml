@@ -22,9 +22,10 @@ settings:
     # 否则两套实现会把同一个版本号映射成不同的 build number，
     # App Store 会当成重复或倒序。
     CURRENT_PROJECT_VERSION: "502"
-    # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（跟 Flutter 版
-    # macos/Configs/AppInfo.xcconfig 里的取值一致）。
-    PRODUCT_COPYRIGHT: "Copyright © 2025 com.rxliuli. All rights reserved."
+    # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（会显示在 macOS 的「关于」面板）。
+    # 原来沿用 Flutter 版的值是 `Copyright © 2025 com.rxliuli. …`——
+    # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
+    PRODUCT_COPYRIGHT: "Copyright © 2026 KAI WANG. All rights reserved."
     SWIFT_VERSION: "5.0"
     # 让编译器把 SwiftUI 的 Text("…") 之类抽成 .stringsdata，
     # Xcode 构建时再自动同步进 Apps/Shared/Localizable.xcstrings。
