@@ -27,6 +27,18 @@ settings:
     # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
     PRODUCT_COPYRIGHT: "Copyright © 2026 KAI WANG. All rights reserved."
     SWIFT_VERSION: "5.0"
+    # Xcode 的「Update to recommended settings」会反复提示下面两项，就是因为工程里没写，
+    # 它每次都认为工程落后于当前模板。写在这里才治本——`.xcodeproj` 是 xcodegen 的产物、
+    # 且已在 .gitignore 里，点那个按钮改的是**产物**，下次 generate 就没了；
+    # 更麻烦的是若带着被改过的工程去 Archive，产物会带上源码里不存在的设置，构建不可复现。
+    #
+    # 死代码剥离：Release 不剥离的话，未被引用的代码会留在包里。
+    # 之前 macOS 两个配置都是 NO（iOS 反而是 YES），发货配置因此白白变大。
+    DEAD_CODE_STRIPPING: YES
+    # 用户脚本沙盒：本工程没有任何 run script 阶段（Scripts/sync-spec.sh 存在但
+    # 没接进 project.yml），所以现在开关它不改变任何行为。写上是给将来立规矩——
+    # 一旦加了脚本，就只能读写自己声明的输入输出。
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
     # 让编译器把 SwiftUI 的 Text("…") 之类抽成 .stringsdata，
     # Xcode 构建时再自动同步进 Apps/Shared/Localizable.xcstrings。
     # 不打开的话字面量还是能跑，但目录永远不更新。
