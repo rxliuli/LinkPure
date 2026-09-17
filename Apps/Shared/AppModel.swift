@@ -24,6 +24,10 @@ final class AppModel: ObservableObject {
     @Published private(set) var userRules: [LocalRule] = []
     @Published private(set) var loadError: String?
     @Published var lastRewritten: (from: String, to: String)?
+    /// 累计改写次数（**跳启动累计**，不是本次会话）。
+    ///
+    /// 存盘在 `Application Support/LinkPure/stats.json`，与规则**同目录但不同文件**
+    /// （为什么分开：见 `StatsStore` 里关于爆炸半径的说明）。
     @Published var rewriteCount = 0
     /// 规则集版本号：任何改动（启用/禁用、增删、导入）都会 +1。
     ///
@@ -48,6 +52,7 @@ final class AppModel: ObservableObject {
             loadError = String(localized: "Could not load the rule library: \(error.localizedDescription)")
         }
         userRules = RuleStore.loadUserRules()
+        rewriteCount = StatsStore.load().rewriteCount
 
         #if os(macOS)
         monitor.handler = { [weak self] text in
@@ -61,6 +66,8 @@ final class AppModel: ObservableObject {
             guard let self else { return }
             self.rewriteCount += 1
             self.lastRewritten = (from, to)
+            // 立即落盘：这一路径本来就不可能高频，换"崩溃/被强杀也不丢"
+            StatsStore.save(RunStats(rewriteCount: self.rewriteCount))
             NotificationService.post(title: String(localized: "URL Rewritten"), body: to)
         }
         monitor.start()
