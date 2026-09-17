@@ -157,5 +157,21 @@ private struct RuleCommands: Commands {
                 .keyboardShortcut("e")
                 .disabled(actions?.canExport != true)
         }
+        // 删除选中。**必须自己接**：`.onDelete` 在 macOS 上不接管 Delete 键
+        // （实测：绑了 selection 之后按 Delete / 前向删除仍然毫无反应）。
+        //
+        // 快捷键用 ⌘⌫ —— Finder「移到废纸篓」、提醒事项删除都用的它。
+        // 已知代价：文本框里 ⌘⌫ 本来有别的含义（删到行首），所以「文本字段获得焦点
+        // 的同时恰好有规则处于选中态」时，会删掉规则而不是删到行首。这种情形很少，
+        // 且删除有 8 秒撤销条兜底。
+        CommandGroup(after: .pasteboard) {
+            Button {
+                actions?.deleteSelection()
+            } label: {
+                Text("Delete \(actions?.selectedRuleCount ?? 0) Rules")
+            }
+            .keyboardShortcut(.delete, modifiers: .command)
+            .disabled((actions?.selectedRuleCount ?? 0) == 0)
+        }
     }
 }

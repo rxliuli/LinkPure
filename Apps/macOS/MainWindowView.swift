@@ -50,6 +50,10 @@ struct RuleActions {
     var exportRules: () -> Void
     /// 没有规则可导出时为 false（菜单项跟着置灰）
     var canExport: Bool
+    /// 删掉当前选中的规则。
+    var deleteSelection: () -> Void
+    /// 选中数量。0 = 菜单项置灰（也顺便让 ⌘⌫ 在没有选中时不抢文本框）。
+    var selectedRuleCount: Int
 }
 
 private struct RuleActionsKey: FocusedValueKey {
@@ -99,6 +103,9 @@ struct MainWindowView: View {
     @State private var isImporting = false
     @State private var exportDoc = JSONDocument(text: "[]")
     @State private var selectedBuiltinRule: Rule.ID?
+    /// 我的规则里选中的行。用 `Set`（而不是单个 ID）多选是白送的：
+    /// ⌘点 切换、⇧点 连选、⇧↑↓ 扩展全由系统实现。
+    @State private var selectedUserRules = Set<LocalRule.ID>()
     @Environment(\.openSettings) private var openSettingsAction
     /// `Table` 只把列头点击写回这里，排数据得自己来（见 `builtinList`）。
     @State private var builtinSortOrder = [KeyPathComparator(\Rule.id)]
@@ -387,17 +394,28 @@ struct MainWindowView: View {
         if model.userRules.isEmpty {
             emptyState
         } else {
-            List {
+            List(selection: $selectedUserRules) {
                 ForEach(filteredUserRules) { local in
                     userRuleRow(local)
                 }
-                // 让 `Delete` 键和「编辑 > 删除」菜单项能用。只有一个删除入口
-                // 是不够原生的：键盘用户碰不到行内那个垃圾桶按钮。
+                // 有了选中，方向键导航、右键菜单作用于选中集都自动成立。
                 .onDelete { offsets in
                     delete(offsets.map { filteredUserRules[$0] })
                 }
             }
             .listStyle(.inset)
+            // 右键菜单挂在**列表**上而不是每一行：这样它作用于**选中集**，
+            // 跟高亮保持一致。挂在行上的话，选中 A 再去右键 B，菜单里的删除
+            // 会删 B 而高亮在 A —— 那种不一致比完全没有选中还糟。
+            .contextMenu(forSelectionType: LocalRule.ID.self) { ids in
+                userRuleMenu(for: ids)
+            } primaryAction: { ids in
+                // 双击 = 编辑。这是 macOS 的"激活"手势（Finder / Xcode / 邮件都是），
+                // 也是内置规则库那个 Table 已经在用的（那边是复制正则）。
+                if let local = singleUserRule(in: ids) {
+                    openEditor(local.rule, testUrl: local.testUrl)
+                }
+            }
         }
     }
 
@@ -416,6 +434,11 @@ struct MainWindowView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// 规则行。
+    ///
+    /// **没有行内编辑/删除按钮** —— 动作全在右键菜单 + 双击 + 键盘，
+    /// 见 `mineList`。这样跟同一窗口里的「内置规则库」表格一致（那个本来就没有
+    /// 行内按钮），且长正则能多出一截宽度（那两个图标占了尾部约 60pt）。
     private func userRuleRow(_ local: LocalRule) -> some View {
         HStack(spacing: 10) {
             // 标签给 VoiceOver 用（`labelsHidden` 只是不画出来）；
@@ -449,32 +472,45 @@ struct MainWindowView: View {
             }
 
             Spacer(minLength: 8)
-
-            Button {
-                openEditor(local.rule, testUrl: local.testUrl)
-            } label: {
-                Image(systemName: "pencil")
-            }
-            .buttonStyle(.borderless)
-            .help("Edit")
-
-            Button {
-                delete(local)
-            } label: {
-                Image(systemName: "trash")
-            }
-            .buttonStyle(.borderless)
-            .help("Delete Rule")
         }
         .padding(.vertical, 2)
-        // 行内按钮是给鼠标的，右键菜单是给"不想瞄小图标"的人的第二条路。
-        .contextMenu {
+    }
+
+    /// 右键菜单。按选中数量决定给哪几项——跟 Finder 一样，只在单选时给"编辑/复制"。
+    @ViewBuilder
+    private func userRuleMenu(for ids: Set<LocalRule.ID>) -> some View {
+        if let local = singleUserRule(in: ids) {
             Button("Edit…") { openEditor(local.rule, testUrl: local.testUrl) }
-            Button(local.enabled ? "Disable" : "Enable") { model.setEnabled(local, !local.enabled) }
-            Divider()
-            Button("Copy Regular Expression") { copyToPasteboard(local.rule.regexFilter) }
-            Button("Delete Rule", role: .destructive) { delete(local) }
         }
+        if !ids.isEmpty {
+            Button("Enable") { setEnabled(ids, true) }
+            Button("Disable") { setEnabled(ids, false) }
+            Divider()
+            if let local = singleUserRule(in: ids) {
+                Button("Copy Regular Expression") { copyToPasteboard(local.rule.regexFilter) }
+            }
+            Button(ids.count == 1 ? "Delete Rule" : "Delete \(ids.count) Rules", role: .destructive) {
+                deleteRules(ids)
+            }
+        }
+    }
+
+    /// 选中集里唯一那条（多选时返回 nil）。
+    private func singleUserRule(in ids: Set<LocalRule.ID>) -> LocalRule? {
+        guard ids.count == 1, let id = ids.first else { return nil }
+        return model.userRules.first { $0.id == id }
+    }
+
+    private func setEnabled(_ ids: Set<LocalRule.ID>, _ enabled: Bool) {
+        for local in model.userRules where ids.contains(local.id) {
+            model.setEnabled(local, enabled)
+        }
+    }
+
+    /// 按 id 删。传的是**列表原序**（`model.userRules` 的顺序），
+    /// 这样 `delete` 记下的下标才能被撤销正确插回。
+    private func deleteRules(_ ids: Set<LocalRule.ID>) {
+        delete(model.userRules.filter { ids.contains($0.id) })
     }
 
     // MARK: - 内置规则库（只读）
@@ -535,7 +571,12 @@ struct MainWindowView: View {
             createRule: { openEditor(newRule(), testUrl: nil) },
             importRules: { isImporting = true },
             exportRules: { doExport() },
-            canExport: !model.userRules.isEmpty
+            canExport: !model.userRules.isEmpty,
+            deleteSelection: {
+                guard !selectedUserRules.isEmpty else { return }
+                deleteRules(selectedUserRules)
+            },
+            selectedRuleCount: selectedUserRules.count
         )
     }
 
@@ -579,8 +620,6 @@ struct MainWindowView: View {
         }
         showUndoHint(for: removed)
     }
-
-    private func delete(_ rule: LocalRule) { delete([rule]) }
 
     // MARK: - 删除提示 / 撤销
 

@@ -320,6 +320,40 @@
         }
       }
     },
+    "Delete %lld Rules": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld Rule"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld Rules"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans": {
+          "variations": {
+            "plural": {
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "删除 %lld 条规则"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Delete Rule": {
       "localizations": {
         "zh-Hans": {
