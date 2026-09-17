@@ -200,7 +200,7 @@ struct RuleEditorView: View {
                 }
                 .padding(12)
             }
-            .frame(width: 560, height: 520)
+            .frame(width: 560, height: 580)
             .task(id: testKey) { await runTest() }
         }
     #endif
