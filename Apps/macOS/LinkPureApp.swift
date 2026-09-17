@@ -29,7 +29,48 @@ final class MainWindowOpener {
     private var action: (() -> Void)?
 
     func register(_ action: @escaping () -> Void) { self.action = action }
-    func open() { action?() }
+
+    /// 打开主窗口，并把它真正带到最前。
+    ///
+    /// **为什么不能只 `activate` 一下**：`openWindow` 是异步的，调用它那一瞬间窗口
+    /// 对象还**不存在**（`.suppressed` 的启动策略不是"把窗口藏起来"，而是根本不创建）。
+    /// 对一个没有窗口的 app 请求激活，系统会批准，但随后很容易把前台交还回去；等
+    /// 窗口真正建出来时 app 已经不是前台了——表现为「窗口开了但没激活」。
+    /// 实测复现率 **15%（20 次里 3 次）**，且失败时 `NSApp.windows` 里确实有一个可见的
+    /// 主窗口，只是 app 不 active。
+    ///
+    /// 所以关键在**时机**：等窗口确实存在之后再抢一次前台并置为 key window。
+    /// 用重试而不是单次 `async`——SwiftUI 建窗要几轮 runloop，一次 hop 不保证够。
+    /// （早先试过直接 `NSApp.windows.first { $0.canBecomeMain }?.makeKeyAndOrderFront(nil)`
+    /// 而不带重试，失败正是因为那一刻窗口尚未被创建。）
+    func openAndActivate() {
+        action?()
+        bringToFront()
+    }
+
+    /// 等"能成为 main 的窗口"出现，然后激活 app 并把它置为 key。
+    ///
+    /// 只认 `canBecomeMain`：菜单栏那个 `NSStatusBarWindow` 不满足（否则会把 app
+    /// 激活成"没有窗口"的状态，正是要避免的情形），各种 `NSPanel`（面板、sheet）
+    /// 也不满足，所以不会误抓。
+    ///
+    /// 已知的小瑕疵：它取的是"第一个能成为 main 的窗口"，**不专门认主窗口**。
+    /// 所以"设置窗口开着、而主窗口已关"时点「Open LinkPure…」，被置为 key 的可能是
+    /// 设置窗口（app 一样会到前台，只是焦点具体落在哪个窗口上不精确）。这个组合很少见，
+    /// 为它引入窗口标识匹配的复杂度不划算。
+    func bringToFront(attempts: Int = 20) {
+        guard attempts > 0 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self else { return }
+            guard let window = NSApp.windows.first(where: { $0.canBecomeMain }) else {
+                // 窗口还没建出来，再等一轮
+                self.bringToFront(attempts: attempts - 1)
+                return
+            }
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+        }
+    }
 }
 
 /// `LSUIElement` 应用没有 Dock 图标、没有主菜单，用户很难找到它的窗口。
@@ -44,8 +85,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // `.defaultLaunchBehavior(.presented)` 只负责"展示"，不保证 app 被激活
         // （最前那个 app 可能还是别人）。首次运行要主动抢一次焦点。
+        //
+        // 必须走 `bringToFront()` 而不能直接 `activate`：启动瞬间窗口同样还没建出来，
+        // 直接激活会撞上和菜单栏「Open LinkPure」一模一样的时机问题。
         guard FirstRun.isCurrent else { return }
-        NSApp.activate(ignoringOtherApps: true)
+        MainWindowOpener.shared.bringToFront()
     }
 
     /// 关掉最后一个窗口**不等于**不用它了。
@@ -64,10 +108,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// `.defaultLaunchBehavior(.suppressed)` 不是"把窗口藏起来"，而是**根本不创建**
     /// （实测：被 suppressed 的启动之后，`NSApp.windows` 里只剩 `NSStatusBarWindow`，
     /// 连一个可用的窗口对象都没有）。所以必须走 SwiftUI 的 openWindow 把场景真正开出来。
+    ///
+    /// 顺序也重要：激活必须发生在**窗口建出来之后**，所以交给 `openAndActivate()`
+    /// 去做（先 openWindow，再等窗口出现才抢前台）。
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         guard !flag else { return true }
-        NSApp.activate(ignoringOtherApps: true)
-        MainWindowOpener.shared.open()
+        MainWindowOpener.shared.openAndActivate()
         return true
     }
 }

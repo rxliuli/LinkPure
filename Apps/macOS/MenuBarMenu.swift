@@ -6,7 +6,6 @@ import SwiftUI
 /// 刻意**不提供**"暂停监听"——不想用就退出 app，少一个能弄坏它的状态。
 struct MenuBarMenu: View {
     @ObservedObject var model: AppModel
-    @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -33,15 +32,20 @@ struct MenuBarMenu: View {
     }
 
     private func showMainWindow() {
+        // 先把 app 拉起来（菜单也跟着收起），但**真正决定成败的是后面那一步**：
+        // 走桥里的 openAndActivate，它会先 openWindow，等窗口确实建出来再抢前台。
+        // 顺序反了就是「窗口开了但没激活」——实测复现率 15%。
         NSApp.activate(ignoringOtherApps: true)
-        openWindow(id: "main")
+        MainWindowOpener.shared.openAndActivate()
     }
 
     /// 设置窗口归系统管，但**把 app 拉到最前**得自己做——
     /// 否则从菜单栏点完，窗口开在别人后面，看起来像没反应。
+    /// 同样要等窗口建出来再抢，理由见 `MainWindowOpener.bringToFront`。
     private func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         openSettings()
+        MainWindowOpener.shared.bringToFront()
     }
 
     private func shorten(_ url: String) -> String {

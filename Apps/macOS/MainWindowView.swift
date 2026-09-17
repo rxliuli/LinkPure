@@ -190,9 +190,11 @@ struct MainWindowView: View {
 
     /// 设置窗口归系统管，但**把 app 拉到最前**得自己做——
     /// 否则从菜单里点完，窗口开在别人后面，看起来像没反应。
+    /// 而激活必须发生在窗口建出来**之后**，所以还得让桥等一轮。
     private func showSettings() {
         NSApp.activate(ignoringOtherApps: true)
         openSettingsAction()
+        MainWindowOpener.shared.bringToFront()
     }
 
     /// `List(selection:)` 单选用的是 `Optional` 绑定，而 `pane` 不该有"没选中"的状态，
