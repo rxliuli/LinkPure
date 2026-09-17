@@ -34,29 +34,29 @@ enum RuleStore {
         if let url = fileURL, FileManager.default.fileExists(atPath: url.path) {
             do {
                 let rules = try RuleFileCodec.decode(try Data(contentsOf: url))
-                log.error("load: \(rules.count, privacy: .public) 条 ← \(url.path, privacy: .public)")
+                log.error("load: \(rules.count, privacy: .public) rules ← \(url.path, privacy: .public)")
                 return rules
             } catch {
                 // 不能静默吞掉，否则表现就是"规则凭空消失"
-                log.error("load 解码失败：\(String(describing: error), privacy: .public)")
+                log.error("load: failed to decode: \(String(describing: error), privacy: .public)")
                 return []
             }
         }
 
         // 文件不存在 = 首次运行 → 尝试从 Flutter 版迁入
         if let migrated = FlutterRuleMigration.rules() {
-            log.error("migrate: 从 Flutter 版迁入 \(migrated.count, privacy: .public) 条")
+            log.error("migrate: imported \(migrated.count, privacy: .public) rules from the Flutter version")
             saveUserRules(migrated)
             return migrated
         }
 
-        log.error("load: 无规则文件，也没有可迁移的旧数据（首次运行）")
+        log.error("load: no rules file and nothing to migrate (first run)")
         return []
     }
 
     static func saveUserRules(_ rules: [LocalRule]) {
         guard let directory, let url = fileURL else {
-            log.error("save: 拿不到存放路径")
+            log.error("save: no container directory available")
             return
         }
         do {
@@ -65,9 +65,9 @@ enum RuleStore {
             )
             let data = try RuleFileCodec.encode(rules)
             try data.write(to: url, options: .atomic)
-            log.error("save: \(rules.count, privacy: .public) 条 → \(url.path, privacy: .public)")
+            log.error("save: \(rules.count, privacy: .public) rules → \(url.path, privacy: .public)")
         } catch {
-            log.error("save 失败：\(String(describing: error), privacy: .public)")
+            log.error("save failed: \(String(describing: error), privacy: .public)")
         }
     }
 }

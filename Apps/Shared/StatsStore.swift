@@ -35,14 +35,14 @@ enum StatsStore {
             // `Decodable` 不会用默认值，缺字段会直接抛 `keyNotFound`（实测过）。
             // 所以以后给 RunStats 加字段时，旧文件会走这条分支归零；
             // 对一个计数器可以接受，真要保留就把解码改成 `decodeIfPresent`。
-            log.error("load 失败，按 0 计：\(String(describing: error), privacy: .public)")
+            log.error("load failed, counting from 0: \(String(describing: error), privacy: .public)")
             return RunStats()
         }
     }
 
     static func save(_ stats: RunStats) {
         guard let directory = RuleStore.directory, let url = fileURL else {
-            log.error("save: 拿不到存放路径")
+            log.error("save: no container directory available")
             return
         }
         do {
@@ -53,7 +53,7 @@ enum StatsStore {
             try JSONEncoder().encode(stats).write(to: url, options: .atomic)
         } catch {
             // 计数写失败不该打断正在进行的改写，更不该弹给用户
-            log.error("save 失败：\(String(describing: error), privacy: .public)")
+            log.error("save failed: \(String(describing: error), privacy: .public)")
         }
     }
 }
