@@ -22,11 +22,18 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- 只用 HTTPS（URLSession），属出口合规豁免。不声明的话每次上传都要在 ASC 里手动回答一次 -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- 跟 App Store 上的实际分类对齐：listing 的 primaryGenreName 是 Utilities
+	     （Flutter 版源码里写的是 productivity，两边本来就不一致） -->
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.productivity</string>
+	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>$(PRODUCT_COPYRIGHT)</string>
 </dict>
 </plist>

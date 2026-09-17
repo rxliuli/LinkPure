@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  App 自己的隐私清单（macOS / iOS 共用一份，跟 Localizable.xcstrings 同一个套路）。
+
+	  为什么必须有：这份 app 的主可执行文件**直接**调用了 UserDefaults
+	  （LinkPureApp.swift 的首次运行标记、RuleFile.swift 的旧数据迁移），
+	  而 UserDefaults 属于 Apple 的 "required reason API"——不申报的话上传后
+	  会收到 ITMS-91053，甚至被拒。
+
+	  Flutter 版当年能过审，是因为它的主可执行文件里没有这种直接调用：
+	  UserDefaults 的调用发生在 shared_preferences_foundation 这个 **framework** 里，
+	  而那个 framework 自带清单替它申报了。我们现在是纯 Swift、没有插件框架，
+	  所以只能自己写。
+
+	  只申报了 UserDefaults 一项——文件时间戳 / 系统启动时间 / 磁盘空间
+	  这三类 required reason API 本项目都没用到（grep 过）。
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<!-- CA92.1 = 只读写本 app 自己的 user defaults -->
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

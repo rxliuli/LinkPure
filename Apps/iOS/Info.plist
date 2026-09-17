@@ -20,12 +20,22 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
+	<!-- iOS 用 CFBundleIconName（下面），不用 macOS 那个 CFBundleIconFile -->
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<!-- 只用 HTTPS（URLSession），属出口合规豁免。不声明的话每次上传都要在 ASC 里手动回答一次 -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.productivity</string>
+	<string>public.app-category.utilities</string>
+	<!-- iOS app 的标准声明，手写 plist 容易漏 -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<!-- 没有它的话，iPad 上接鼠标/触控板会被当成触摸模拟（hover、右键不正常） -->
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<!-- 现代做法：空字典即"用系统默认启动画面"，避免 iOS 以兼容模式跑（界面被裁成小窗）。
+	     Flutter 版用的是 UILaunchStoryboardName，两者是替代关系，不要同时写 -->
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
