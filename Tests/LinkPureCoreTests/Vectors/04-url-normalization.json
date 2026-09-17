@@ -1,0 +1,252 @@
+{
+  "version": 1,
+  "name": "04 · URL 规范化探针（跨语言分歧热点）",
+  "comment": "expect 为参考实现观测值。这些用例钉死的是**已达成一致的语义**（规范第 5 条）：按原始 query 串处理，不做多余归一化。任何实现偏离都会在这里暴露。",
+  "cases": [
+    {
+      "name": "重复参数必须全部保留",
+      "comment": "规范：不得折叠重复键。历史上 Dart 用 Map.from(queryParameters) 会丢 a=1。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?a=1&a=2&x=3",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?a=1&a=2"
+      }
+    },
+    {
+      "name": "参数值里的 '+' 原样保留",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?q=a+b&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?q=a+b"
+      }
+    },
+    {
+      "name": "query key 里的 '+' 按空格解码（form 风格）",
+      "comment": "key 用 form 解码（'+' → 空格）；正则替换的捕获组不转换 '+'。两者语义不同，必须分别测。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "a b"
+          ]
+        }
+      ],
+      "input": "https://example.com/?a+b=1&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?x=1"
+      }
+    },
+    {
+      "name": "百分号编码原样保留",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?q=%2Fslash%2F&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?q=%2Fslash%2F"
+      }
+    },
+    {
+      "name": "小写 hex 编码不被改写（%2f 保持小写）",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?q=%2f&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?q=%2f"
+      }
+    },
+    {
+      "name": "fragment 必须保留且不得残留空 '?'",
+      "comment": "规范：参数全空时去掉整个 '?'，即便后面还有 #fragment。历史上 Dart 会产出 '/p?#frag'。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/p?x=1#frag",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/p#frag"
+      }
+    },
+    {
+      "name": "默认端口原样保留",
+      "comment": "规范：不经过 URL 归一化，:443 不被省略。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com:443/?x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com:443/"
+      }
+    },
+    {
+      "name": "主机名大小写不影响规则匹配（大小写不敏感）",
+      "comment": "规范：规则匹配忽略大小写（与 Redirector 一致）。host 按 RFC 本就大小写不敏感，用户从地址栏复制到 HTTPS://EXAMPLE.COM 很常见。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://EXAMPLE.com/?x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://EXAMPLE.com/"
+      }
+    },
+    {
+      "name": "大写 scheme + host 也能命中，且原样保留",
+      "comment": "只改写 query，不重写 scheme/host 的大小写——不引入额外归一化。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "HTTPS://EXAMPLE.COM/?x=1",
+      "expect": {
+        "status": "matched",
+        "output": "HTTPS://EXAMPLE.COM/"
+      }
+    },
+    {
+      "name": "无路径 + 移除全部参数",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com?x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com"
+      }
+    },
+    {
+      "name": "参数值内含 '=' 原样保留",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?y=a=b&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?y=a=b"
+      }
+    },
+    {
+      "name": "显式空值 'key=' 必须保留 '='",
+      "comment": "规范：不改变参数语义。历史上 Dart 会产出 '?empty'。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?empty=&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?empty="
+      }
+    },
+    {
+      "name": "无值参数（无 '='）原样保留",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?flag&x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/?flag"
+      }
+    },
+    {
+      "name": "空 query 串（'?' 后直接结束）不改写",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/?",
+      "expect": {
+        "status": "notMatched",
+        "output": "https://example.com/?"
+      }
+    }
+  ]
+}

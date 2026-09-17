@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "name": "02 · 正则替换 / 重定向解包语义",
+  "cases": [
+    {
+      "name": "google /url?q= 解包",
+      "ruleRef": "clearurls-google-redirect-0",
+      "input": "https://www.google.com/url?q=https://example.com/page",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/page"
+      }
+    },
+    {
+      "name": "facebook l.php?u= 解包（URL 编码）",
+      "ruleRef": "clearurls-facebook-redirect-0",
+      "input": "https://l.facebook.com/l.php?u=https%3A%2F%2Fexample.com%2Fpage",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/page"
+      }
+    },
+    {
+      "name": "reddit out.reddit.com 解包",
+      "ruleRef": "clearurls-reddit-redirect-0",
+      "input": "https://out.reddit.com/t3_abc?url=https%3A%2F%2Fexample.com%2Fpost&token=xyz",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/post"
+      }
+    },
+    {
+      "name": "youtube /redirect?q= 解包",
+      "ruleRef": "clearurls-youtube-redirect-0",
+      "input": "https://www.youtube.com/redirect?q=https%3A%2F%2Fexample.com%2Fv",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/v"
+      }
+    },
+    {
+      "name": "多捕获组替换与顺序调换",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://old\\.com/([a-z]+)/([0-9]+)$",
+          "regexSubstitution": "https://new.com/$2/$1"
+        }
+      ],
+      "input": "https://old.com/abc/42",
+      "expect": {
+        "status": "matched",
+        "output": "https://new.com/42/abc"
+      }
+    },
+    {
+      "name": "替换值中的捕获组会被 URL 解码",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://jump\\.com/\\?to=(.*)$",
+          "regexSubstitution": "$1"
+        }
+      ],
+      "input": "https://jump.com/?to=https%3A%2F%2Fexample.com%2Fa%20b",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/a b"
+      }
+    },
+    {
+      "name": "替换规则不匹配 → 不改写",
+      "ruleRef": "clearurls-google-redirect-0",
+      "input": "https://notgoogle.example.org/url?q=https://example.com",
+      "expect": {
+        "status": "notMatched",
+        "output": "https://notgoogle.example.org/url?q=https://example.com"
+      }
+    }
+  ]
+}

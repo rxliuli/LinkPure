@@ -1,0 +1,106 @@
+name: LinkPure
+options:
+  bundleIdPrefix: com.rxliuli
+  deploymentTarget:
+    macOS: "15.0"
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  LinkPureCore:
+    path: .
+
+settings:
+  base:
+    # 版本号跟着 Flutter 版那条线往下走（App Store 上当前是 0.5.1，
+    # Flutter 仓库工作区正在做 0.5.2），Swift 重写不另起一个 1.0。
+    # 上传 App Store 时 **不能低于已发布版本**，否则直接被拒。
+    MARKETING_VERSION: "0.5.2"
+    # build number 用 Flutter 仓库 CI 里那条公式：x*10000 + y*100 + z
+    #（见 LinkPure/.github/workflows/release.yml 的 "Generate build number from version"）。
+    # 0.5.2 → 0*10000 + 5*100 + 2 = 502。这里必须用**同一个公式**，
+    # 否则两套实现会把同一个版本号映射成不同的 build number，
+    # App Store 会当成重复或倒序。
+    CURRENT_PROJECT_VERSION: "502"
+    SWIFT_VERSION: "5.0"
+    # 让编译器把 SwiftUI 的 Text("…") 之类抽成 .stringsdata，
+    # Xcode 构建时再自动同步进 Apps/Shared/Localizable.xcstrings。
+    # 不打开的话字面量还是能跑，但目录永远不更新。
+    SWIFT_EMIT_LOC_STRINGS: YES
+    CODE_SIGN_STYLE: Automatic
+    # 必须用真实签名（不能是 ad-hoc）：macOS 不给 ad-hoc 签名的 app 发通知权限。
+    DEVELOPMENT_TEAM: N2X78TUUFG
+
+targets:
+  # ---------------------------------------------------------------- macOS
+  LinkPureMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: Apps/macOS
+      - path: Apps/Shared
+    dependencies:
+      - package: LinkPureCore
+        product: LinkPureCore
+    entitlements:
+      path: Apps/macOS/LinkPureMac.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
+    settings:
+      base:
+        # PRODUCT_NAME 默认取 target 名（LinkPureMac / LinkPureIOS），
+        # 会连带影响：.app 文件名、CFBundleName、CFBundleExecutable。
+        # 而 CFBundleDisplayName 只能覆盖 Finder / 主屏的显示名——
+        # 登录项列表显示的是 .app 文件名，iOS 部分系统界面用 CFBundleName，
+        # 所以必须显式把 PRODUCT_NAME 固定成 LinkPure。
+        PRODUCT_NAME: LinkPure
+        PRODUCT_BUNDLE_IDENTIFIER: com.rxliuli.linkpure2.dev
+        INFOPLIST_FILE: Apps/macOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        # App Sandbox 开启（上架 Mac App Store 的硬性要求）。
+        # 已验证剪贴板轮询在沙盒下可用（Flutter 版就是沙盒的）。
+        # 副作用：跨 app 的 preferences 扫描会被拒（迁移会退化为只查 UserDefaults）。
+        ENABLE_APP_SANDBOX: YES
+      configs:
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.rxliuli.linkpure2
+
+  # ---------------------------------------------------------------- iOS
+  LinkPureIOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Apps/iOS
+      - path: Apps/Shared
+    dependencies:
+      - package: LinkPureCore
+        product: LinkPureCore
+    settings:
+      base:
+        PRODUCT_NAME: LinkPure
+        PRODUCT_BUNDLE_IDENTIFIER: com.rxliuli.linkpure2.dev
+        INFOPLIST_FILE: Apps/iOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.rxliuli.linkpure2
+
+schemes:
+  LinkPureMac:
+    build:
+      targets:
+        LinkPureMac: all
+    run:
+      config: Debug
+  LinkPureIOS:
+    build:
+      targets:
+        LinkPureIOS: all
+    run:
+      config: Debug

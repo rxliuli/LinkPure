@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 上架 Mac App Store 的硬性要求（Flutter 版也是这么配的） -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- followRedirect 规则要发 HTTP 请求 -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- 规则导入/导出用文件选择器 -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+</dict>
+</plist>

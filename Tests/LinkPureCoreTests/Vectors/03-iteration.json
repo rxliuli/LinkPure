@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "name": "03 · 迭代 / 规则顺序 / 环检测",
+  "cases": [
+    {
+      "name": "链式改写：A 替换后 B 再去除参数",
+      "rules": [
+        {
+          "id": "A",
+          "regexFilter": "^https://a\\.com/x\\?(.*)$",
+          "regexSubstitution": "https://b.com/y?$1"
+        },
+        {
+          "id": "B",
+          "regexFilter": "^https://b\\.com/y",
+          "removeParams": [
+            "utm_source"
+          ]
+        }
+      ],
+      "input": "https://a.com/x?a=1&utm_source=z",
+      "expect": {
+        "status": "matched",
+        "output": "https://b.com/y?a=1"
+      }
+    },
+    {
+      "name": "多轮累积：同一轮内已无变化的规则会被跳过",
+      "rules": [
+        {
+          "id": "first",
+          "regexFilter": ".*",
+          "removeParams": [
+            "a"
+          ]
+        },
+        {
+          "id": "second",
+          "regexFilter": ".*",
+          "removeParams": [
+            "b"
+          ]
+        }
+      ],
+      "input": "https://example.com/?a=1&b=2",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/"
+      }
+    },
+    {
+      "name": "环形重定向检测",
+      "rules": [
+        {
+          "id": "A",
+          "regexFilter": "^https://a\\.com",
+          "regexSubstitution": "https://b.com"
+        },
+        {
+          "id": "B",
+          "regexFilter": "^https://b\\.com",
+          "regexSubstitution": "https://a.com"
+        }
+      ],
+      "input": "https://a.com/",
+      "expect": {
+        "status": "circularRedirect",
+        "output": "https://b.com"
+      }
+    },
+    {
+      "name": "无限改写（每轮都变但不成环）",
+      "rules": [
+        {
+          "id": "A",
+          "regexFilter": "^(https://example\\.com/.*)$",
+          "regexSubstitution": "$1x"
+        }
+      ],
+      "input": "https://example.com/",
+      "expect": {
+        "status": "infiniteRedirect",
+        "output": "https://example.com/xxxxx"
+      }
+    },
+    {
+      "name": "非法正则不应崩溃，视为不匹配",
+      "rules": [
+        {
+          "id": "bad",
+          "regexFilter": "([unclosed",
+          "removeParams": [
+            "a"
+          ]
+        },
+        {
+          "id": "good",
+          "regexFilter": "^https://example\\.com",
+          "removeParams": [
+            "b"
+          ]
+        }
+      ],
+      "input": "https://example.com/?b=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/"
+      }
+    },
+    {
+      "name": "非 http(s) 输入直接不改写",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": ".*",
+          "removeParams": [
+            "utm_source"
+          ]
+        }
+      ],
+      "input": "ftp://example.com/?utm_source=x",
+      "expect": {
+        "status": "notMatched",
+        "output": "ftp://example.com/?utm_source=x"
+      }
+    }
+  ]
+}

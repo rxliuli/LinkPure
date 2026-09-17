@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "name": "01 · 参数移除语义",
+  "cases": [
+    {
+      "name": "移除单个字面量参数",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://example.com/?utm_source=x&id=1",
+      "expect": { "status": "matched", "output": "https://example.com/?id=1" }
+    },
+    {
+      "name": "保留其余参数及其顺序",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://example.com/?a=1&utm_source=x&b=2",
+      "expect": { "status": "matched", "output": "https://example.com/?a=1&b=2" }
+    },
+    {
+      "name": "参数全部移除时不应残留 '?'",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://example.com/?utm_source=x",
+      "expect": { "status": "matched", "output": "https://example.com/" }
+    },
+    {
+      "name": "无 query 时不改写",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://example.com/path",
+      "expect": { "status": "notMatched", "output": "https://example.com/path" }
+    },
+    {
+      "name": "正则形式的参数名前缀（^utm_）",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["^utm_"] }
+      ],
+      "input": "https://example.com/?utm_source=a&utm_medium=b&ok=1",
+      "expect": { "status": "matched", "output": "https://example.com/?ok=1" }
+    },
+    {
+      "name": "目标参数不存在 → 不改写",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://example.com/?other=1",
+      "expect": { "status": "notMatched", "output": "https://example.com/?other=1" }
+    },
+    {
+      "name": "域名不匹配 → 不改写",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["utm_source"] }
+      ],
+      "input": "https://other.com/?utm_source=x",
+      "expect": { "status": "notMatched", "output": "https://other.com/?utm_source=x" }
+    },
+    {
+      "name": "多个参数名一次命中",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["a", "b", "c"] }
+      ],
+      "input": "https://example.com/?a=1&b=2&c=3&keep=4",
+      "expect": { "status": "matched", "output": "https://example.com/?keep=4" }
+    },
+    {
+      "name": "字面量参数名含 '$'（Branch 风格）应精确匹配",
+      "comment": "参数名 $3p 字面上就含 $。不能因为它含元字符就当正则——$ 是行尾锚点，会永久失效。规则：先精确匹配，再试正则。",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["$3p", "$deep_link"] }
+      ],
+      "input": "https://example.com/?%243p=1&%24deep_link=2&keep=3",
+      "expect": { "status": "matched", "output": "https://example.com/?keep=3" }
+    },
+    {
+      "name": "含 '$' 但不精确匹配时不应误删",
+      "comment": "确保“先精确匹配”没有把 $ 开头的模式变成“匹配一切”。",
+      "rules": [
+        { "id": "r1", "regexFilter": "^https://example\\.com", "removeParams": ["$deep_link"] }
+      ],
+      "input": "https://example.com/?other=1",
+      "expect": { "status": "notMatched", "output": "https://example.com/?other=1" }
+    }
+  ]
+}

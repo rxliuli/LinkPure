@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "name": "05 · 正则风味探针（跨语言分歧热点）",
+  "comment": "各语言正则引擎对 \\d / \\w 的 Unicode 语义不同：Dart(ECMAScript)、Java、Rust regex 默认 \\d=[0-9]；而 Rust regex 的 \\d 默认是 Unicode 数字。这些用例把差异钉死。",
+  "cases": [
+    {
+      "name": "\\d 匹配 ASCII 数字",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/n/(\\d+)$",
+          "regexSubstitution": "https://example.com/num/$1"
+        }
+      ],
+      "input": "https://example.com/n/123",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/num/123"
+      }
+    },
+    {
+      "name": "\\d 是否匹配非 ASCII 数字（阿拉伯-印度数字 ٣）",
+      "comment": "ASCII 语义 → notMatched；Unicode 语义 → matched。规则库里 clearurls-imgsrc.ru-redirect-0 用了 \\d。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/n/(\\d+)$",
+          "regexSubstitution": "https://example.com/num/$1"
+        }
+      ],
+      "input": "https://example.com/n/٣",
+      "expect": {
+        "status": "notMatched",
+        "output": "https://example.com/n/٣"
+      }
+    },
+    {
+      "name": "\\w 匹配下划线与 ASCII 字母数字",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/w/(\\w+)$",
+          "regexSubstitution": "https://example.com/word/$1"
+        }
+      ],
+      "input": "https://example.com/w/abc_123",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/word/abc_123"
+      }
+    },
+    {
+      "name": "\\w 是否匹配非 ASCII 字母（全角 ａ）",
+      "comment": "规则库里有 3 条用了 \\w（chromewebstore / t.co）。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/w/(\\w+)$",
+          "regexSubstitution": "https://example.com/word/$1"
+        }
+      ],
+      "input": "https://example.com/w/ａ",
+      "expect": {
+        "status": "notMatched",
+        "output": "https://example.com/w/ａ"
+      }
+    },
+    {
+      "name": "惰性量词 .*? 的行为",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/x\\?.*?v=(\\w+)",
+          "regexSubstitution": "https://example.com/v/$1"
+        }
+      ],
+      "input": "https://example.com/x?a=1&v=hello&v=world",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/v/hello"
+      }
+    },
+    {
+      "name": "{1,} 与嵌套 (?:...) 组合（规则库常见形态）",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https?://(?:[a-z0-9-]+\\.)*?example(?:\\.[a-z]{2,}){1,}/p",
+          "regexSubstitution": "https://example.com/p"
+        }
+      ],
+      "input": "https://a.b.example.co.uk/p?keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/p"
+      }
+    },
+    {
+      "name": "字符类范围与取反",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/ok/([a-z0-9]+)-([^&#]+)$",
+          "regexSubstitution": "https://example.com/two/$2"
+        }
+      ],
+      "input": "https://example.com/ok/abc-98.6",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/two/98.6"
+      }
+    },
+    {
+      "name": "规则匹配大小写不敏感（路径也一样）",
+      "comment": "规范：大小写不敏感作用于整个 URL，因此 path 也变成大小写不敏感。这是与 Redirector 对齐的 tradeoff，已明确记录。",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/Path",
+          "removeParams": [
+            "x"
+          ]
+        }
+      ],
+      "input": "https://example.com/PATH?x=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/PATH"
+      }
+    },
+    {
+      "name": "大小写不敏感，但捕获组保留原大小写",
+      "rules": [
+        {
+          "id": "r1",
+          "regexFilter": "^https://example\\.com/([a-z]+)$",
+          "regexSubstitution": "https://example.com/id/$1"
+        }
+      ],
+      "input": "https://EXAMPLE.com/ABC",
+      "expect": {
+        "status": "matched",
+        "output": "https://example.com/id/ABC"
+      }
+    }
+  ]
+}

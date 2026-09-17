@@ -1,0 +1,391 @@
+{
+  "version": 1,
+  "name": "11 · 整库端到端（抽样）",
+  "comment": "同一批输入改用完整规则库（含规则顺序影响）。",
+  "cases": [
+    {
+      "name": "linkumori-1password.university-params (shared)",
+      "input": "https://1password.university/?utm_ref=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://1password.university/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-alibaba.com-params (shared)",
+      "input": "https://alibaba.com/?categoryIds=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://alibaba.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-app.snyk.io-params (shared)",
+      "input": "https://app.snyk.io/?pagedoc=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://app.snyk.io/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-b23.tv-params (shared)",
+      "input": "https://b23.tv/?bbid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://b23.tv/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-bilibili.com-params (shared)",
+      "input": "https://bilibili.com/?-Arouter=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://bilibili.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-booster.osnova.io-params (shared)",
+      "input": "https://booster.osnova.io/?boosterUid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://booster.osnova.io/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-carseven.co.jp-params (shared)",
+      "input": "https://carseven.co.jp/?from=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://carseven.co.jp/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-cinematoday.jp-params (shared)",
+      "input": "https://cinematoday.jp/?g_clk=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://cinematoday.jp/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-controld.com-params (shared)",
+      "input": "https://controld.com/?cid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://controld.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-dashboard.wedare.pl-params (shared)",
+      "input": "https://dashboard.wedare.pl/?smc1=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://dashboard.wedare.pl/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-dmm.co.jp-params (shared)",
+      "input": "https://dmm.co.jp/?dmmref=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://dmm.co.jp/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-ebay-params (shared)",
+      "input": "https://ebay.com/?_trkparms=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://ebay.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-etsy.com-params (shared)",
+      "input": "https://etsy.com/?click_key=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://etsy.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-fmworld.net-params (shared)",
+      "input": "https://fmworld.net/?from=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://fmworld.net/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-geoguessr.com-params (shared)",
+      "input": "https://geoguessr.com/?s=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://geoguessr.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-grafana.com-params (shared)",
+      "input": "https://grafana.com/?plcmt=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://grafana.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-hog.com-params (shared)",
+      "input": "https://hog.com/?ad=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://hog.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-immobilienscout24.de-params (shared)",
+      "input": "https://immobilienscout24.de/?enteredFrom=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://immobilienscout24.de/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-jetbrains.com-params (shared)",
+      "input": "https://jetbrains.com/?from=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://jetbrains.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-kongregate.com-params (shared)",
+      "input": "https://kongregate.com/?acomplete=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://kongregate.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-live.nicovideo.jp-params (shared)",
+      "input": "https://live.nicovideo.jp/?ch_anime_ref=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://live.nicovideo.jp/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-malwarebytes.com-params (shared)",
+      "input": "https://malwarebytes.com/?ADDITIONAL_AFFID=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://malwarebytes.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-medium.com-params (shared)",
+      "input": "https://medium.com/?source=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://medium.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-moosejaw.com-params (shared)",
+      "input": "https://moosejaw.com/?cm_lm=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://moosejaw.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-netonnet.no-params (shared)",
+      "input": "https://netonnet.no/?dclid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://netonnet.no/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-norml.org-params (shared)",
+      "input": "https://norml.org/?can_id=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://norml.org/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-only.com-params (shared)",
+      "input": "https://only.com/?rm=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://only.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-player.theplatform.com-params (shared)",
+      "input": "https://player.theplatform.com/?playeranalytics=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://player.theplatform.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-protonvpn.com-params (shared)",
+      "input": "https://protonvpn.com/?ref=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://protonvpn.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-rdrtr.com-params (shared)",
+      "input": "https://rdrtr.com/?aff_sub=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://rdrtr.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-roboform.com-params (shared)",
+      "input": "https://roboform.com/?a=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://roboform.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-shop.adidas.jp-params (shared)",
+      "input": "https://shop.adidas.jp/?shortlink=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://shop.adidas.jp/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-slack.com-params (shared)",
+      "input": "https://slack.com/?t=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://slack.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-sportschosun.com-params (shared)",
+      "input": "https://sportschosun.com/?f_url=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://sportschosun.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-t.myvisualiq.net-params (shared)",
+      "input": "https://t.myvisualiq.net/?~red=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://t.myvisualiq.net/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-thisismoney.co.uk-params (shared)",
+      "input": "https://thisismoney.co.uk/?ico=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://thisismoney.co.uk/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-travelist.pl-params (shared)",
+      "input": "https://travelist.pl/?MWID=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://travelist.pl/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-urlshare.cn-params (shared)",
+      "input": "https://urlshare.cn/?_wv=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://urlshare.cn/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-walmart.com-params (shared)",
+      "input": "https://walmart.com/?classType=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://walmart.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-wired.com-params (shared)",
+      "input": "https://wired.com/?intcid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://wired.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-yandex.com-params (shared)",
+      "input": "https://yandex.com/?clid=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://yandex.com/?keep=1"
+      }
+    },
+    {
+      "name": "linkumori-zozo.jp-params (shared)",
+      "input": "https://zozo.jp/?t=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://zozo.jp/?keep=1"
+      }
+    },
+    {
+      "name": "clearurls-hhdotru-params (shared)",
+      "input": "https://hh.ru/?vss=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://hh.ru/?keep=1"
+      }
+    },
+    {
+      "name": "clearurls-nypost.com-params (shared)",
+      "input": "https://nypost.com/?__twitter_impression=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://nypost.com/?keep=1"
+      }
+    },
+    {
+      "name": "clearurls-clearurlstest-params (shared)",
+      "input": "https://kevinroebert.gitlab.io/?test=1&keep=1",
+      "expect": {
+        "status": "notMatched",
+        "output": "https://kevinroebert.gitlab.io/?test=1&keep=1"
+      }
+    },
+    {
+      "name": "clearurls-marketscreener.comsearch-params (shared)",
+      "input": "https://marketscreener.com/?type_recherche=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://marketscreener.com/?keep=1"
+      }
+    },
+    {
+      "name": "clearurls-academic.oup.com-params (shared)",
+      "input": "https://academic.oup.com/?redirectedFrom=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://academic.oup.com/?keep=1"
+      }
+    },
+    {
+      "name": "clearurls-magento.com-params (shared)",
+      "input": "https://magento.com/?itm_campaign=1&keep=1",
+      "expect": {
+        "status": "matched",
+        "output": "https://magento.com/?keep=1"
+      }
+    }
+  ]
+}
