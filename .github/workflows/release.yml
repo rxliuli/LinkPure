@@ -95,38 +95,14 @@ jobs:
           echo "version=${VERSION}  build=${BUILD_NUMBER}  run=${RUN}  publish=${PUBLISH}"
 
   # ───────────────────────── App Store Connect（macOS + iOS） ─────────────────────────
-  # 两个平台合成一个 matrix：它们之间只差 scheme / destination / 上传类型 / 产物后缀。
-  # 以前是两份 200 行的复制品，而其中 keychain 那 40 行已经漂移过好几次（丢过
-  # mkdir ~/private_keys、在空 keychain 上跑 set-key-partition-list……），
-  # 所以那部分逻辑现在只有一份：Scripts/ci-signing.sh。
+  # 归档 → 导出 → 校验 →（可选）上传，全部交给共享 action：
+  # https://github.com/rxliuli/apple-release —— 里面的规则（归档阶段为什么不签名、
+  # app 的签名身份为什么来自 cloud signing、为什么必须先导入合集证书、加密钥为什么
+  # 要补 base64 padding）在那边的 README 与 scripts/asc.sh 里有完整说明，这里不再
+  # 复制一遍：注释复制到各处就会各自漂移，这正是当初要抽出去的原因。
   #
-  # 签名这件事的真相（2026-09 实测，证据在上面那个 run 的 DistributionSummary 里）：
-  #
-  # - **app 自己的签名身份来自 cloud signing**，不是我们本地那两张证书。
-  #   0.6.1 那次的 DistributionSummary 写得很清楚：
-  #       "type" => "Cloud Managed Apple Distribution"
-  #       "profile" => "Mac Team Store Provisioning Profile: com.rxliuli.linkpure2"
-  #   证书和 profile 都是 Xcode 通过 ASC API key 自己搞定的。
-  # - **本地只需要 installer 证书**（macOS）：.pkg 确实是 productbuild 用
-  #   `3rd Party Mac Developer Installer: KAI WANG` 签的，那张在 secret 里、有效。
-  #   原来的 APPLE_CERTIFICATE_APPSTORE 里那张 Apple Distribution **早已过期**
-  #   （`find-identity` 打的是 CSSMERR_TP_CERT_EXPIRED），从来没参与过签名。
-  #
-  # 所以归档阶段刻意**不签名**：macOS 走 ad-hoc（identity "-"）、iOS 完全不签。
-  # 三个理由，少一个都不行：
-  #   1. automatic 签名在归档时想要的是**开发**身份，本地没有 —— 于是它会向 Apple
-  #      现要一张，一次一张、私钥随 runner 销毁，直到撞上账号上限（真踩过：一天
-  #      10 张 "Apple Development: Created via API"）。
-  #   2. Xcode **不允许**在 automatic 签名下显式指定分发身份，硬要指定就是
-  #      "has conflicting provisioning settings ... but code signing identity
-  #      Apple Distribution ... has been manually specified"。
-  #   3. macOS 又不能完全不签：entitlements 跟着签名走，不签就丢 sandbox，ASC
-  #      报 90296。ad-hoc 签名不需要证书也不需要 profile，但足以把三项
-  #      entitlements 带进归档，导出重签时与 profile 的合并（0.6.1 就是这么发出去的）。
-  #
-  # iOS 那侧连 ad-hoc 都不需要：它的 entitlements 全部来自 profile，没有项目里
-  # 声明的那一类。（以后给 iOS 加了自定义 entitlement，这里就得照 macOS 改成
-  # ad-hoc，否则会在 ASC 校验阶段才发现。）
+  # 两个平台仍然是一个 matrix：差别只剩 scheme，平台语义由 action 的 platform 输入承载。
+  # iOS 是可选的 —— 不想要就在 matrix 里删掉那一项。
   appstore:
     name: ${{ matrix.platform }} → App Store Connect
     needs: version
@@ -139,141 +115,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macOS
+          - platform: macos
             scheme: LinkPureMac
-            destination: generic/platform=macOS
-            # altool 的 --type，同时也是「要不要额外验 .pkg 签名」的开关
-            upload_type: macos
-            artifact: '*.pkg'
-            # 归档怎么签（见上面那段注释）。引号是 YAML 的，传给 shell 后只剩 `-`。
-            archive_signing: 'CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-"'
-            # Mac App Store 的 .pkg 由 productbuild 用**本地** installer 证书签，
-            # 所以只有 macOS 需要导入证书；iOS 只需要 ASC API key。
-            # 导入的是一个「合集」p12（开发 / 分发 / installer / Developer ID 全在里面），
-            # 多个仓库共用同一个 secret。
-            certs: [APPLE_CERTIFICATE_BASE64]
-          - platform: iOS
+          - platform: ios
             scheme: LinkPureIOS
-            destination: generic/platform=iOS
-            upload_type: ios
-            artifact: '*.ipa'
-            certs: []
-            # iOS 归档完全不签（原因见上面那段注释的最后一段）
-            archive_signing: 'CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO'
     steps:
       - uses: actions/checkout@v6
-
-      # keychain + 证书 + ASC API key 由这一个脚本负责（三个 job 共用）：导入 p12、
-      # 把 API key 落成 AuthKey_<id>.p8 并当场验一遍。
-      # 导入的是合集 p12；iOS 一张都不给——它一份本地签名物料都不需要。
-      - name: Setup signing keychain
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: ./Scripts/ci-signing.sh setup ${{ join(matrix.certs, ' ') }}
 
       - name: Generate Xcode project
         run: |
           brew install xcodegen
           xcodegen generate
 
-      # 归档阶段**刻意不签名**（macOS 走 ad-hoc，iOS 完全不签），原因见上面那段
-      # 注释的最后一段。这里不能加 `-allowProvisioningUpdates`：归档时需要的是
-      # 开发身份，本地没有、加上这个开关就等于允许 Apple 现造一张。
-      - name: Archive
-        run: |
-          xcodebuild archive \
-            -project LinkPure.xcodeproj \
-            -scheme ${{ matrix.scheme }} \
-            -configuration Release \
-            -destination '${{ matrix.destination }}' \
-            -archivePath build/${{ matrix.platform }}.xcarchive \
-            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            ${{ matrix.archive_signing }}
-
-      # macOS 归档是 ad-hoc 签的，它唯一的作用就是**让 entitlements 进到归档里**
-      # （entitlements 跟着签名走；完全不签的话导出重签时只会剩 profile 自带的两项，
-      # ASC 会用 90296 拒收）。所以这里只断言这一条不变量——别再把 ad-hoc 那行
-      # 顺手改成“真签名”，那需要一张本地有效的 app 证书，而 Xcode 不允许在
-      # automatic 签名下显式指定分发身份。
-      - name: Verify the archive carries entitlements
-        if: matrix.upload_type == 'macos'
-        run: |
-          APP=$(find build/${{ matrix.platform }}.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
-          codesign --verify --verbose=2 "$APP"
-          codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority=|TeamIdentifier='
-          codesign -d --entitlements - --xml "$APP" | plutil -p -
-          codesign -d --entitlements - --xml "$APP" | plutil -p - | grep -q 'com.apple.security.app-sandbox' \
-            || { echo '::error::归档里的 app 缺 app-sandbox entitlement（ad-hoc 那行被谁删了？）'; exit 1; }
-
-      - name: Export
-        env:
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          TEAM_ID: ${{ vars.TEAM_ID }}
-        run: |
-          # manageAppVersionAndBuildNumber=false 关掉「导出时自动 +1 build 号」——
-          # 默认开着的话 Xcode 会把我们指定的 601 改成 602，发布就不可复现了。
-          cat > build/ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>signingStyle</key><string>automatic</string>
-            <key>teamID</key><string>${TEAM_ID}</string>
-            <key>destination</key><string>export</string>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-            <key>uploadSymbols</key><true/>
-          </dict>
-          </plist>
-          EOF
-
-          # 归档已经真签过了，这一步只负责换成「distribution profile + installer
-          # 证书」那一套重签并打包（.pkg / .ipa）。profile 依旧由 Xcode 自己按
-          # bundle id 现取，我们没有也不需要 profile 文件。
-          xcodebuild -exportArchive \
-            -archivePath build/${{ matrix.platform }}.xcarchive \
-            -exportPath build/export-${{ matrix.platform }} \
-            -exportOptionsPlist build/ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$API_ISSUER"
-
-      - name: Show what got signed
-        run: |
-          EXPORT=build/export-${{ matrix.platform }}
-          ARTIFACT=$(find "$EXPORT" -name '${{ matrix.artifact }}' | head -1)
-          echo "artifact: $ARTIFACT"
-          if [ '${{ matrix.upload_type }}' = macos ]; then
-            pkgutil --check-signature "$ARTIFACT"
-          fi
-          # DistributionSummary 里能看到实际用的证书、profile、entitlements 和
-          # build 号，出问题时这一行就是最有用的线索
-          plutil -p "$EXPORT/DistributionSummary.plist"
-
-      - name: Validate with App Store Connect
-        env:
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: |
-          ARTIFACT=$(find build/export-${{ matrix.platform }} -name '${{ matrix.artifact }}' | head -1)
-          xcrun altool --validate-app --type ${{ matrix.upload_type }} --file "$ARTIFACT" \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$API_ISSUER"
-
-      - name: Upload to App Store Connect
-        if: needs.version.outputs.publish == 'true'
-        env:
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: |
-          ARTIFACT=$(find build/export-${{ matrix.platform }} -name '${{ matrix.artifact }}' | head -1)
-          xcrun altool --upload-app --type ${{ matrix.upload_type }} --file "$ARTIFACT" \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$API_ISSUER"
-
-      - name: Cleanup keychain
-        if: always()
-        run: ./Scripts/ci-signing.sh teardown
+      # release=false 时只演练到通过 Apple 的校验为止（不上传）。注意演练也会真去
+      # 问 Apple：同一个 version + build-number 传过之后，演练会失败在 ASC 的重复
+      # 校验上（ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE），重发要换 build 号。
+      - uses: rxliuli/apple-release/asc@v1
+        with:
+          platform: ${{ matrix.platform }}
+          scheme: ${{ matrix.scheme }}
+          project: LinkPure.xcodeproj
+          version: ${{ needs.version.outputs.version }}
+          build-number: ${{ needs.version.outputs.build_number }}
+          team-id: ${{ vars.TEAM_ID }}
+          release: ${{ needs.version.outputs.publish }}
+          certificate-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          api-key: ${{ secrets.APPLE_API_KEY }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-issuer: ${{ secrets.APPLE_API_ISSUER }}
 
   # ───────────────────────── macOS → 公证过的 DMG ─────────────────────────
   # 直发渠道（Homebrew / GitHub Release）。跟上一条最大的不同是签名身份：
@@ -413,65 +283,9 @@ jobs:
               LinkPure-macos.dmg
           fi
 
-      - name: Update Homebrew cask
-        env:
-          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
-          VERSION: ${{ needs.version.outputs.version }}
-        run: |
-          if [[ -z "${TAP_TOKEN}" ]]; then
-            echo "::warning::TAP_GITHUB_TOKEN 未配置，跳过 cask 更新（DMG 已经发到 GitHub Release）"
-            exit 0
-          fi
-
-          SHA256=$(sha256sum LinkPure-macos.dmg | cut -d' ' -f1)
-          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/rxliuli/homebrew-tap.git" tap
-          cd tap
-          mkdir -p Casks
-
-          if [[ -f Casks/linkpure.rb ]]; then
-            # 只改这两行：cask 里可能有人手写的 livecheck / caveats / zap，别覆盖掉
-            sed -i -E "s|^  version \".*\"$|  version \"${VERSION}\"|" Casks/linkpure.rb
-            sed -i -E "s|^  sha256 \".*\"$|  sha256 \"${SHA256}\"|" Casks/linkpure.rb
-          else
-            cat > Casks/linkpure.rb <<RUBY
-          cask "linkpure" do
-            version "${VERSION}"
-            sha256 "${SHA256}"
-
-            url "https://github.com/rxliuli/LinkPure/releases/download/v#{version}/LinkPure-macos.dmg"
-            name "LinkPure"
-            desc "Rewrites clipboard URLs using user-defined rules"
-            homepage "https://github.com/rxliuli/LinkPure"
-
-            livecheck do
-              url :url
-              strategy :github_latest
-            end
-
-            depends_on macos: ">= :sequoia"
-
-            app "LinkPure.app"
-
-            caveats <<~EOS
-              这个 cask 装的是同一款 app 的直发版本，bundle id 与 Mac App Store 版相同
-              （com.rxliuli.linkpure2）。两份同时装会互相覆盖，装之前请先卸掉另一份。
-            EOS
-
-            zap trash: [
-              "~/Library/Containers/com.rxliuli.linkpure2",
-              "~/Library/Preferences/com.rxliuli.linkpure2.plist",
-              "~/Library/Saved Application State/com.rxliuli.linkpure2.savedState",
-            ]
-          end
-          RUBY
-          fi
-
-          git add Casks/linkpure.rb
-          if git diff --cached --quiet; then
-            echo "cask 已经是 v${VERSION} / ${SHA256}，无需更新"
-            exit 0
-          fi
-          git -c user.name="github-actions[bot]" \
-              -c user.email="github-actions[bot]@users.noreply.github.com" \
-              commit -m "chore: bump linkpure to v${VERSION}"
-          git push
+      - uses: rxliuli/apple-release/tap-update@v1
+        with:
+          cask: linkpure
+          version: ${{ needs.version.outputs.version }}
+          artifact: LinkPure-macos.dmg
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
