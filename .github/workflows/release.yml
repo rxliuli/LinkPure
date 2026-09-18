@@ -158,17 +158,19 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      - name: Archive
-        env:
-          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      # A 路线：归档阶段**完全不签名**，签名全交给下面的 -exportArchive。
+      #
+      # 为什么：`xcodebuild archive` 在自动签名下会向 Xcode 要一张 Apple Development
+      # 证书（日志里写的是 "Apple Development: Created via API"），而且是**每跑一次就
+      # 新建一张**——今天十几轮演练把团队的开发证书额度烧光了，之后每次都报
+      # "Your account has reached the maximum number of certificates"。
+      # 归档不签名就不需要任何证书；而导出那一步只**复用**已存在的 Apple Distribution
+      # 证书 + App Store profile（证书列表里没有任何 Created via API 的分发证书，可佐证）。
+      #
+      # 注意这里也不传 -allowProvisioningUpdates / 认证参数：归档阶段既然不需要
+      # provisioning，就不给 Xcode 去创建东西的机会。
+      - name: Archive (unsigned)
         run: |
-          AUTH=(
-            -allowProvisioningUpdates
-            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
-            -authenticationKeyID "${API_KEY_ID}"
-            -authenticationKeyIssuerID "${API_ISSUER}"
-          )
           xcodebuild archive \
             -project LinkPure.xcodeproj \
             -scheme LinkPureMac \
@@ -176,7 +178,8 @@ jobs:
             -destination 'generic/platform=macOS' \
             -archivePath build/macos.xcarchive \
             CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            "${AUTH[@]}"
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Export .pkg
         env:
@@ -292,17 +295,9 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      - name: Archive
-        env:
-          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      # 同 macOS：归档不签名（原因见上面那个 job 的注释）
+      - name: Archive (unsigned)
         run: |
-          AUTH=(
-            -allowProvisioningUpdates
-            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
-            -authenticationKeyID "${API_KEY_ID}"
-            -authenticationKeyIssuerID "${API_ISSUER}"
-          )
           xcodebuild archive \
             -project LinkPure.xcodeproj \
             -scheme LinkPureIOS \
@@ -310,7 +305,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath build/ios.xcarchive \
             CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            "${AUTH[@]}"
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
 
       - name: Export .ipa
         env:
