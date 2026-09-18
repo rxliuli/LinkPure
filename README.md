@@ -5,6 +5,29 @@ LinkPure 的 **native Apple 平台实现**：macOS 菜单栏应用 + iOS（AppIn
 规则引擎抽成 `LinkPureCore` Swift Package —— 与 Flutter 版、以及未来的 Android 版
 共享**同一份规则库与同一套行为规范**。
 
+## 安装
+
+| 平台 | 可用的渠道 |
+| --- | --- |
+| iOS | **只能从 App Store 装**（没有 TestFlight 之类的外部渠道） |
+| macOS | App Store / Homebrew / 直接下载 DMG，三选一 |
+
+- **App Store**（macOS 与 iOS 共用同一个 app 记录，Universal Purchase）：
+  <https://apps.apple.com/app/id6753670551>
+- **Homebrew**（直发版）：
+
+  ```sh
+  brew install --cask rxliuli/tap/linkpure
+  ```
+
+- **DMG**（直发版，Developer ID 签名 + 已公证）：
+  <https://github.com/rxliuli/LinkPure/releases/latest>
+
+> ⚠️ Homebrew / DMG 装的直发版与 App Store 版 **bundle id 相同**
+> （`com.rxliuli.linkpure2`），两份同时装会互相覆盖。换渠道之前先卸掉另一份。
+
+系统要求：macOS 15（Sequoia）及以上；iOS 17 及以上。
+
 ## 为什么这样组织
 
 核心逻辑（规则引擎 + 1061 条规则）是唯一的资产；平台集成才是各端差异所在。
