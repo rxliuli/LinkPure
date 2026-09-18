@@ -239,7 +239,7 @@ public struct UrlCleaner: Sendable {
     /// 规则匹配**大小写不敏感**（与 Redirector 一致）。
     static func compile(_ pattern: String, caseInsensitive: Bool = true) -> NSRegularExpression? {
         try? NSRegularExpression(
-            pattern: asciiRewrite(pattern),
+            pattern: pattern,
             options: caseInsensitive ? [.caseInsensitive] : []
         )
     }
