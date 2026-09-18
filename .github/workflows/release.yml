@@ -1,0 +1,553 @@
+name: Release
+
+# 版本号（MARKETING_VERSION）和 build 号（CURRENT_PROJECT_VERSION）都写在 project.yml，
+# 所以它就是这条流水线唯一的输入：改 project.yml 里的版本 → 自动发一版。
+#
+# 只在版本**真的变了**时才发布（build 号单独变不算——那是重传同一版本号的情况，
+# 走 workflow_dispatch 并覆盖 build-number）。
+on:
+  push:
+    branches: [feat/swift-native]
+    paths: [project.yml]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 真正上传 ASC / 发 GitHub Release / 更新 cask（不勾只演练到「能通过 Apple 的校验」为止）
+        type: boolean
+        default: false
+      build-number:
+        description: 覆盖 CFBundleVersion（留空 = 用 project.yml 的 CURRENT_PROJECT_VERSION）
+        type: string
+        default: ""
+
+# 两个 release 同时跑会抢同一个 tag 和同一个 cask 文件
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ───────────────────────── 解析版本 ─────────────────────────
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      build_number: ${{ steps.read.outputs.build_number }}
+      run: ${{ steps.read.outputs.run }}
+      publish: ${{ steps.read.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      # 用仓库自己的 action 读 XcodeGen 的 project.yml（format 会自动识别成 xcodegen）
+      - id: check
+        uses: rxliuli/version-check@v1
+        with:
+          file: project.yml
+
+      - id: read
+        name: Resolve build number and whether to publish
+        run: |
+          VERSION="${{ steps.check.outputs.version }}"
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::没能从 project.yml 里读到 MARKETING_VERSION"
+            exit 1
+          fi
+
+          # 只有版本变了才发；手动触发（重传/重试）永远跑
+          RUN=false
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ steps.check.outputs.changed }}" == "true" ]]; then
+            RUN=true
+          fi
+
+          # 演练开关：push 触发时总是真发，手动触发时听输入
+          PUBLISH=false
+          if [[ "$RUN" == "true" ]] && { [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ inputs.publish }}" == "true" ]]; }; then
+            PUBLISH=true
+          fi
+
+          BUILD_NUMBER="${{ inputs.build-number }}"
+          if [[ -z "$BUILD_NUMBER" ]]; then
+            # 先去掉行尾注释再取数字：project.yml 里 build 号那一带注释不少
+            BUILD_NUMBER=$(grep -E '^[[:space:]]*CURRENT_PROJECT_VERSION:' project.yml \
+              | head -1 | sed 's/#.*//' | tr -dc '0-9')
+          fi
+          if [[ -z "$BUILD_NUMBER" ]]; then
+            echo "::error::没能从 project.yml 里读到 CURRENT_PROJECT_VERSION"
+            exit 1
+          fi
+
+          {
+            echo "version=${VERSION}"
+            echo "build_number=${BUILD_NUMBER}"
+            echo "run=${RUN}"
+            echo "publish=${PUBLISH}"
+          } >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}  build=${BUILD_NUMBER}  run=${RUN}  publish=${PUBLISH}"
+
+  # ───────────────────────── macOS → App Store Connect ─────────────────────────
+  # 用 Xcode 的「自动签名 + App Store Connect API key」认证，而不是把
+  # provisioning profile 塞进环境再 manual 签名：现有的那两个 profile 是
+  # **Xcode 托管**的（Team Store），manual 签名会直接报
+  # "is Xcode managed, but signing settings require a manually managed profile"。
+  # 自动签名这条路上 Xcode 会自己按 bundle id 找到/更新对应 profile，
+  # 因此也不需要 IOS_/MACOS_PROVISIONING_PROFILE_BASE64 这两个 secret。
+  macos-appstore:
+    name: macOS → App Store Connect
+    needs: version
+    if: needs.version.outputs.run == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    environment: release-macOS
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup keychain and API key
+        env:
+          APPSTORE_CERT: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}
+          APPSTORE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}
+          INSTALLER_CERT: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_BASE64 }}
+          INSTALLER_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_PASSWORD }}
+          API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
+
+          # 上传 Mac App Store 需要两张证书：Apple Distribution（签 app）+
+          # 3rd Party Mac Developer Installer（签 .pkg）
+          echo "$APPSTORE_CERT" | base64 --decode > $RUNNER_TEMP/appstore.p12
+          security import $RUNNER_TEMP/appstore.p12 -P "$APPSTORE_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          echo "$INSTALLER_CERT" | base64 --decode > $RUNNER_TEMP/installer.p12
+          security import $RUNNER_TEMP/installer.p12 -P "$INSTALLER_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+
+          mkdir -p ~/private_keys
+          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Archive
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          AUTH=(
+            -allowProvisioningUpdates
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
+            -authenticationKeyID "${API_KEY_ID}"
+            -authenticationKeyIssuerID "${API_ISSUER}"
+          )
+          xcodebuild archive \
+            -project LinkPure.xcodeproj \
+            -scheme LinkPureMac \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath build/macos.xcarchive \
+            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
+            "${AUTH[@]}"
+
+      - name: Export .pkg
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          TEAM_ID: ${{ vars.TEAM_ID }}
+        run: |
+          # manageAppVersionAndBuildNumber=false 关掉「导出时自动 +1 build 号」——
+          # 默认开着的话 Xcode 会把我们指定的 600 改成 601，发布就不可复现了。
+          cat > build/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>destination</key><string>export</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath build/macos.xcarchive \
+            -exportPath build/export-macos \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8" \
+            -authenticationKeyID "${API_KEY_ID}" \
+            -authenticationKeyIssuerID "${API_ISSUER}"
+
+      - name: Show what got signed
+        run: |
+          PKG=$(find build/export-macos -name '*.pkg' | head -1)
+          pkgutil --check-signature "$PKG"
+          # DistributionSummary 里能看到实际用的证书、profile、entitlements 和 build 号，
+          # 出问题时这一行就是最有用的线索
+          plutil -p build/export-macos/DistributionSummary.plist
+
+      - name: Validate with App Store Connect
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          PKG=$(find build/export-macos -name '*.pkg' | head -1)
+          xcrun altool --validate-app --type macos --file "$PKG" \
+            --apiKey "${API_KEY_ID}" --apiIssuer "${API_ISSUER}"
+
+      - name: Upload to App Store Connect
+        if: needs.version.outputs.publish == 'true'
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          PKG=$(find build/export-macos -name '*.pkg' | head -1)
+          xcrun altool --upload-app --type macos --file "$PKG" \
+            --apiKey "${API_KEY_ID}" --apiIssuer "${API_ISSUER}"
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+
+  # ───────────────────────── iOS → App Store Connect ─────────────────────────
+  ios-appstore:
+    name: iOS → App Store Connect
+    needs: version
+    if: needs.version.outputs.run == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 40
+    environment: release-macOS
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup keychain and API key
+        env:
+          APPSTORE_CERT: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}
+          APPSTORE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}
+          API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
+
+          echo "$APPSTORE_CERT" | base64 --decode > $RUNNER_TEMP/appstore.p12
+          security import $RUNNER_TEMP/appstore.p12 -P "$APPSTORE_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+
+          mkdir -p ~/private_keys
+          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Archive
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          AUTH=(
+            -allowProvisioningUpdates
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
+            -authenticationKeyID "${API_KEY_ID}"
+            -authenticationKeyIssuerID "${API_ISSUER}"
+          )
+          xcodebuild archive \
+            -project LinkPure.xcodeproj \
+            -scheme LinkPureIOS \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/ios.xcarchive \
+            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
+            "${AUTH[@]}"
+
+      - name: Export .ipa
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          TEAM_ID: ${{ vars.TEAM_ID }}
+        run: |
+          cat > build/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>destination</key><string>export</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath build/ios.xcarchive \
+            -exportPath build/export-ios \
+            -exportOptionsPlist build/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8" \
+            -authenticationKeyID "${API_KEY_ID}" \
+            -authenticationKeyIssuerID "${API_ISSUER}"
+
+      - name: Show what got signed
+        run: plutil -p build/export-ios/DistributionSummary.plist
+
+      - name: Validate with App Store Connect
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          IPA=$(find build/export-ios -name '*.ipa' | head -1)
+          xcrun altool --validate-app --type ios --file "$IPA" \
+            --apiKey "${API_KEY_ID}" --apiIssuer "${API_ISSUER}"
+
+      - name: Upload to App Store Connect
+        if: needs.version.outputs.publish == 'true'
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          IPA=$(find build/export-ios -name '*.ipa' | head -1)
+          xcrun altool --upload-app --type ios --file "$IPA" \
+            --apiKey "${API_KEY_ID}" --apiIssuer "${API_ISSUER}"
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+
+  # ───────────────────────── macOS → 公证过的 DMG ─────────────────────────
+  # 直发渠道（Homebrew / GitHub Release）。跟上面两条最大的不同是签名身份：
+  # Developer ID + hardened runtime + 公证，**不嵌任何 provisioning profile**
+  # （所以这里 manual 签名是合法的——上架那条路上的托管 profile 才是麻烦所在）。
+  macos-dmg:
+    name: macOS → notarized DMG
+    needs: version
+    if: needs.version.outputs.run == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    environment: release-macOS
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup keychain and API key
+        env:
+          DEVELOPERID_CERT: ${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_BASE64 }}
+          DEVELOPERID_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_PASSWORD }}
+          API_KEY: ${{ secrets.APPLE_API_KEY }}
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          security create-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security set-keychain-settings -lut 21600 $RUNNER_TEMP/app-signing.keychain-db
+          security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
+          security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
+
+          echo "$DEVELOPERID_CERT" | base64 --decode > $RUNNER_TEMP/developerid.p12
+          security import $RUNNER_TEMP/developerid.p12 -P "$DEVELOPERID_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
+          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+
+          mkdir -p ~/private_keys
+          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Archive with Developer ID
+        env:
+          SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
+        run: |
+          # 这里**不能**传 PROVISIONING_PROFILE_SPECIFIER：它是全局构建设置，
+          # 会连 SwiftPM 的 LinkPureCore_LinkPureCore 资源包一起要求 profile
+          # （那是纯资源包，不支持 profile）。
+          xcodebuild archive \
+            -project LinkPure.xcodeproj \
+            -scheme LinkPureMac \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -archivePath build/dmg.xcarchive \
+            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="${SIGNING_IDENTITY}"
+
+      - name: Verify the archived app
+        run: |
+          APP=$(find build/dmg.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority=|TeamIdentifier=|flags='
+          # 上 Mac App Store 要 universal；这个渠道也一并保持一致
+          lipo -info "$APP/Contents/MacOS/$(basename "$APP" .app)"
+
+      - name: Create DMG
+        env:
+          SIGNING_IDENTITY: ${{ vars.SIGNING_IDENTITY_DMG }}
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
+        run: |
+          APP=$(find build/dmg.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
+          brew untap aws/tap 2>/dev/null || true
+          brew install create-dmg
+          create-dmg \
+            --volname "LinkPure" \
+            --window-pos 200 120 \
+            --window-size 660 400 \
+            --icon-size 100 \
+            --icon "$(basename "$APP")" 180 170 \
+            --hide-extension "$(basename "$APP")" \
+            --app-drop-link 480 170 \
+            --codesign "${SIGNING_IDENTITY}" \
+            "LinkPure-macos.dmg" \
+            "$APP"
+          codesign --verify --verbose=2 LinkPure-macos.dmg
+
+      - name: Notarize and staple
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          xcrun notarytool submit LinkPure-macos.dmg \
+            --key "$HOME/private_keys/AuthKey_${API_KEY_ID}.p8" \
+            --key-id "${API_KEY_ID}" \
+            --issuer "${API_ISSUER}" \
+            --wait
+          xcrun stapler staple LinkPure-macos.dmg
+          # 盖章是真的成功了，而不是 notarytool 说成功
+          xcrun stapler validate LinkPure-macos.dmg
+          # Gatekeeper 的最终判定。放在这里当"附加证据"而不是硬门：
+          # runner 上的 assess 守护进程状态偶尔会给出假阴性，而 stapler validate 已经过了。
+          spctl -a -t open --context context:primary-signature -v LinkPure-macos.dmg \
+            || echo "::warning::spctl 未通过（stapler validate 已通过，通常是 runner 上的 Gatekeeper 状态问题）"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos-dmg
+          path: LinkPure-macos.dmg
+          if-no-files-found: error
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
+          rm -rf ~/private_keys || true
+
+  # ───────────────────────── GitHub Release + Homebrew cask ─────────────────────────
+  release:
+    name: GitHub Release + Homebrew cask
+    needs: [version, macos-appstore, ios-appstore, macos-dmg]
+    # always()：needs 里有被跳过的 job 时，不加它就整个跳过
+    if: >-
+      always()
+      && needs.version.outputs.publish == 'true'
+      && needs.macos-appstore.result == 'success'
+      && needs.ios-appstore.result == 'success'
+      && needs.macos-dmg.result == 'success'
+    runs-on: ubuntu-latest
+    environment: release-macOS
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: macos-dmg
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          TAG="v${VERSION}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "${TAG} 已存在，只替换 DMG"
+            gh release upload "$TAG" LinkPure-macos.dmg --clobber --repo "${{ github.repository }}"
+          else
+            gh release create "$TAG" \
+              --title "Release ${TAG}" \
+              --generate-notes \
+              --repo "${{ github.repository }}" \
+              LinkPure-macos.dmg
+          fi
+
+      - name: Update Homebrew cask
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          if [[ -z "${TAP_TOKEN}" ]]; then
+            echo "::warning::TAP_GITHUB_TOKEN 未配置，跳过 cask 更新（DMG 已经发到 GitHub Release）"
+            exit 0
+          fi
+
+          SHA256=$(sha256sum LinkPure-macos.dmg | cut -d' ' -f1)
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/rxliuli/homebrew-tap.git" tap
+          cd tap
+          mkdir -p Casks
+
+          if [[ -f Casks/linkpure.rb ]]; then
+            # 只改这两行：cask 里可能有人手写的 livecheck / caveats / zap，别覆盖掉
+            sed -i -E "s|^  version \".*\"$|  version \"${VERSION}\"|" Casks/linkpure.rb
+            sed -i -E "s|^  sha256 \".*\"$|  sha256 \"${SHA256}\"|" Casks/linkpure.rb
+          else
+            cat > Casks/linkpure.rb <<RUBY
+          cask "linkpure" do
+            version "${VERSION}"
+            sha256 "${SHA256}"
+
+            url "https://github.com/rxliuli/LinkPure/releases/download/v#{version}/LinkPure-macos.dmg"
+            name "LinkPure"
+            desc "Rewrites clipboard URLs using user-defined rules"
+            homepage "https://github.com/rxliuli/LinkPure"
+
+            livecheck do
+              url :url
+              strategy :github_latest
+            end
+
+            depends_on macos: ">= :sequoia"
+
+            app "LinkPure.app"
+
+            caveats <<~EOS
+              这个 cask 装的是同一款 app 的直发版本，bundle id 与 Mac App Store 版相同
+              （com.rxliuli.linkpure2）。两份同时装会互相覆盖，装之前请先卸掉另一份。
+            EOS
+
+            zap trash: [
+              "~/Library/Containers/com.rxliuli.linkpure2",
+              "~/Library/Preferences/com.rxliuli.linkpure2.plist",
+              "~/Library/Saved Application State/com.rxliuli.linkpure2.savedState",
+            ]
+          end
+          RUBY
+          fi
+
+          git add Casks/linkpure.rb
+          if git diff --cached --quiet; then
+            echo "cask 已经是 v${VERSION} / ${SHA256}，无需更新"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+              -c user.email="github-actions[bot]@users.noreply.github.com" \
+              commit -m "chore: bump linkpure to v${VERSION}"
+          git push
