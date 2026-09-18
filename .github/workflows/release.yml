@@ -16,7 +16,7 @@ on:
         type: boolean
         default: false
       build-number:
-        description: 覆盖 CFBundleVersion（留空 = 用 project.yml 的 CURRENT_PROJECT_VERSION）
+        description: 覆盖 CFBundleVersion（留空 = 按版本号自动算：x*10000 + y*100 + z）
         type: string
         default: ""
 
@@ -70,14 +70,19 @@ jobs:
             PUBLISH=true
           fi
 
+          # build number 默认按版本号算，跟 Flutter repo 的 CI 用同一个公式
+          # （x*10000 + y*100 + z，0.6.1 → 601）。这样“改版本号”就是发版唯一的动作，
+          # 不必再去 project.yml 里同步一个数字；两套实现映射出同一个 build number，
+          # App Store 才不会当成重复或倒序。
+          # 同一个版本要重传时（该 build number 已被 ASC 占掉），用 workflow_dispatch
+          # 的 build-number 输入覆盖。
           BUILD_NUMBER="${{ inputs.build-number }}"
           if [[ -z "$BUILD_NUMBER" ]]; then
-            # 先去掉行尾注释再取数字：project.yml 里 build 号那一带注释不少
-            BUILD_NUMBER=$(grep -E '^[[:space:]]*CURRENT_PROJECT_VERSION:' project.yml \
-              | head -1 | sed 's/#.*//' | tr -dc '0-9')
+            IFS='.' read -r MAJOR MINOR PATCH <<< "${VERSION}"
+            BUILD_NUMBER=$((MAJOR * 10000 + MINOR * 100 + PATCH))
           fi
-          if [[ -z "$BUILD_NUMBER" ]]; then
-            echo "::error::没能从 project.yml 里读到 CURRENT_PROJECT_VERSION"
+          if ! [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::build number 算出的是 '$BUILD_NUMBER'（版本号 $VERSION 不是 x.y.z 形式？）"
             exit 1
           fi
 
