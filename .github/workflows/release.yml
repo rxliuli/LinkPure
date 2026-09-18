@@ -146,9 +146,10 @@ jobs:
           api-issuer: ${{ secrets.APPLE_API_ISSUER }}
 
   # ───────────────────────── macOS → 公证过的 DMG ─────────────────────────
-  # 直发渠道（Homebrew / GitHub Release）。跟上一条最大的不同是签名身份：
-  # Developer ID + hardened runtime + 公证，**不嵌任何 provisioning profile**
-  # （所以这里 manual 签名是合法的——上架那条路上的托管 profile 才是麻烦所在）。
+  # 直发渠道（Homebrew / GitHub Release）。规则与"为什么"都在共享 action 那边：
+  # https://github.com/rxliuli/apple-release —— 与上架那条路最大的不同是它必须
+  # 本地持有一张有效的 Developer ID 证书（直发不嵌 profile，没有托管身份可依赖），
+  # 所以那边会显式钉住签名身份。
   macos-dmg:
     name: macOS → notarized DMG
     needs: version
@@ -159,95 +160,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # 跟 appstore 那两个平台共用同一份准备逻辑（Scripts/ci-signing.sh）和同一个
-      # 合集 secret；区别只是这里真的拿里面的 Developer ID 身份去签名。
-      # vars.SIGNING_IDENTITY_DMG 从原来的「唯一真相」降级成一道断言（它必须跟
-      # 导入进来的证书对得上），真正的身份名由脚本从 keychain 里读出来，
-      # 供下面的 archive / create-dmg 使用——两处不再需要手动保持一致。
-      - name: Setup signing keychain
-        env:
-          SIGNING_IDENTITY_DMG: ${{ vars.SIGNING_IDENTITY_DMG }}
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: ./Scripts/ci-signing.sh setup --expect "${SIGNING_IDENTITY_DMG}" APPLE_CERTIFICATE_BASE64
-
       - name: Generate Xcode project
         run: |
           brew install xcodegen
           xcodegen generate
 
-      # SIGNING_IDENTITY 由上面的脚本导出（= keychain 里那个 Developer ID 证书的全名）
-      - name: Archive with Developer ID
-        run: |
-          # 这里**不能**传 PROVISIONING_PROFILE_SPECIFIER：它是全局构建设置，
-          # 会连 SwiftPM 的 LinkPureCore_LinkPureCore 资源包一起要求 profile
-          # （那是纯资源包，不支持 profile）。
-          xcodebuild archive \
-            -project LinkPure.xcodeproj \
-            -scheme LinkPureMac \
-            -configuration Release \
-            -destination 'generic/platform=macOS' \
-            -archivePath build/dmg.xcarchive \
-            CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="${SIGNING_IDENTITY}"
-
-      - name: Verify the archived app
-        run: |
-          APP=$(find build/dmg.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
-          codesign --verify --deep --strict --verbose=2 "$APP"
-          codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority=|TeamIdentifier=|flags='
-          # 上 Mac App Store 要 universal；这个渠道也一并保持一致
-          lipo -info "$APP/Contents/MacOS/$(basename "$APP" .app)"
-
-      - name: Create DMG
-        env:
-          HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
-        run: |
-          APP=$(find build/dmg.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
-          brew untap aws/tap 2>/dev/null || true
-          brew install create-dmg
-          create-dmg \
-            --volname "LinkPure" \
-            --window-pos 200 120 \
-            --window-size 660 400 \
-            --icon-size 100 \
-            --icon "$(basename "$APP")" 180 170 \
-            --hide-extension "$(basename "$APP")" \
-            --app-drop-link 480 170 \
-            --codesign "${SIGNING_IDENTITY}" \
-            "LinkPure-macos.dmg" \
-            "$APP"
-          codesign --verify --verbose=2 LinkPure-macos.dmg
-
-      - name: Notarize and staple
-        env:
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: |
-          xcrun notarytool submit LinkPure-macos.dmg \
-            --key "$ASC_KEY_PATH" \
-            --key-id "$ASC_KEY_ID" \
-            --issuer "$API_ISSUER" \
-            --wait
-          xcrun stapler staple LinkPure-macos.dmg
-          # 盖章是真的成功了，而不是 notarytool 说成功
-          xcrun stapler validate LinkPure-macos.dmg
-          # Gatekeeper 的最终判定。放在这里当"附加证据"而不是硬门：
-          # runner 上的 assess 守护进程状态偶尔会给出假阴性，而 stapler validate 已经过了。
-          spctl -a -t open --context context:primary-signature -v LinkPure-macos.dmg \
-            || echo "::warning::spctl 未通过（stapler validate 已通过，通常是 runner 上的 Gatekeeper 状态问题）"
+      # 产物默认叫 <App>-macos.dmg（= LinkPure-macos.dmg，cask 的 url 依赖这个名字），
+      # 落在 build/apple-release/ 下，路径由 dmg-path 输出。
+      - uses: rxliuli/apple-release/dmg@v1
+        id: dmg
+        with:
+          project: LinkPure.xcodeproj
+          scheme: LinkPureMac
+          version: ${{ needs.version.outputs.version }}
+          build-number: ${{ needs.version.outputs.build_number }}
+          signing-identity: ${{ vars.SIGNING_IDENTITY_DMG }}
+          certificate-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          api-key: ${{ secrets.APPLE_API_KEY }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-issuer: ${{ secrets.APPLE_API_ISSUER }}
 
       - uses: actions/upload-artifact@v7
         with:
           name: macos-dmg
-          path: LinkPure-macos.dmg
+          path: ${{ steps.dmg.outputs.dmg-path }}
           if-no-files-found: error
-
-      - name: Cleanup keychain
-        if: always()
-        run: ./Scripts/ci-signing.sh teardown
 
   # ───────────────────────── GitHub Release + Homebrew cask ─────────────────────────
   release:
