@@ -54,14 +54,6 @@ decode_base64() {
   python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$1"
 }
 
-# 从 p12 里取出证书 PEM。不依赖 keychain 的信任评估，也不依赖我们去猜证书叫什么。
-# 末尾的 -legacy 是兜底：老式 PBE 加密的 p12 在 OpenSSL 3 下必须显式打开才读得到。
-p12_cert_pem() {
-  openssl pkcs12 -in "$1" -passin "pass:$2" -clcerts -nokeys 2>/dev/null \
-    || openssl pkcs12 -legacy -in "$1" -passin "pass:$2" -clcerts -nokeys 2>/dev/null \
-    || true
-}
-
 teardown() {
   security delete-keychain "${SIGNING_KEYCHAIN:-$KEYCHAIN}" >/dev/null 2>&1 || true
   rm -rf "$HOME/private_keys"
@@ -109,7 +101,7 @@ setup() {
   fi
   security default-keychain -s "$KEYCHAIN"
 
-  local name pw_name value password dir pem subject
+  local name pw_name value password dir
   # 用 if 包住而不是直接 for：bash 3.2 在 `set -u` 下展开空数组会报
   # `certs[@]: unbound variable`（bash 4.4 才修）。
   if [ ${#certs[@]} -gt 0 ]; then
@@ -126,21 +118,12 @@ setup() {
     dir="$(mktemp -d)"
     decode_base64 "$value" >"$dir/cert.p12"
 
-    # 先用 openssl 从 p12 里把证书本身读出来，查有效期。
-    # 过期证书必须当场挡掉：拿它手动签名会失败，而更阴的情况是导出阶段发现本地
-    # 没有可用身份，于是转头让 Apple 现造一张——installer 证书的上限只有 3 张。
-    # 这个坑真踩过：APPLE_CERTIFICATE_APPSTORE 里那张 Apple Distribution 早已
-    # 过期，而流水线一直没发现（旧流程只把 `find-identity -v` 的输出打出来给人看，
-    # 没人校验过）。
-    pem="$(p12_cert_pem "$dir/cert.p12" "$password")"
-    [ -n "$pem" ] || fail "$name 解出来的 p12 里读不到证书（密码不对？或者这根本不是个 p12？）"
-    subject="$(printf '%s\n' "$pem" | openssl x509 -noout -subject 2>/dev/null || true)"
-    printf '%s\n' "$pem" | openssl x509 -noout -checkend 0 >/dev/null 2>&1 \
-      || fail "$name 里的证书已经过期（${subject}）——去 developer.apple.com 重新签发、更新 secret 之后再发版。"
-    echo "::notice title=$name::${subject}"
-
+    # 这里**不查有效期**。这个 p12 是个合集（开发 / 分发 / installer /
+    # Developer ID 全在里面，多个仓库共用），里面必然携带着历史遗留的过期证书，
+    # 拿它们拦发布只会误报；而真正要用的那张过期时，签名/导出那一步会直接失败。
+    #
     # 导入的原始输出故意留着不重定向：它只有几行（"1 key imported" /
-    # "1 certificate imported"），而一旦后面报错，这几行就是「到底是只有证书
+    # "1 certificate imported"），而一旦后面那道闸报错，这几行就是「只有证书
     # 还是没有私钥」的唯一直接证据。
     #
     # -A：允许任何程序使用导入的私钥。这只是一次性 runner 上的一次性 keychain，

@@ -147,10 +147,11 @@ jobs:
             artifact: '*.pkg'
             # 归档怎么签（见上面那段注释）。引号是 YAML 的，传给 shell 后只剩 `-`。
             archive_signing: 'CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-"'
-            # Mac App Store 的 .pkg 由 productbuild 用 **本地** installer 证书签，
-            # 所以只有 macOS 需要一张证书。app 自己的签名身份来自 cloud signing，
-            # 两边都不需要本地 app 证书（见上面那段注释）。
-            certs: [APPLE_CERTIFICATE_INSTALLER_BASE64]
+            # Mac App Store 的 .pkg 由 productbuild 用**本地** installer 证书签，
+            # 所以只有 macOS 需要导入证书；iOS 只需要 ASC API key。
+            # 导入的是一个「合集」p12（开发 / 分发 / installer / Developer ID 全在里面），
+            # 多个仓库共用同一个 secret。
+            certs: [APPLE_CERTIFICATE_BASE64]
           - platform: iOS
             scheme: LinkPureIOS
             destination: generic/platform=iOS
@@ -162,15 +163,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # keychain + 证书 + ASC API key 由这一个脚本负责（三个 job 共用）。
-      # 它做两件事：把每个 p12 里的证书读出来**查有效期**（过期证书会让导出阶段
-      # 转头去让 Apple 现造一张，而那张的私钥随 runner 销毁 —— installer 证书的
-      # 上限只有 3 张），以及把 API key 落成 AuthKey_<id>.p8 并当场验一遍。
-      # iOS 一张证书都不给：它一份本地签名物料都不需要。
+      # keychain + 证书 + ASC API key 由这一个脚本负责（三个 job 共用）：导入 p12、
+      # 把 API key 落成 AuthKey_<id>.p8 并当场验一遍。
+      # 导入的是合集 p12；iOS 一张都不给——它一份本地签名物料都不需要。
       - name: Setup signing keychain
         env:
-          APPLE_CERTIFICATE_INSTALLER_BASE64: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_BASE64 }}
-          APPLE_CERTIFICATE_INSTALLER_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_PASSWORD }}
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: ./Scripts/ci-signing.sh setup ${{ join(matrix.certs, ' ') }}
@@ -290,18 +289,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # 跟 appstore 那两个平台共用同一份准备逻辑（Scripts/ci-signing.sh），
-      # 只是证书换成 Developer ID。vars.SIGNING_IDENTITY_DMG 从原来的「唯一真相」
-      # 降级成一道断言（它必须跟导入进来的证书对得上），真正的身份名由脚本从
-      # keychain 里读出来，供下面的 archive / create-dmg 使用——两处不再需要手动保持一致。
+      # 跟 appstore 那两个平台共用同一份准备逻辑（Scripts/ci-signing.sh）和同一个
+      # 合集 secret；区别只是这里真的拿里面的 Developer ID 身份去签名。
+      # vars.SIGNING_IDENTITY_DMG 从原来的「唯一真相」降级成一道断言（它必须跟
+      # 导入进来的证书对得上），真正的身份名由脚本从 keychain 里读出来，
+      # 供下面的 archive / create-dmg 使用——两处不再需要手动保持一致。
       - name: Setup signing keychain
         env:
           SIGNING_IDENTITY_DMG: ${{ vars.SIGNING_IDENTITY_DMG }}
-          APPLE_CERTIFICATE_DEVELOPERID_BASE64: ${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_BASE64 }}
-          APPLE_CERTIFICATE_DEVELOPERID_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_DEVELOPERID_PASSWORD }}
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: ./Scripts/ci-signing.sh setup --expect "${SIGNING_IDENTITY_DMG}" APPLE_CERTIFICATE_DEVELOPERID_BASE64
+        run: ./Scripts/ci-signing.sh setup --expect "${SIGNING_IDENTITY_DMG}" APPLE_CERTIFICATE_BASE64
 
       - name: Generate Xcode project
         run: |
