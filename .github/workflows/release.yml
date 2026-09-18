@@ -158,18 +158,22 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      # A 路线：归档阶段**完全不签名**，签名全交给下面的 -exportArchive。
+      # A 路线：归档阶段**不申请任何证书**，签 app / 签 .pkg 全交给下面的 -exportArchive。
       #
-      # 为什么：`xcodebuild archive` 在自动签名下会向 Xcode 要一张 Apple Development
-      # 证书（日志里写的是 "Apple Development: Created via API"），而且是**每跑一次就
-      # 新建一张**——今天十几轮演练把团队的开发证书额度烧光了，之后每次都报
-      # "Your account has reached the maximum number of certificates"。
-      # 归档不签名就不需要任何证书；而导出那一步只**复用**已存在的 Apple Distribution
-      # 证书 + App Store profile（证书列表里没有任何 Created via API 的分发证书，可佐证）。
+      # 为什么不能再让归档自动签名：`xcodebuild archive` 在自动签名下会向 Xcode 要一张
+      # Apple Development 证书（日志里是 "Apple Development: Created via API"），而且是
+      # **每跑一次就新建一张**——团队里现在躺着 10 张今天创建的 Created via API 证书，
+      # 额度被烧光，之后每次都报 "Your account has reached the maximum number of
+      # certificates"。而导出那一步只**复用**已存在的 Apple Distribution 证书 + App Store
+      # profile（证书列表里没有任何 Created via API 的分发证书，可佐证）。
       #
-      # 注意这里也不传 -allowProvisioningUpdates / 认证参数：归档阶段既然不需要
-      # provisioning，就不给 Xcode 去创建东西的机会。
-      - name: Archive (unsigned)
+      # 但也不能完全不签（CODE_SIGNING_ALLOWED=NO）：entitlements 是**跟着签名走的**。
+      # 归档不签，Xcode 手里就没有我们那份 entitlements，导出重签时只会用 profile 自带的
+      # 那些，于是 sandbox/network/files 三项丢失，ASC 直接拒收：
+      #   App sandbox not enabled ... must include com.apple.security.app-sandbox (90296)
+      # 所以用 **ad-hoc 签名**（identity 就是 "-"）：不需要证书、不需要 profile，
+      # 但足以让那三项 entitlements 进到归档里，导出时再与 profile 的合并。
+      - name: Archive (ad-hoc signed)
         run: |
           xcodebuild archive \
             -project LinkPure.xcodeproj \
@@ -178,8 +182,8 @@ jobs:
             -destination 'generic/platform=macOS' \
             -archivePath build/macos.xcarchive \
             CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="-"
 
       - name: Export .pkg
         env:
@@ -295,7 +299,12 @@ jobs:
           brew install xcodegen
           xcodegen generate
 
-      # 同 macOS：归档不签名（原因见上面那个 job 的注释）
+      # 同 macOS：归档不申请证书（原因见上面那个 job 的注释）。
+      # iOS 可以**完全不签**：它的 entitlements 本来就全部来自 profile
+      # （application-identifier / team-identifier / get-task-allow），没有项目里声明的
+      # 那一类，所以不存在 macOS 那个"entitlements 跟着签名丢"的问题。
+      # ⚠️ 以后给 iOS 加了自定义 entitlement（keychain group、app group 等），
+      #    这里就得照 macOS 那样改成 ad-hoc 签名，否则会在 ASC 校验阶段才发现。
       - name: Archive (unsigned)
         run: |
           xcodebuild archive \
