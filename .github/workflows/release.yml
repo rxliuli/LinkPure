@@ -264,11 +264,10 @@ jobs:
 
           # iOS 不需要导任何证书：App Store 那套（Apple Distribution + profile）
           # 都由 Xcode 通过 API key 自动搞定（DistributionSummary 里是
-          # Cloud Managed Apple Distribution）。keychain 只为自动签名可能用到的
-          # 本地证书留着，以及下一行写 API key 用。
-
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
-          security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
+          # Cloud Managed Apple Distribution）。
+          # 也**不能**跑下面那两条 security：set-key-partition-list 在空 keychain
+          # 上会直接报 SecItemCopyMatching: The specified item could not be found。
+          # （macOS 那个 job 导入了 Installer 证书，所以那两条在那里是必须的。）
 
           # 同上：补 padding + openssl 校验，别让残缺的 base64 在几分钟后才以
           # invalidPEMDocument 的形式暴露出来
