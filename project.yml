@@ -16,12 +16,12 @@ settings:
     # Swift 重写不另起一个 1.0。0.6.x 是 Swift 原生版相对线上那版的功能更新。
     # 上传 App Store 时 **不能低于已发布版本**，否则直接被拒。
     # 0.6.1：ASC 里 0.6.0 的 build 600 已经用掉了，而 build number 必须严格递增，
-    # 所以补丁版一起往前走。
-    MARKETING_VERSION: "0.6.1"
+    # 所以补丁版一起往前走。0.6.2：把发布流程改成「归档即真签名」那一版。
+    MARKETING_VERSION: "0.6.2"
     # build number 用 Flutter 仓库 CI 里那条公式：x*10000 + y*100 + z
-    #（0.6.1 → 6*100+1 = 601）。发版时 release.yml 会按版本号算出来覆盖本值，
-    # 这里的 601 只是给本机 Xcode archive 用的默认值，两者要保持一致。
-    CURRENT_PROJECT_VERSION: "601"
+    #（0.6.2 → 6*100+2 = 602）。发版时 release.yml 会按版本号算出来覆盖本值，
+    # 这里的 602 只是给本机 Xcode archive 用的默认值，两者要保持一致。
+    CURRENT_PROJECT_VERSION: "602"
     # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（会显示在 macOS 的「关于」面板）。
     # 原来沿用 Flutter 版的值是 `Copyright © 2025 com.rxliuli. …`——
     # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
@@ -103,6 +103,15 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1,2"
+        # 一定要写在 **iOS target** 这一层：XcodeGen 对 iOS 会硬编码注入
+        # CODE_SIGN_IDENTITY = "iPhone Developer"（写死在它的 Swift 源码里，不在
+        # SettingPresets/*.yml，所以只在目标级设置能盖掉它）——那是个早已不存在的
+        # 身份名，自动签名解析不到就会去 Apple 申请一张新的 Apple Development 证书，
+        # 一次一张、私钥随 runner 销毁，直到撞上账号上限。
+        # 写成现代的名字，跟 imp-rec 那个手写工程里的取值一致。
+        # 注：macOS 那侧 XcodeGen 不会注入，Xcode 的默认值本来就是 Apple Development，
+        # 所以不必多写一行。
+        CODE_SIGN_IDENTITY: "Apple Development"
       configs:
         Release:
           PRODUCT_BUNDLE_IDENTIFIER: com.rxliuli.linkpure2
