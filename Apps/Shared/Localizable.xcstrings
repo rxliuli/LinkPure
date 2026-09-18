@@ -1,43 +1,33 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "%lld / %lld enabled": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld / %lld 条启用"
-          }
-        }
-      }
-    },
-    "%lld URLs rewritten": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld URL rewritten"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "… %lld more steps" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "… %lld more step"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld URLs rewritten"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "… %lld more steps"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "已改写 %lld 次"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "… 还有 %lld 步"
                 }
               }
             }
@@ -45,33 +35,43 @@
         }
       }
     },
-    "%lld rules": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld rule"
+    "%lld / %lld enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld / %lld 条启用"
+          }
+        }
+      }
+    },
+    "%lld rules" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rule"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld rules"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld rules"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld 条"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 条"
                 }
               }
             }
@@ -79,274 +79,43 @@
         }
       }
     },
-    "%lld rules · Read-only": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld 条 · 只读"
+    "%lld rules · Read-only" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 条 · 只读"
           }
         }
       }
     },
-    "Add LinkPure's “Clean URL Text” action": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加 LinkPure 的「Clean URL Text」动作"
-          }
-        }
-      }
-    },
-    "Add Rule": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新增规则"
-          }
-        }
-      }
-    },
-    "Add a rule (⌘N)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "新增规则（⌘N）"
-          }
-        }
-      }
-    },
-    "Add an “If” and put the write-back actions inside it": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加一个「如果」，把写回动作放进去"
-          }
-        }
-      }
-    },
-    "Back Tap": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "轻点背面"
-          }
-        }
-      }
-    },
-    "Built-in Rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置规则库"
-          }
-        }
-      }
-    },
-    "Built-in rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置规则"
-          }
-        }
-      }
-    },
-    "Built-in rules are always active": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置规则始终生效，无需管理"
-          }
-        }
-      }
-    },
-    "Built-in rules are read-only": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置规则库只读"
-          }
-        }
-      }
-    },
-    "Built-in rules can't be edited and always apply. Long-press any rule to copy its regular expression.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置规则不能编辑，始终参与改写。长按任意一条可复制它的正则。"
-          }
-        }
-      }
-    },
-    "Built-in shared rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "内置共享规则"
-          }
-        }
-      }
-    },
-    "Cancel": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
-          }
-        }
-      }
-    },
-    "Circular Redirect": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "检测到循环重定向"
-          }
-        }
-      }
-    },
-    "Clean URL Text": {},
-    "Clear": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "清空"
-          }
-        }
-      }
-    },
-    "Condition: Clean URL Text “is not” Clipboard — drag both variables into the condition": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "条件：Clean URL Text 「不等于」剪贴板——两个变量都拖进条件里"
-          }
-        }
-      }
-    },
-    "Control Center": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "控制中心"
-          }
-        }
-      }
-    },
-    "Control Center is the best pick: one swipe from any app, no switching required.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "推荐「控制中心」：在任意 App 里下滑就能触发，不用切换应用。"
-          }
-        }
-      }
-    },
-    "Copy Regular Expression": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "复制正则"
-          }
-        }
-      }
-    },
-    "Copy Rule ID": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "复制规则 id"
-          }
-        }
-      }
-    },
-    "Could not change the launch at login setting: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开机自启设置失败：%@"
-          }
-        }
-      }
-    },
-    "Could not load the rule library: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则库加载失败：%@"
-          }
-        }
-      }
-    },
-    "Current status": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "当前状态"
-          }
-        }
-      }
-    },
-    "Custom rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自定义规则"
-          }
-        }
-      }
-    },
-    "Delete %lld Rules": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Delete %lld Rule"
+    "%lld URLs rewritten" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld URL rewritten"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Delete %lld Rules"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld URLs rewritten"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "删除 %lld 条规则"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已改写 %lld 次"
                 }
               }
             }
@@ -354,43 +123,287 @@
         }
       }
     },
-    "Delete Rule": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删除规则"
+    "^https://example\\.com/..." : {
+
+    },
+    "^https://example\\.com/(.*)$" : {
+
+    },
+    "→ %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "→ %@"
           }
         }
       }
     },
-    "Deleted %lld rules": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Deleted %lld rule"
+    "Add a rule (⌘N)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增规则（⌘N）"
+          }
+        }
+      }
+    },
+    "Add an “If” and put the write-back actions inside it" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "加一个「如果」，把写回动作放进去"
+          }
+        }
+      }
+    },
+    "Add LinkPure's “Clean URL Text” action" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加 LinkPure 的「Clean URL Text」动作"
+          }
+        }
+      }
+    },
+    "Add Rule" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增规则"
+          }
+        }
+      }
+    },
+    "Back Tap" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "轻点背面"
+          }
+        }
+      }
+    },
+    "Built-in rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置规则"
+          }
+        }
+      }
+    },
+    "Built-in Rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置规则库"
+          }
+        }
+      }
+    },
+    "Built-in rules are always active" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置规则始终生效，无需管理"
+          }
+        }
+      }
+    },
+    "Built-in rules are read-only" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置规则库只读"
+          }
+        }
+      }
+    },
+    "Built-in rules can't be edited and always apply. Long-press any rule to copy its regular expression." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置规则不能编辑，始终参与改写。长按任意一条可复制它的正则。"
+          }
+        }
+      }
+    },
+    "Built-in shared rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置共享规则"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Circular Redirect" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到循环重定向"
+          }
+        }
+      }
+    },
+    "Clean URL Text" : {
+
+    },
+    "Clear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清空"
+          }
+        }
+      }
+    },
+    "ClearURLs" : {
+
+    },
+    "Condition: Clean URL Text “is not” Clipboard — drag both variables into the condition" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "条件：Clean URL Text 「不等于」剪贴板——两个变量都拖进条件里"
+          }
+        }
+      }
+    },
+    "Control Center" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "控制中心"
+          }
+        }
+      }
+    },
+    "Control Center is the best pick: one swipe from any app, no switching required." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "推荐「控制中心」：在任意 App 里下滑就能触发，不用切换应用。"
+          }
+        }
+      }
+    },
+    "Copy Regular Expression" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制正则"
+          }
+        }
+      }
+    },
+    "Copy Rule ID" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制规则 id"
+          }
+        }
+      }
+    },
+    "Could not change the launch at login setting: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开机自启设置失败：%@"
+          }
+        }
+      }
+    },
+    "Could not load the rule library: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则库加载失败：%@"
+          }
+        }
+      }
+    },
+    "Current status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前状态"
+          }
+        }
+      }
+    },
+    "Custom rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义规则"
+          }
+        }
+      }
+    },
+    "Delete %lld Rules" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld Rule"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Deleted %lld rules"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld Rules"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "已删除 %lld 条规则"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "删除 %lld 条规则"
                 }
               }
             }
@@ -398,504 +411,43 @@
         }
       }
     },
-    "Disable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "禁用"
+    "Delete Rule" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除规则"
           }
         }
       }
     },
-    "Disabled": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已禁用"
-          }
-        }
-      }
-    },
-    "Dismiss": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关闭"
-          }
-        }
-      }
-    },
-    "Edit": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编辑"
-          }
-        }
-      }
-    },
-    "Edit…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编辑…"
-          }
-        }
-      }
-    },
-    "Enable": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启用"
-          }
-        }
-      }
-    },
-    "Enabled": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已启用"
-          }
-        }
-      }
-    },
-    "Enabled custom rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已启用自定义规则"
-          }
-        }
-      }
-    },
-    "Export": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出"
-          }
-        }
-      }
-    },
-    "Export Rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出规则"
-          }
-        }
-      }
-    },
-    "Export Rules…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出规则…"
-          }
-        }
-      }
-    },
-    "Export as JSON (⌘E)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出为 JSON（⌘E）"
-          }
-        }
-      }
-    },
-    "Export failed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出失败"
-          }
-        }
-      }
-    },
-    "Export failed: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出失败：%@"
-          }
-        }
-      }
-    },
-    "Get Clipboard (read by the system) → Clean URL Text (this app) → copy back + notify, only if the URL changed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "获取剪贴板（系统读） → Clean URL Text（本 App） → 有变化才写回 + 通知"
-          }
-        }
-      }
-    },
-    "How to Use": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用方式"
-          }
-        }
-      }
-    },
-    "Import": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入"
-          }
-        }
-      }
-    },
-    "Import Rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入规则"
-          }
-        }
-      }
-    },
-    "Import Rules…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入规则…"
-          }
-        }
-      }
-    },
-    "Import failed": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入失败"
-          }
-        }
-      }
-    },
-    "Import failed: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入失败：%@"
-          }
-        }
-      }
-    },
-    "Import from JSON (⌘I)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "从 JSON 导入（⌘I）"
-          }
-        }
-      }
-    },
-    "Inside “If”: “Copy to Clipboard”, with the input set to Clean URL Text": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「如果」里面：「拷贝到剪贴板」，输入选 Clean URL Text"
-          }
-        }
-      }
-    },
-    "Inside “If”: “Show Notification”, with the content set to Clean URL Text (optional, just for feedback)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「如果」里面：「显示通知」，内容选 Clean URL Text（可选，只是为了有反馈）"
-          }
-        }
-      }
-    },
-    "Launch at login": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开机时自动启动"
-          }
-        }
-      }
-    },
-    "Leave the “Otherwise” branch empty: if the result didn't change, do nothing": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「否则」留空：结果没变就什么都不做"
-          }
-        }
-      }
-    },
-    "LinkPure": {},
-    "Maximum redirect limit exceeded": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "改写次数超限（疑似无限循环）"
-          }
-        }
-      }
-    },
-    "More": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更多"
-          }
-        }
-      }
-    },
-    "My Rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "我的规则"
-          }
-        }
-      }
-    },
-    "No custom rules yet": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没有自定义规则"
-          }
-        }
-      }
-    },
-    "No matching rules found for this URL": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "没有规则命中这个 URL"
-          }
-        }
-      }
-    },
-    "Not a valid http(s) URL": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不是有效的 http(s) URL"
-          }
-        }
-      }
-    },
-    "OK": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "好"
-          }
-        }
-      }
-    },
-    "On iOS, an app that reads the clipboard is either blocked (background reads) or triggers an “Allow Paste” prompt first (foreground reads). So “copy it and it's already clean” can't be done on this platform — that's a system limitation, not a shortcut this app is taking.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS 上 App 读剪贴板，要么被系统拦住（后台静默读），要么会先弹一次「允许粘贴」（前台读）。所以「复制即自动清洗」在这个平台上做不到，这不是本 App 的实现问题。"
-          }
-        }
-      }
-    },
-    "Open LinkPure…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开 LinkPure…"
-          }
-        }
-      }
-    },
-    "Open settings (⌘,)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开设置（⌘,）"
-          }
-        }
-      }
-    },
-    "Open the Shortcuts app and create a new shortcut": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开「快捷指令」App，新建一条快捷指令"
-          }
-        }
-      }
-    },
-    "Paste URL here…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "粘贴一个 URL，自动显示改写结果…"
-          }
-        }
-      }
-    },
-    "Paste a URL above to try the built-in rules, or add one of your own.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在上面的输入框里粘一个 URL 试试内置规则，或者新增一条自己的。"
-          }
-        }
-      }
-    },
-    "Paste a URL to test it right away": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "粘贴一个 URL 立即验证"
-          }
-        }
-      }
-    },
-    "Preview": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "预览"
-          }
-        }
-      }
-    },
-    "Put it somewhere within reach": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "挂到一个顺手的位置"
-          }
-        }
-      }
-    },
-    "Quit LinkPure": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出 LinkPure"
-          }
-        }
-      }
-    },
-    "Receives a URL string and returns it with tracking parameters removed. Never reads or writes the clipboard.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "接收一段 URL 文本，返回去掉跟踪参数后的结果。从不读写剪贴板。"
-          }
-        }
-      }
-    },
-    "Regular Expression": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "匹配正则（regexFilter）"
-          }
-        }
-      }
-    },
-    "Regular Expression Match": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "匹配正则（regexFilter）"
-          }
-        }
-      }
-    },
-    "Replace With": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "替换为（regexSubstitution）"
-          }
-        }
-      }
-    },
-    "Rewrite chain (%lld steps)": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Rewrite chain (%lld step)"
+    "Deleted %lld rules" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted %lld rule"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Rewrite chain (%lld steps)"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted %lld rules"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "有效改写链（%lld 步）"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "已删除 %lld 条规则"
                 }
               }
             }
@@ -903,397 +455,533 @@
         }
       }
     },
-    "Rule": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则"
+    "Disable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "禁用"
           }
         }
       }
     },
-    "Rule ID": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则 id"
+    "Disabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已禁用"
           }
         }
       }
     },
-    "Rule ID: %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则 id：%@"
+    "Discord" : {
+
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
           }
         }
       }
     },
-    "Rule deleted": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已删除一条规则"
+    "Edit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑"
           }
         }
       }
     },
-    "Rule enabled": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则已启用"
+    "Edit…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑…"
           }
         }
       }
     },
-    "Rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则"
+    "Enable" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用"
           }
         }
       }
     },
-    "Rules imported successfully": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已导入（按 id 去重合并）"
+    "Enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已启用"
           }
         }
       }
     },
-    "Rules section": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则分区"
+    "Enabled custom rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已启用自定义规则"
           }
         }
       }
     },
-    "Save": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存"
+    "Export" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出"
           }
         }
       }
     },
-    "Say the shortcut's name, e.g. “Hey Siri, Clean URL”": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "说这条快捷指令的名字，比如「嘿 Siri，Clean URL」"
+    "Export as JSON (⌘E)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出为 JSON（⌘E）"
           }
         }
       }
     },
-    "Search built-in rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索内置规则"
+    "Export failed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出失败"
           }
         }
       }
     },
-    "Search for and add the “Get Clipboard” action": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索并添加动作「获取剪贴板」"
+    "Export failed: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出失败：%@"
           }
         }
       }
     },
-    "Search my rules": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索我的规则"
+    "Export Rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出规则"
           }
         }
       }
     },
-    "Set its URL parameter to the output of step 1 (tap the parameter → choose “Clipboard”)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "把它的 URL 参数设成上一步的输出（点参数 → 选「剪贴板」）"
+    "Export Rules…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导出规则…"
           }
         }
       }
     },
-    "Set up (once)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置（只需一次）"
+    "Get Clipboard (read by the system) → Clean URL Text (this app) → copy back + notify, only if the URL changed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "获取剪贴板（系统读） → Clean URL Text（本 App） → 有变化才写回 + 通知"
           }
         }
       }
     },
-    "Settings → Accessibility → Touch → Back Tap → pick this shortcut": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置 → 辅助功能 → 触控 → 轻点背面 → 选这条快捷指令"
+    "GitHub" : {
+
+    },
+    "How to Use" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用方式"
           }
         }
       }
     },
-    "Settings…": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置…"
+    "https://example.com/$1" : {
+
+    },
+    "Import" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入"
           }
         }
       }
     },
-    "Siri": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Siri"
+    "Import failed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入失败"
           }
         }
       }
     },
-    "Status": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "状态"
+    "Import failed: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入失败：%@"
           }
         }
       }
     },
-    "Stays quietly in the menu bar after login. No window is shown.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登录后静默驻留在菜单栏，不会弹出窗口。"
+    "Import from JSON (⌘I)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从 JSON 导入（⌘I）"
           }
         }
       }
     },
-    "Swipe down → “+” in the top left → Add a Control → search for “Shortcuts”, then pick this one": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下滑 → 左上角 + → 添加控制 → 搜「快捷指令」，添加后会让你挑是哪一条"
+    "Import Rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入规则"
           }
         }
       }
     },
-    "Test URL (optional)": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "测试 URL（可选）"
+    "Import Rules…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入规则…"
           }
         }
       }
     },
-    "The URL text to clean": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "要清洗的 URL 文本"
+    "Inside “If”: “Copy to Clipboard”, with the input set to Clean URL Text" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「如果」里面：「拷贝到剪贴板」，输入选 Clean URL Text"
           }
         }
       }
     },
-    "The engine matches on regexFilter, then replaces the whole URL using regexSubstitution ($1..$9 are supported). A rule with an empty replacement is invalid, and Save stays disabled.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "引擎按 regexFilter 匹配，再用 regexSubstitution 替换整个 URL（支持 $1..$9）。留空替换则规则无效，保存按钮会保持禁用。"
+    "Inside “If”: “Show Notification”, with the content set to Clean URL Text (optional, just for feedback)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「如果」里面：「显示通知」，内容选 Clean URL Text（可选，只是为了有反馈）"
           }
         }
       }
     },
-    "The flow:": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "流程："
+    "iOS can't rewrite automatically" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 上无法自动改写"
           }
         }
       }
     },
-    "The important part: the clipboard is read by the **system**, not by this app — so iOS never shows an “Allow Paste” prompt.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关键点：读剪贴板的是**系统**，不是本 App——因此不会弹出「允许粘贴」提示。"
+    "Launch at login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开机时自动启动"
           }
         }
       }
     },
-    "The macOS version isn't affected: copy a link and it's rewritten automatically, with nothing to press.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "桌面版（macOS）不受此限制，复制链接即自动清洗，无需任何操作。"
+    "Leave the “Otherwise” branch empty: if the result didn't change, do nothing" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「否则」留空：结果没变就什么都不做"
           }
         }
       }
     },
-    "The rule library is empty": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "规则库为空"
+    "LinkPure" : {
+
+    },
+    "Links" : {
+
+    },
+    "Linkumori" : {
+
+    },
+    "Maximum redirect limit exceeded" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改写次数超限（疑似无限循环）"
           }
         }
       }
     },
-    "The test runs your draft through the whole rule set, so what you see is what a saved rule would actually do.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "测试会连同其他已生效的规则一起跑完整改写链，与保存后的真实行为一致。"
+    "More" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更多"
           }
         }
       }
     },
-    "There's exactly one thing to get right: “Copy to Clipboard” must be **inside** the “If”. Put it outside and every run writes the clipboard again even when nothing changed — iOS doesn't de-duplicate clipboard writes, so you'd trigger a Universal Clipboard sync for nothing, and any rich text you copied gets flattened to plain text (non-text content may be dropped entirely). Clean URL Text itself has no side effects; all the risk lives in where that write-back sits.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只有一条规则：「拷贝到剪贴板」必须在「如果」**里面**。放到外面，结果没变时也会照写一遍剪贴板——iOS 写剪贴板**没有内容去重**，于是白触发一次 Universal Clipboard 同步，还会把复制来的富文本压成纯文本（非文本内容更糟，可能直接被清掉）。`Clean URL Text` 本身没有副作用，风险全部来自这个写回动作放在哪。"
+    "My Rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "我的规则"
           }
         }
       }
     },
-    "URL": {},
-    "URL Rewritten": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL 已改写"
+    "No custom rules yet" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "还没有自定义规则"
           }
         }
       }
     },
-    "URLs rewritten": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "已改写"
+    "No matching rules found for this URL" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有规则命中这个 URL"
           }
         }
       }
     },
-    "Undo": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "撤销"
+    "Not a valid http(s) URL" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不是有效的 http(s) URL"
           }
         }
       }
     },
-    "Version": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "版本"
+    "OK" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
           }
         }
       }
     },
-    "Want to try it in the app first? Switch to the Rules tab — there's a test field there.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "想先在本 App 里试一下效果？切到「规则」页，有测试输入框。"
+    "On iOS, an app that reads the clipboard is either blocked (background reads) or triggers an “Allow Paste” prompt first (foreground reads). So “copy it and it's already clean” can't be done on this platform — that's a system limitation, not a shortcut this app is taking." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 上 App 读剪贴板，要么被系统拦住（后台静默读），要么会先弹一次「允许粘贴」（前台读）。所以「复制即自动清洗」在这个平台上做不到，这不是本 App 的实现问题。"
           }
         }
       }
     },
-    "^https://example\\.com/(.*)$": {},
-    "^https://example\\.com/...": {},
-    "https://example.com/$1": {},
-    "iOS can't rewrite automatically": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iOS 上无法自动改写"
+    "Open LinkPure…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开 LinkPure…"
           }
         }
       }
     },
-    "… %lld more steps": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "… %lld more step"
+    "Open settings (⌘,)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开设置（⌘,）"
+          }
+        }
+      }
+    },
+    "Open the Shortcuts app and create a new shortcut" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开「快捷指令」App，新建一条快捷指令"
+          }
+        }
+      }
+    },
+    "Paste a URL above to try the built-in rules, or add one of your own." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在上面的输入框里粘一个 URL 试试内置规则，或者新增一条自己的。"
+          }
+        }
+      }
+    },
+    "Paste a URL to test it right away" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴一个 URL 立即验证"
+          }
+        }
+      }
+    },
+    "Paste URL here…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粘贴一个 URL，自动显示改写结果…"
+          }
+        }
+      }
+    },
+    "Preview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览"
+          }
+        }
+      }
+    },
+    "Put it somewhere within reach" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "挂到一个顺手的位置"
+          }
+        }
+      }
+    },
+    "Quit LinkPure" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出 LinkPure"
+          }
+        }
+      }
+    },
+    "Receives a URL string and returns it with tracking parameters removed. Never reads or writes the clipboard." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接收一段 URL 文本，返回去掉跟踪参数后的结果。从不读写剪贴板。"
+          }
+        }
+      }
+    },
+    "Regular Expression" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匹配正则（regexFilter）"
+          }
+        }
+      }
+    },
+    "Regular Expression Match" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "匹配正则（regexFilter）"
+          }
+        }
+      }
+    },
+    "Replace With" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "替换为（regexSubstitution）"
+          }
+        }
+      }
+    },
+    "Rewrite chain (%lld steps)" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Rewrite chain (%lld step)"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "… %lld more steps"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Rewrite chain (%lld steps)"
                 }
               }
             }
           }
         },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "… 还有 %lld 步"
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "有效改写链（%lld 步）"
                 }
               }
             }
@@ -1301,16 +989,365 @@
         }
       }
     },
-    "→ %@": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "→ %@"
+    "Rule" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则"
           }
         }
       }
+    },
+    "Rule deleted" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已删除一条规则"
+          }
+        }
+      }
+    },
+    "Rule enabled" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则已启用"
+          }
+        }
+      }
+    },
+    "Rule ID" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则 id"
+          }
+        }
+      }
+    },
+    "Rule ID: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则 id：%@"
+          }
+        }
+      }
+    },
+    "Rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则"
+          }
+        }
+      }
+    },
+    "Rules imported successfully" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已导入（按 id 去重合并）"
+          }
+        }
+      }
+    },
+    "Rules section" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则分区"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存"
+          }
+        }
+      }
+    },
+    "Say the shortcut's name, e.g. “Hey Siri, Clean URL”" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "说这条快捷指令的名字，比如「嘿 Siri，Clean URL」"
+          }
+        }
+      }
+    },
+    "Search built-in rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索内置规则"
+          }
+        }
+      }
+    },
+    "Search for and add the “Get Clipboard” action" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索并添加动作「获取剪贴板」"
+          }
+        }
+      }
+    },
+    "Search my rules" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索我的规则"
+          }
+        }
+      }
+    },
+    "Set its URL parameter to the output of step 1 (tap the parameter → choose “Clipboard”)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把它的 URL 参数设成上一步的输出（点参数 → 选「剪贴板」）"
+          }
+        }
+      }
+    },
+    "Set up (once)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置（只需一次）"
+          }
+        }
+      }
+    },
+    "Settings → Accessibility → Touch → Back Tap → pick this shortcut" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置 → 辅助功能 → 触控 → 轻点背面 → 选这条快捷指令"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置…"
+          }
+        }
+      }
+    },
+    "Siri" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siri"
+          }
+        }
+      }
+    },
+    "Status" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "状态"
+          }
+        }
+      }
+    },
+    "Stays quietly in the menu bar after login. No window is shown." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录后静默驻留在菜单栏，不会弹出窗口。"
+          }
+        }
+      }
+    },
+    "Swipe down → “+” in the top left → Add a Control → search for “Shortcuts”, then pick this one" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下滑 → 左上角 + → 添加控制 → 搜「快捷指令」，添加后会让你挑是哪一条"
+          }
+        }
+      }
+    },
+    "Test URL (optional)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试 URL（可选）"
+          }
+        }
+      }
+    },
+    "The engine matches on regexFilter, then replaces the whole URL using regexSubstitution ($1..$9 are supported). A rule with an empty replacement is invalid, and Save stays disabled." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引擎按 regexFilter 匹配，再用 regexSubstitution 替换整个 URL（支持 $1..$9）。留空替换则规则无效，保存按钮会保持禁用。"
+          }
+        }
+      }
+    },
+    "The flow:" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "流程："
+          }
+        }
+      }
+    },
+    "The important part: the clipboard is read by the **system**, not by this app — so iOS never shows an “Allow Paste” prompt." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关键点：读剪贴板的是**系统**，不是本 App——因此不会弹出「允许粘贴」提示。"
+          }
+        }
+      }
+    },
+    "The macOS version isn't affected: copy a link and it's rewritten automatically, with nothing to press." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "桌面版（macOS）不受此限制，复制链接即自动清洗，无需任何操作。"
+          }
+        }
+      }
+    },
+    "The rule library is assembled from ClearURLs and Linkumori, and is distributed under the LGPL-3.0. LinkPure itself is GPL-3.0." : {
+
+    },
+    "The rule library is empty" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则库为空"
+          }
+        }
+      }
+    },
+    "The test runs your draft through the whole rule set, so what you see is what a saved rule would actually do." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试会连同其他已生效的规则一起跑完整改写链，与保存后的真实行为一致。"
+          }
+        }
+      }
+    },
+    "The URL text to clean" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要清洗的 URL 文本"
+          }
+        }
+      }
+    },
+    "There's exactly one thing to get right: “Copy to Clipboard” must be **inside** the “If”. Put it outside and every run writes the clipboard again even when nothing changed — iOS doesn't de-duplicate clipboard writes, so you'd trigger a Universal Clipboard sync for nothing, and any rich text you copied gets flattened to plain text (non-text content may be dropped entirely). Clean URL Text itself has no side effects; all the risk lives in where that write-back sits." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只有一条规则：「拷贝到剪贴板」必须在「如果」**里面**。放到外面，结果没变时也会照写一遍剪贴板——iOS 写剪贴板**没有内容去重**，于是白触发一次 Universal Clipboard 同步，还会把复制来的富文本压成纯文本（非文本内容更糟，可能直接被清掉）。`Clean URL Text` 本身没有副作用，风险全部来自这个写回动作放在哪。"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "撤销"
+          }
+        }
+      }
+    },
+    "URL" : {
+
+    },
+    "URL Rewritten" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL 已改写"
+          }
+        }
+      }
+    },
+    "URLs rewritten" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已改写"
+          }
+        }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本"
+          }
+        }
+      }
+    },
+    "Want to try it in the app first? Switch to the Rules tab — there's a test field there." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "想先在本 App 里试一下效果？切到「规则」页，有测试输入框。"
+          }
+        }
+      }
+    },
+    "Website" : {
+
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }
