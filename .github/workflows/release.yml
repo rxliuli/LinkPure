@@ -130,8 +130,18 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
           security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
 
-          mkdir -p ~/private_keys
-          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          # secret 里存的可能是「尾部 padding 被丢掉的 base64」，也可能直接就是 PEM。
+          # 不能直接用 `base64 --decode`：它对残缺输入会**静默丢字节**——踩过一次，
+          # 少一个 '=' 就丢 2 字节，PEM 结束行被砍成 `-----END PRIVATE KEY---`，
+          # 结果 notarytool / xcodebuild 在几分钟后才报一个看不懂的 invalidPEMDocument。
+          # 所以：补回 padding → 解码 → 立刻用 openssl 验一遍。
+          KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
+          python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
+          if ! openssl pkey -in "$KEY" -noout; then
+            echo "::error::APPLE_API_KEY 解出来不是合法的 PKCS#8 私钥（$(wc -c < "$KEY") 字节）。应该存 p8 文件的 base64（含结尾的 '='），或者直接存 PEM 全文。"
+            exit 1
+          fi
+          echo "::notice title=APPLE_API_KEY::$(wc -c < "$KEY") 字节，sha256 $(shasum -a 256 "$KEY" | cut -c1-12)"
 
       - name: Generate Xcode project
         run: |
@@ -252,8 +262,15 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
           security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
 
-          mkdir -p ~/private_keys
-          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          # 同上：补 padding + openssl 校验，别让残缺的 base64 在几分钟后才以
+          # invalidPEMDocument 的形式暴露出来
+          KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
+          python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
+          if ! openssl pkey -in "$KEY" -noout; then
+            echo "::error::APPLE_API_KEY 解出来不是合法的 PKCS#8 私钥（$(wc -c < "$KEY") 字节）。应该存 p8 文件的 base64（含结尾的 '='），或者直接存 PEM 全文。"
+            exit 1
+          fi
+          echo "::notice title=APPLE_API_KEY::$(wc -c < "$KEY") 字节，sha256 $(shasum -a 256 "$KEY" | cut -c1-12)"
 
       - name: Generate Xcode project
         run: |
@@ -370,22 +387,15 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
           security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
 
-          mkdir -p ~/private_keys
-          echo "$API_KEY" | base64 --decode > ~/private_keys/AuthKey_${API_KEY_ID}.p8
-
-      - name: Diagnose API key format
-        env:
-          API_KEY: ${{ secrets.APPLE_API_KEY }}
-          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: |
+          # 同上：补 padding + openssl 校验，别让残缺的 base64 在几分钟后才以
+          # invalidPEMDocument 的形式暴露出来
           KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
-          echo "secret 长度: $(printf '%s' "$API_KEY" | wc -c) 字节 / $(printf '%s' "$API_KEY" | wc -l) 个换行"
-          echo "secret 前 4 字符: [$(printf '%s' "$API_KEY" | head -c 4)]"
-          echo "secret 含 BEGIN: $(printf '%s' "$API_KEY" | grep -c BEGIN || true)"
-          echo "解出文件大小: $(wc -c < "$KEY") 字节"
-          echo "解出文件首行前 20 字符: [$(head -1 "$KEY" | cut -c1-20)]"
-          echo "解出文件含 BEGIN PRIVATE KEY: $(grep -c 'BEGIN PRIVATE KEY' "$KEY" || true)"
-          ls -la ~/private_keys/
+          python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
+          if ! openssl pkey -in "$KEY" -noout; then
+            echo "::error::APPLE_API_KEY 解出来不是合法的 PKCS#8 私钥（$(wc -c < "$KEY") 字节）。应该存 p8 文件的 base64（含结尾的 '='），或者直接存 PEM 全文。"
+            exit 1
+          fi
+          echo "::notice title=APPLE_API_KEY::$(wc -c < "$KEY") 字节，sha256 $(shasum -a 256 "$KEY" | cut -c1-12)"
 
       - name: Generate Xcode project
         run: |
