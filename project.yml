@@ -23,11 +23,13 @@ settings:
     # 0.6.5：换成重新导出的合集证书（只含三个当前有效的身份，清掉了过期证书
     # 与无关的自签证书）。0.6.6：Android 首次进入发布流水线（构建 AAB/APK、
     # 挂到 GitHub Release；Play 上传待服务账号凭据配好后自动生效）。
-    MARKETING_VERSION: "0.6.6"
+    # 0.6.7：Android 换成品牌图标 + 补深色启动主题（0.6.6 那版 AAB/APK 用的还是
+    # 占位图标，验过 0.6.7 的产物就是新图标）。
+    MARKETING_VERSION: "0.6.7"
     # build number 用 Flutter 仓库 CI 里那条公式：x*10000 + y*100 + z
-    #（0.6.6 → 6*100+6 = 606）。发版时 release.yml 会按版本号算出来覆盖本值，
-    # 这里的 606 只是给本机 Xcode archive 用的默认值，两者要保持一致。
-    CURRENT_PROJECT_VERSION: "606"
+    #（0.6.7 → 6*100+7 = 607）。发版时 release.yml 会按版本号算出来覆盖本值，
+    # 这里的 607 只是给本机 Xcode archive 用的默认值，两者要保持一致。
+    CURRENT_PROJECT_VERSION: "607"
     # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（会显示在 macOS 的「关于」面板）。
     # 原来沿用 Flutter 版的值是 `Copyright © 2025 com.rxliuli. …`——
     # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
