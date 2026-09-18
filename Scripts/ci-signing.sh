@@ -107,12 +107,16 @@ setup() {
 
     dir="$(mktemp -d)"
     decode_base64 "$value" >"$dir/cert.p12"
+    # 导入的原始输出故意留着不重定向：它只有几行（"1 key imported" /
+    # "1 certificate imported"），而一旦后面那道闸真的报了错，这几行就是
+    # 「到底是只有证书还是也带了私钥」的唯一直接证据。
+    #
     # -A：允许任何程序使用导入的私钥。这只是一次性 runner 上的一次性 keychain，
     # 保留 -A 是这里的常规做法。extport 那边改成了逐个 -T 点名
     # (codesign/security/productbuild)，少点一个（productbuild 没被信任）会让
     # 它**静默卡在**一个永远弹不出来的 keychain 授权框上，最后以 job 超时收场——
     # 已经踩过，所以这里不缩窄。
-    security import "$dir/cert.p12" -P "$password" -f pkcs12 -A -k "$KEYCHAIN" >/dev/null \
+    security import "$dir/cert.p12" -P "$password" -f pkcs12 -A -k "$KEYCHAIN" \
       || fail "$name 导入失败（密码不对？或者 p12 里只有证书没有私钥？）"
     rm -rf "$dir"
   done
@@ -125,24 +129,34 @@ setup() {
   # 销毁，永远无法再用，每次跑烧掉一张，直到撞上 Apple 的证书上限
   # （"Your account has reached the maximum number of certificates"）。
   # 这个坑真的踩过：一天之内出现 10 张 "Apple Development: Created via API"。
-  local identities
-  identities="$(security find-identity -v -p codesigning "$KEYCHAIN")"
+  #
+  # 注意 **不能用 -v**。`-v` 是「只显示 valid 身份」，而 valid 要看信任链能不能
+  # 跑通——导入到临时 keychain 的 p12 只带叶子证书，缺 Apple WWDR 中间证书，
+  # 于是 valid 恒为 0，**而 codesign / xcodebuild 照样能正常用它签名**。
+  # 旧流程里那条 `find-identity -v` 只是打印给人看、没人校验输出，所以在成功的
+  # 运行里它也一直写着 0 valid identities。
+  #
+  # 不带 -v 时那份 "Matching identities" 才是我们要的：它列的是「证书 + 私钥配对、
+  # 且证书带 codeSigning EKU」的全部身份，不要求信任链完整——runner 上真实的样子是
+  #     1) HASH "Apple Distribution: KAI WANG (N2X78TUUFG)" (CSSMERR_TP_NOT_TRUSTED)
+  # 尾巴那个是信任状态，跟「能不能拿来签名」无关（本地用自签证书复现过：带
+  # codeSigning EKU 的自签证书，不带 -v 列为 1 个，带 -v 是 0 个）。
+  local identities names
+  identities="$(security find-identity -p codesigning "$KEYCHAIN")"
   printf '%s\n' "$identities"
-  local count
-  count="$(printf '%s\n' "$identities" | grep -cE '^[[:space:]]*[0-9]+\) ' || true)"
-  [ "$count" -gt 0 ] \
-    || fail "keychain 里没有可用的 codesigning 身份：导入的 p12 大概只有证书、没有私钥。自动签名在这种情况下会去 Apple 造一张新证书，那正是这里要挡住的失败模式。"
-
-  # 从 find-identity 的输出里把证书全名抠出来，挑一个导出成 SIGNING_IDENTITY，
-  # 让 workflow 用 `CODE_SIGN_IDENTITY="$SIGNING_IDENTITY"` 精确钉住它。
+  # 抠名字时不能假设行尾就是引号：信任链不完整的身份后面会跟一个
+  # `(CSSMERR_TP_NOT_TRUSTED)` 尾巴，所以只取第一对引号里的内容、忽略后缀。
   #
   # 为什么不写死名字：Mac App Store 的 app 证书有新旧两套名字
   # （Apple Distribution ↔ 老的 3rd Party Mac Developer Application），secret
   # 里到底是哪张不该由 workflow 猜。而**不钉住**的后果是把选择权交给 Xcode 的
   # 自动签名：它找不到想要的开发身份就向 Apple 申请一张新的，那张证书的私钥
-  # 随 runner 一起销毁，每次跑烧一张，直到撞上账号上限——这个坑真踩过。
-  local names picked
-  names="$(printf '%s\n' "$identities" | sed -n 's/^[[:space:]]*[0-9]*) [0-9A-Fa-f]\{1,\} "\(.*\)"$/\1/p')"
+  # 随 runner 一起销毁，每次跑烧一张，直到撞上账号上限。
+  names="$(printf '%s\n' "$identities" | sed -n 's/^[[:space:]]*[0-9]*) [0-9A-Fa-f]\{1,\} "\([^"]*\)".*$/\1/p')"
+  [ -n "$names" ] \
+    || fail "keychain 里没有任何证书+私钥配对的身份：导入的 p12 大概只有证书、没有私钥。自动签名在这种情况下会去 Apple 造一张新证书，那正是这里要挡住的失败模式。"
+
+  local picked
   picked=""
   if [ ${#expects[@]} -gt 0 ]; then
     local n e
