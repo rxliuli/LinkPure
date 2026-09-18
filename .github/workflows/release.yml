@@ -260,16 +260,32 @@ jobs:
             LinkPure-android.apk
           if-no-files-found: error
 
-      # Play 的发布凭据（服务账号 JSON）需要单独在 Play Console 里建，见 Apps/android/README.md。
-      # 没配就跳过并留下一条 warning，而不是把整条发布判红——其它渠道（Apple / DMG / cask）
-      # 与它互不相关。
+  # ───────────────────────── Android → Google Play（上传） ─────────────────────────
+  # 刻意与上面的 android job 分开：构建失败该拦住发布（没东西可发），但 **Play 抽风
+  # 不该连带压住 DMG/GitHub Release**（跟当初 Safari 那条路单独 continue-on-error 同理），
+  # 所以 release job 只依赖 android、不依赖它。
+  #
+  # 凭据（服务账号 JSON）需要单独在 Play Console 里建，见 Apps/android/README.md。
+  # 没配就跳过并留一条 warning —— Play 是新增渠道，不该因为它把整条流水线判红。
+  android-play:
+    name: Android → Google Play (upload)
+    needs: [version, android]
+    if: needs.version.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: build-android
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: android
+
       - name: Check Play credentials
         id: play
         env:
           PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ -z "$PLAY_JSON" ]; then
-            echo "::warning::PLAY_SERVICE_ACCOUNT_JSON 未配置 —— 跳过 Play 上传（AAB/APK 仍然产出了）；配置步骤见 Apps/android/README.md"
+            echo "::warning::PLAY_SERVICE_ACCOUNT_JSON 未配置 —— 跳过 Play 上传（AAB/APK 已经产出并挂到 Release）；配置步骤见 Apps/android/README.md"
             {
               echo "### Play 上传已跳过"
               echo
@@ -294,19 +310,24 @@ jobs:
   # ───────────────────────── GitHub Release + Homebrew cask ─────────────────────────
   release:
     name: GitHub Release + Homebrew cask
-    needs: [version, appstore, macos-dmg]
+    needs: [version, appstore, macos-dmg, android]
     # always()：needs 里有被跳过的 job 时，不加它就整个跳过
     if: >-
       always()
       && needs.version.outputs.publish == 'true'
       && needs.appstore.result == 'success'
       && needs.macos-dmg.result == 'success'
+      && needs.android.result == 'success'
     runs-on: ubuntu-latest
     environment: release-macOS
     steps:
       - uses: actions/download-artifact@v8
         with:
           name: macos-dmg
+      # Android 的 AAB/APK（Flutter 版当初也是挂在 Release 上的：Play 之外还要能侧载）
+      - uses: actions/download-artifact@v8
+        with:
+          name: android
 
       - name: Create GitHub Release
         env:
@@ -314,15 +335,16 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
           TAG="v${VERSION}"
+          FILES=(LinkPure-macos.dmg LinkPure-android.aab LinkPure-android.apk)
           if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "${TAG} 已存在，只替换 DMG"
-            gh release upload "$TAG" LinkPure-macos.dmg --clobber --repo "${{ github.repository }}"
+            echo "${TAG} 已存在，只替换附件"
+            gh release upload "$TAG" "${FILES[@]}" --clobber --repo "${{ github.repository }}"
           else
             gh release create "$TAG" \
               --title "Release ${TAG}" \
               --generate-notes \
               --repo "${{ github.repository }}" \
-              LinkPure-macos.dmg
+              "${FILES[@]}"
           fi
 
       - uses: rxliuli/apple-release/tap-update@v1
