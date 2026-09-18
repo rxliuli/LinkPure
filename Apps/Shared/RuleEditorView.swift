@@ -11,7 +11,7 @@ import LinkPureCore
 /// 在这里算完，算不了（需要联网、或测试 URL 还不是合法 URL）就留空，
 /// 交给编辑器里的异步路径补上（那条路径也会画“不是有效 URL”的提示）。
 struct EditorTarget: Identifiable {
-    let rule: Rule
+    let rule: RuleX
     let testUrl: String?
     let preview: MatchResult?
     var id: String { rule.id }
