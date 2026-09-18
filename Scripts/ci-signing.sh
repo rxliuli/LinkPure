@@ -9,19 +9,24 @@
 # 不会再漂。
 #
 # 用法：
-#   Scripts/ci-signing.sh setup [--expect <身份名片段>]... <CERT_ENV_VAR>...
+#   Scripts/ci-signing.sh setup [--expect <身份名片段>]... [<CERT_ENV_VAR>...]
 #   Scripts/ci-signing.sh teardown
 #
 # 证书用**环境变量名**传（值由调用方注入，脚本自己不读 secrets），密码按
 # `<前缀>_BASE64` → `<前缀>_PASSWORD` 的约定自动推导，正好对上仓库里现有的
-# APPLE_CERTIFICATE_{APPSTORE,INSTALLER,DEVELOPERID}_{BASE64,PASSWORD}。
+# APPLE_CERTIFICATE_{INSTALLER,DEVELOPERID}_{BASE64,PASSWORD}。
+# 证书列表可以是空的：上架那条路只需要 ASC API key —— app 的签名身份由
+# cloud signing 提供（见 release.yml 里 appstore job 的注释）。
+#
+# --expect 只在需要**手动指定签名身份**时给（目前只有 Developer ID 那条路）：
+# 给了它就会要求 keychain 里存在名字匹配的 codesigning 身份，并把匹配到的全名
+# 导出成 SIGNING_IDENTITY，供 `CODE_SIGN_IDENTITY="$SIGNING_IDENTITY"` 用。
 #
 # setup 结束后向 $GITHUB_ENV（若存在）写入：
-#   SIGNING_KEYCHAIN   临时 keychain 的路径
-#   SIGNING_IDENTITY   实际导入、且被选中的那个身份的全名，供
-#                      `CODE_SIGN_IDENTITY="$SIGNING_IDENTITY"` 精确钉住
-#   ASC_KEY_PATH       AuthKey_<keyId>.p8 的路径（没给 APPLE_API_KEY 时为空）
-#   ASC_KEY_ID         App Store Connect API key id
+#   SIGNING_KEYCHAIN  临时 keychain 的路径
+#   SIGNING_IDENTITY  选中的身份全名（只在给了 --expect 时）
+#   ASC_KEY_PATH      AuthKey_<keyId>.p8 的路径（没给 APPLE_API_KEY 时为空）
+#   ASC_KEY_ID        App Store Connect API key id
 
 set -euo pipefail
 
@@ -49,6 +54,14 @@ decode_base64() {
   python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$1"
 }
 
+# 从 p12 里取出证书 PEM。不依赖 keychain 的信任评估，也不依赖我们去猜证书叫什么。
+# 末尾的 -legacy 是兜底：老式 PBE 加密的 p12 在 OpenSSL 3 下必须显式打开才读得到。
+p12_cert_pem() {
+  openssl pkcs12 -in "$1" -passin "pass:$2" -clcerts -nokeys 2>/dev/null \
+    || openssl pkcs12 -legacy -in "$1" -passin "pass:$2" -clcerts -nokeys 2>/dev/null \
+    || true
+}
+
 teardown() {
   security delete-keychain "${SIGNING_KEYCHAIN:-$KEYCHAIN}" >/dev/null 2>&1 || true
   rm -rf "$HOME/private_keys"
@@ -71,12 +84,14 @@ setup() {
         ;;
     esac
   done
-  [ ${#certs[@]} -gt 0 ] || fail "至少要给一个证书环境变量名，例如 APPLE_CERTIFICATE_APPSTORE_BASE64"
+  if [ ${#certs[@]} -eq 0 ] && [ -z "${APPLE_API_KEY:-}" ]; then
+    fail "既没给证书环境变量，也没给 APPLE_API_KEY —— 那这一步只是准备了一个空 keychain"
+  fi
 
   # 同一个 runner 上重跑（或者上一步失败留下的）时先清干净
   security delete-keychain "$KEYCHAIN" >/dev/null 2>&1 || true
   security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-  # 默认几分钟就会自动锁；这条流水线的 job 最长 40 分钟，锁了必然失败。
+  # 默认几分钟就会自动锁；这条流水线的 job 最长 60 分钟，锁了必然失败。
   security set-keychain-settings -lut 21600 "$KEYCHAIN"
   security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
 
@@ -94,7 +109,10 @@ setup() {
   fi
   security default-keychain -s "$KEYCHAIN"
 
-  local name pw_name value password dir
+  local name pw_name value password dir pem subject
+  # 用 if 包住而不是直接 for：bash 3.2 在 `set -u` 下展开空数组会报
+  # `certs[@]: unbound variable`（bash 4.4 才修）。
+  if [ ${#certs[@]} -gt 0 ]; then
   for name in "${certs[@]}"; do
     case "$name" in
       *_BASE64) pw_name="${name%_BASE64}_PASSWORD" ;;
@@ -107,9 +125,23 @@ setup() {
 
     dir="$(mktemp -d)"
     decode_base64 "$value" >"$dir/cert.p12"
+
+    # 先用 openssl 从 p12 里把证书本身读出来，查有效期。
+    # 过期证书必须当场挡掉：拿它手动签名会失败，而更阴的情况是导出阶段发现本地
+    # 没有可用身份，于是转头让 Apple 现造一张——installer 证书的上限只有 3 张。
+    # 这个坑真踩过：APPLE_CERTIFICATE_APPSTORE 里那张 Apple Distribution 早已
+    # 过期，而流水线一直没发现（旧流程只把 `find-identity -v` 的输出打出来给人看，
+    # 没人校验过）。
+    pem="$(p12_cert_pem "$dir/cert.p12" "$password")"
+    [ -n "$pem" ] || fail "$name 解出来的 p12 里读不到证书（密码不对？或者这根本不是个 p12？）"
+    subject="$(printf '%s\n' "$pem" | openssl x509 -noout -subject 2>/dev/null || true)"
+    printf '%s\n' "$pem" | openssl x509 -noout -checkend 0 >/dev/null 2>&1 \
+      || fail "$name 里的证书已经过期（${subject}）——去 developer.apple.com 重新签发、更新 secret 之后再发版。"
+    echo "::notice title=$name::${subject}"
+
     # 导入的原始输出故意留着不重定向：它只有几行（"1 key imported" /
-    # "1 certificate imported"），而一旦后面那道闸真的报了错，这几行就是
-    # 「到底是只有证书还是也带了私钥」的唯一直接证据。
+    # "1 certificate imported"），而一旦后面报错，这几行就是「到底是只有证书
+    # 还是没有私钥」的唯一直接证据。
     #
     # -A：允许任何程序使用导入的私钥。这只是一次性 runner 上的一次性 keychain，
     # 保留 -A 是这里的常规做法。extport 那边改成了逐个 -T 点名
@@ -121,45 +153,35 @@ setup() {
     rm -rf "$dir"
   done
 
+  # 空 keychain 上跑这条会直接报 “The specified item could not be found”——旧流程
+  # 里就犯过这个错（把它放在导入之前）。所以它必须待在这个 if 里面。
   security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+  fi
 
-  # 关键的一道闸：必须在**归档之前**确认 keychain 里确实有可用的签名身份。
-  # 自动签名（CODE_SIGN_STYLE=Automatic + -allowProvisioningUpdates）找不到本地
-  # 身份时不会报错，而是向 Apple 申请一张新证书；那张证书的私钥随 runner 一起
-  # 销毁，永远无法再用，每次跑烧掉一张，直到撞上 Apple 的证书上限
-  # （"Your account has reached the maximum number of certificates"）。
-  # 这个坑真的踩过：一天之内出现 10 张 "Apple Development: Created via API"。
-  #
-  # 注意 **不能用 -v**。`-v` 是「只显示 valid 身份」，而 valid 要看信任链能不能
-  # 跑通——导入到临时 keychain 的 p12 只带叶子证书，缺 Apple WWDR 中间证书，
-  # 于是 valid 恒为 0，**而 codesign / xcodebuild 照样能正常用它签名**。
-  # 旧流程里那条 `find-identity -v` 只是打印给人看、没人校验输出，所以在成功的
-  # 运行里它也一直写着 0 valid identities。
-  #
-  # 不带 -v 时那份 "Matching identities" 才是我们要的：它列的是「证书 + 私钥配对、
-  # 且证书带 codeSigning EKU」的全部身份，不要求信任链完整——runner 上真实的样子是
-  #     1) HASH "Apple Distribution: KAI WANG (N2X78TUUFG)" (CSSMERR_TP_NOT_TRUSTED)
-  # 尾巴那个是信任状态，跟「能不能拿来签名」无关（本地用自签证书复现过：带
-  # codeSigning EKU 的自签证书，不带 -v 列为 1 个，带 -v 是 0 个）。
-  local identities names
-  identities="$(security find-identity -p codesigning "$KEYCHAIN")"
-  printf '%s\n' "$identities"
-  # 抠名字时不能假设行尾就是引号：信任链不完整的身份后面会跟一个
-  # `(CSSMERR_TP_NOT_TRUSTED)` 尾巴，所以只取第一对引号里的内容、忽略后缀。
-  #
-  # 为什么不写死名字：Mac App Store 的 app 证书有新旧两套名字
-  # （Apple Distribution ↔ 老的 3rd Party Mac Developer Application），secret
-  # 里到底是哪张不该由 workflow 猜。而**不钉住**的后果是把选择权交给 Xcode 的
-  # 自动签名：它找不到想要的开发身份就向 Apple 申请一张新的，那张证书的私钥
-  # 随 runner 一起销毁，每次跑烧一张，直到撞上账号上限。
-  names="$(printf '%s\n' "$identities" | sed -n 's/^[[:space:]]*[0-9]*) [0-9A-Fa-f]\{1,\} "\([^"]*\)".*$/\1/p')"
-  [ -n "$names" ] \
-    || fail "keychain 里没有任何证书+私钥配对的身份：导入的 p12 大概只有证书、没有私钥。自动签名在这种情况下会去 Apple 造一张新证书，那正是这里要挡住的失败模式。"
+  export_env SIGNING_KEYCHAIN "$KEYCHAIN"
 
-  local picked
-  picked=""
+  # 只有真的要手动指定签名身份时，才需要 keychain 里有 codesigning 身份。
+  # 上架那条路不需要：它归档阶段不签名（macOS 走 ad-hoc 只为把 entitlements 带
+  # 进归档），真正的签名在导出阶段由 cloud signing 提供。
   if [ ${#expects[@]} -gt 0 ]; then
-    local n e
+    # 注意**不能用 -v**。`-v` 是「只显示 valid 身份」，而 valid 要看证书有没有
+    # 过期、信任链能不能跑通——导入到临时 keychain 的 p12 只带叶子证书、缺
+    # Apple WWDR 中间证书，valid 就恒为 0，**而 codesign 照样拿它签名**。
+    # 旧流程里那条 `find-identity -v` 只是打印给人看、没人校验输出，所以在成功的
+    # 发布运行里它写的也是「0 valid identities found」。
+    # 不带 -v 时那份 "Matching identities" 才是要的：证书 + 私钥配对、且证书带
+    # codeSigning EKU 的全部身份，不要求信任链完整。
+    local identities names
+    identities="$(security find-identity -p codesigning "$KEYCHAIN")"
+    printf '%s\n' "$identities"
+    # 抠名字时不能假设行尾就是引号：信任链不完整的身份后面会跟一个
+    # `(CSSMERR_TP_NOT_TRUSTED)` 尾巴，所以只取第一对引号里的内容、忽略后缀。
+    names="$(printf '%s\n' "$identities" | sed -n 's/^[[:space:]]*[0-9]*) [0-9A-Fa-f]\{1,\} "\([^"]*\)".*$/\1/p')"
+    [ -n "$names" ] \
+      || fail "keychain 里没有任何证书+私钥配对的身份：导入的 p12 大概只有证书、没有私钥。"
+
+    local picked n e
+    picked=""
     while IFS= read -r n; do
       for e in "${expects[@]}"; do
         case "$n" in
@@ -171,15 +193,10 @@ setup() {
       done
     done <<<"$names"
     [ -n "$picked" ] \
-      || fail "keychain 里没有名字包含 $(printf '"%s" ' "${expects[@]}")的身份——归档用不上它，Xcode 会转身去 Apple 造一张新的。"
-  else
-    picked="$(printf '%s\n' "$names" | head -1)"
+      || fail "keychain 里没有名字包含 $(printf '"%s" ' "${expects[@]}")的身份——签名用不上它，Xcode 会转身去 Apple 造一张新的。"
+    echo "::notice title=选中的签名身份::$picked"
+    export_env SIGNING_IDENTITY "$picked"
   fi
-  [ -n "$picked" ] || fail "没能从 find-identity 的输出里解析出身份名，无法钉住签名身份。"
-  echo "::notice title=选中的签名身份::$picked"
-
-  export_env SIGNING_KEYCHAIN "$KEYCHAIN"
-  export_env SIGNING_IDENTITY "$picked"
 
   if [ -n "${APPLE_API_KEY:-}" ]; then
     [ -n "${APPLE_API_KEY_ID:-}" ] \
@@ -211,6 +228,6 @@ case "${1:-}" in
     teardown
     ;;
   *)
-    fail "用法：$(basename "$0") setup [--expect <身份名片段>] <CERT_ENV_VAR>... | teardown"
+    fail "用法：$(basename "$0") setup [--expect <身份名片段>]... [<CERT_ENV_VAR>...] | teardown"
     ;;
 esac

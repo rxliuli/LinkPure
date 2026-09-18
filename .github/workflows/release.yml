@@ -100,24 +100,33 @@ jobs:
   # mkdir ~/private_keys、在空 keychain 上跑 set-key-partition-list……），
   # 所以那部分逻辑现在只有一份：Scripts/ci-signing.sh。
   #
-  # 签名走 extport（imp-write / scrub 那套）的模式：把自备的 Apple Distribution
-  # 证书塞进临时 keychain，剩下的交给 Xcode —— `CODE_SIGN_STYLE=Automatic` +
-  # `-allowProvisioningUpdates` + ASC API key 会自己按 bundle id 找到/更新
-  # profile，所以**不需要**任何 profile 文件，也没有 IOS_/MACOS_PROVISIONING_PROFILE
-  # 这两个 secret。
+  # 签名这件事的真相（2026-09 实测，证据在上面那个 run 的 DistributionSummary 里）：
   #
-  # 相对 extport 只多一件事：把归档的签名身份钉死。原来自动签名归档会向 Xcode
-  # 要一张 Apple **Development** 证书（日志里是 "Apple Development: Created via API"），
-  # 每跑一次新造一张，几天就撞满 Apple 的证书上限。现在 keychain 里只有我们自己
-  # 塞进去的那张 app 分发证书（脚本读出它的全名导出成 SIGNING_IDENTITY，
-  # 用 CODE_SIGN_IDENTITY 精确指定），Xcode 只能用那张：要么成功，要么当场失败，
-  # 不会再静默地造一张。
+  # - **app 自己的签名身份来自 cloud signing**，不是我们本地那两张证书。
+  #   0.6.1 那次的 DistributionSummary 写得很清楚：
+  #       "type" => "Cloud Managed Apple Distribution"
+  #       "profile" => "Mac Team Store Provisioning Profile: com.rxliuli.linkpure2"
+  #   证书和 profile 都是 Xcode 通过 ASC API key 自己搞定的。
+  # - **本地只需要 installer 证书**（macOS）：.pkg 确实是 productbuild 用
+  #   `3rd Party Mac Developer Installer: KAI WANG` 签的，那张在 secret 里、有效。
+  #   原来的 APPLE_CERTIFICATE_APPSTORE 里那张 Apple Distribution **早已过期**
+  #   （`find-identity` 打的是 CSSMERR_TP_CERT_EXPIRED），从来没参与过签名。
   #
-  # 顺带删掉「归档不签名」那个补丁：之前 macOS 靠 ad-hoc 签（identity "-"）、
-  # iOS 干脆 CODE_SIGNING_ALLOWED=NO，理由就是上面那个造证书的问题。但那样归档
-  # 出来的不是你要发的产物——entitlements 是跟着签名走的，不签就只能靠 ad-hoc
-  # 把 sandbox/network/files「偷渡」进归档，再指望 exportArchive 重签时合并回去。
-  # 现在归档就是真签名的，那层夹心没必要存在了。
+  # 所以归档阶段刻意**不签名**：macOS 走 ad-hoc（identity "-"）、iOS 完全不签。
+  # 三个理由，少一个都不行：
+  #   1. automatic 签名在归档时想要的是**开发**身份，本地没有 —— 于是它会向 Apple
+  #      现要一张，一次一张、私钥随 runner 销毁，直到撞上账号上限（真踩过：一天
+  #      10 张 "Apple Development: Created via API"）。
+  #   2. Xcode **不允许**在 automatic 签名下显式指定分发身份，硬要指定就是
+  #      "has conflicting provisioning settings ... but code signing identity
+  #      Apple Distribution ... has been manually specified"。
+  #   3. macOS 又不能完全不签：entitlements 跟着签名走，不签就丢 sandbox，ASC
+  #      报 90296。ad-hoc 签名不需要证书也不需要 profile，但足以把三项
+  #      entitlements 带进归档，导出重签时与 profile 的合并（0.6.1 就是这么发出去的）。
+  #
+  # iOS 那侧连 ad-hoc 都不需要：它的 entitlements 全部来自 profile，没有项目里
+  # 声明的那一类。（以后给 iOS 加了自定义 entitlement，这里就得照 macOS 改成
+  # ad-hoc，否则会在 ASC 校验阶段才发现。）
   appstore:
     name: ${{ matrix.platform }} → App Store Connect
     needs: version
@@ -136,49 +145,45 @@ jobs:
             # altool 的 --type，同时也是「要不要额外验 .pkg 签名」的开关
             upload_type: macos
             artifact: '*.pkg'
-            # Mac App Store 的 .pkg 由 productbuild 用 installer 证书签，
-            # 所以 macOS 比 iOS 多一张证书。
-            certs: [APPLE_CERTIFICATE_APPSTORE_BASE64, APPLE_CERTIFICATE_INSTALLER_BASE64]
+            # 归档怎么签（见上面那段注释）。引号是 YAML 的，传给 shell 后只剩 `-`。
+            archive_signing: 'CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="-"'
+            # Mac App Store 的 .pkg 由 productbuild 用 **本地** installer 证书签，
+            # 所以只有 macOS 需要一张证书。app 自己的签名身份来自 cloud signing，
+            # 两边都不需要本地 app 证书（见上面那段注释）。
+            certs: [APPLE_CERTIFICATE_INSTALLER_BASE64]
           - platform: iOS
             scheme: LinkPureIOS
             destination: generic/platform=iOS
             upload_type: ios
             artifact: '*.ipa'
-            certs: [APPLE_CERTIFICATE_APPSTORE_BASE64]
+            certs: []
+            # iOS 归档完全不签（原因见上面那段注释的最后一段）
+            archive_signing: 'CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO'
     steps:
       - uses: actions/checkout@v6
 
-      # keychain + 证书 + ASC API key 全部由这一个脚本负责（三个 job 共用），
-      # 它带两道闸：① 导入后必须真的出现可用签名身份（p12 里只有证书没私钥的话，
-      # 自动签名会转身去 Apple 申请一张新的）；② 断言这份证书确实是 app 签名证书，
-      # 然后把它的全名导出成 SIGNING_IDENTITY，供下面精确钉住。
-      # 这里不写死 "Apple Distribution"：Mac App Store 的 app 证书有新旧两套名字
-      # （Apple Distribution ↔ 老的 3rd Party Mac Developer Application），
-      # secret 里到底是哪张不该由 workflow 猜，但两个名字都接受。
+      # keychain + 证书 + ASC API key 由这一个脚本负责（三个 job 共用）。
+      # 它做两件事：把每个 p12 里的证书读出来**查有效期**（过期证书会让导出阶段
+      # 转头去让 Apple 现造一张，而那张的私钥随 runner 销毁 —— installer 证书的
+      # 上限只有 3 张），以及把 API key 落成 AuthKey_<id>.p8 并当场验一遍。
+      # iOS 一张证书都不给：它一份本地签名物料都不需要。
       - name: Setup signing keychain
         env:
-          APPLE_CERTIFICATE_APPSTORE_BASE64: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}
-          APPLE_CERTIFICATE_APPSTORE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}
           APPLE_CERTIFICATE_INSTALLER_BASE64: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_BASE64 }}
           APPLE_CERTIFICATE_INSTALLER_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-        run: |
-          ./Scripts/ci-signing.sh setup \
-            --expect "Apple Distribution" \
-            --expect "3rd Party Mac Developer Application" \
-            ${{ join(matrix.certs, ' ') }}
+        run: ./Scripts/ci-signing.sh setup ${{ join(matrix.certs, ' ') }}
 
       - name: Generate Xcode project
         run: |
           brew install xcodegen
           xcodegen generate
 
-      # 真签名归档（不再是 ad-hoc / 不签）。`-allowProvisioningUpdates` 在这里
-      # 仍然必要：我们不带 profile 文件，profile 是 Xcode 通过 API key 现取/现更新的。
-      - name: Archive (automatic signing)
-        env:
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      # 归档阶段**刻意不签名**（macOS 走 ad-hoc，iOS 完全不签），原因见上面那段
+      # 注释的最后一段。这里不能加 `-allowProvisioningUpdates`：归档时需要的是
+      # 开发身份，本地没有、加上这个开关就等于允许 Apple 现造一张。
+      - name: Archive
         run: |
           xcodebuild archive \
             -project LinkPure.xcodeproj \
@@ -187,33 +192,22 @@ jobs:
             -destination '${{ matrix.destination }}' \
             -archivePath build/${{ matrix.platform }}.xcarchive \
             CURRENT_PROJECT_VERSION="${{ needs.version.outputs.build_number }}" \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "$ASC_KEY_ID" \
-            -authenticationKeyIssuerID "$API_ISSUER"
+            ${{ matrix.archive_signing }}
 
-      # 归档产物自己就是真签名 + 带 entitlements 的——这正是删掉 ad-hoc 补丁之后
-      # 要守住的那条不变量，所以在这里当场断言，而不是等 ASC 几分钟后用 90296 拒收。
-      - name: Verify the archive is really signed
+      # macOS 归档是 ad-hoc 签的，它唯一的作用就是**让 entitlements 进到归档里**
+      # （entitlements 跟着签名走；完全不签的话导出重签时只会剩 profile 自带的两项，
+      # ASC 会用 90296 拒收）。所以这里只断言这一条不变量——别再把 ad-hoc 那行
+      # 顺手改成“真签名”，那需要一张本地有效的 app 证书，而 Xcode 不允许在
+      # automatic 签名下显式指定分发身份。
+      - name: Verify the archive carries entitlements
+        if: matrix.upload_type == 'macos'
         run: |
           APP=$(find build/${{ matrix.platform }}.xcarchive/Products/Applications -maxdepth 1 -name '*.app' | head -1)
           codesign --verify --verbose=2 "$APP"
           codesign -dv --verbose=2 "$APP" 2>&1 | grep -E 'Authority=|TeamIdentifier='
-          # 以前这里是 ad-hoc（identity "-"）或者干脆没签，归档产物跟真正发给 ASC 的
-          # 东西不是一回事（entitlements 得靠 ad-hoc 偷渡）。这条断言就把新的不变量
-          # 钉住了：必须是我们那张 app 分发证书签的，不是 Xcode 现场造的开发证书。
-          codesign -dv --verbose=2 "$APP" 2>&1 \
-            | grep -Eq 'Authority=(Apple Distribution|3rd Party Mac Developer Application)' \
-            || { echo '::error::归档里的 app 不是用 app 分发证书签的（自动签名又绕开 keychain 造了一张？）'; exit 1; }
           codesign -d --entitlements - --xml "$APP" | plutil -p -
-          if [ '${{ matrix.upload_type }}' = macos ]; then
-            # entitlements 跟着签名走：不签就丢 sandbox（ASC 报 90296）。
-            # 这条断言是防止那个补丁被重新引入的。
-            codesign -d --entitlements - --xml "$APP" | plutil -p - | grep -q 'com.apple.security.app-sandbox' \
-              || { echo '::error::归档里的 app 缺 app-sandbox entitlement'; exit 1; }
-          fi
+          codesign -d --entitlements - --xml "$APP" | plutil -p - | grep -q 'com.apple.security.app-sandbox' \
+            || { echo '::error::归档里的 app 缺 app-sandbox entitlement（ad-hoc 那行被谁删了？）'; exit 1; }
 
       - name: Export
         env:
