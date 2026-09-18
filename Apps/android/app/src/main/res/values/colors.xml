@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1B1B1F</color>
+    <!--
+      自适应图标的背景层。用白色而不是品牌蓝：图稿本身就是「蓝色圆角方块」，
+      背景再刷成同一个蓝会把方块这个品牌元素抹掉（铅笔、剪贴板的夹子都会失去
+      对比度，实测过）。白底跟 iOS 图标和 Play 上的那张 listing 图标一致。
+    -->
+    <color name="ic_launcher_background">#FFFFFFFF</color>
 </resources>

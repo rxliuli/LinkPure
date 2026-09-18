@@ -238,8 +238,9 @@ parameters were actually removed, and it only serves as the expanded line.
 ## Two things that must change before the first Play release
 
 1. **`versionCode` must be greater than the Flutter version's current value on Play**
-   (0.5.2 → 502). It is derived from `project.yml` now (0.6.5 → 605), which matches the Swift
-   side's build number. **Making it smaller makes Play reject the upload outright.**
+   (the Flutter line left off at 0.5.2 → 502). It is derived from `project.yml` using the same
+   `x*10000 + y*100 + z` formula as the Swift side's build number. **Making it smaller makes
+   Play reject the upload outright.**
 2. **The signing key must reuse the Flutter version's `android/upload-keystore.jks`**
    (in `~/code/flutter/LinkPure/android/`). Play requires the same upload key for the same
    package name; change it and you can never update the app again, only open a new one.

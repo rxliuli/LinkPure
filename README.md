@@ -65,10 +65,11 @@ linkpure/
 │   └── LinkPureApp.swift             scenes / menu commands (FocusedValues)
 ├── Apps/iOS/                         rule management + usage guide
 ├── Apps/android/                     native Android implementation (Kotlin / Gradle)
-│   ├── settings.gradle.kts           Gradle root (:core is pure JVM / :app added later)
-│   └── core/                         the Kotlin port of LinkPureCore
-│       └── src/                      ★ the rule library and vectors are NOT copied here;
-│                                       build.gradle.kts references the two directories above
+│   ├── settings.gradle.kts           Gradle root (:core is a pure JVM module, :app is the app)
+│   ├── core/                         the Kotlin port of LinkPureCore
+│   │   └── src/                      ★ the rule library and vectors are NOT copied here;
+│   │                                   build.gradle.kts references the two directories above
+│   └── app/                          the Android app (Compose); ProcessTextActivity is the entry point
 ├── Scripts/sync-spec.sh              syncs the rule library and vectors from the Flutter repo
 └── project.yml                       XcodeGen (macOS / iOS)
 ```

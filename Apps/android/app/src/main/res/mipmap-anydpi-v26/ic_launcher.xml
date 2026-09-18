@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  自适应图标：背景是纯白，前景是品牌图（Apps/macOS/Assets.xcassets 那份带 alpha 的
+  1024 图稿）缩到安全区（66/108）后的位图，五个密度各有 ic_launcher_foreground.png。
+
+  之前这里是占位：一根通用链条矢量 + #1B1B1F 的深色背景。
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
 </adaptive-icon>

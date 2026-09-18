@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      深色模式下的「启动窗口」主题。不写这个文件的话，Compose 那边虽然已经跟着
+      系统切深色（Theme.kt 用 isSystemInDarkTheme()），但冷启动那一瞬间窗口背景
+      仍是 Light 主题的白 —— 会闪一下白。这里让窗口背景跟 Material3 的
+      darkColorScheme().background 对齐。
+    -->
+    <style name="Theme.LinkPure" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF1C1B1F</item>
+    </style>
+</resources>

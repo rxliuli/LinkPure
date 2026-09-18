@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.LinkPure" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      启动窗口主题。界面本身全部由 Compose 画（见 ui/Theme.kt），这里只管冷启动
+      那一瞬间的窗口背景 —— 所以 windowBackground 跟 Material3 的
+      lightColorScheme().background 对齐，深色模式那份在 values-night/。
+    -->
+    <style name="Theme.LinkPure" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFFFFBFE</item>
+    </style>
 
     <!--
       清洗入口的窗口：半透明、无内容、无动画。
