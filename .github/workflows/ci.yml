@@ -1,0 +1,83 @@
+name: CI
+
+# 这个文件只在 Swift 原生版的分支上存在。**刻意不监听 main**：
+# main 是 Flutter 版，目录结构完全不同（pubspec.yaml / lib/ / macos/），
+# 在这里跑 Swift 的命令只会全红。等本分支合并进 main 之后再把它加进来
+# （那时 main 上的 .github/workflows/release.yml 也该一起处理掉——见 README「与 Flutter 版的关系」）。
+on:
+  push:
+    branches: [feat/swift-native]
+  pull_request:
+  workflow_dispatch:
+
+# 同一分支连推几次时，只有最后一次的结果有意义
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ───────────────────────── 规则引擎 ─────────────────────────
+  # 规则库 + conformance 向量是全仓库唯一一份「跨语言数据契约」，
+  # Swift 与 Kotlin 两个实现跑的是同一批 1053 条向量——这里跑的就是它。
+  # 两条都放 ubuntu（最快最便宜的 runner）：LinkPureCore 只依赖 Foundation，
+  # Android :core 是刻意的纯 JVM 模块。
+  swift-core:
+    name: Swift core / 1053 vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: swift test
+        run: |
+          swift --version
+          swift test
+
+  android-core:
+    name: Kotlin core / 1053 vectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      # 不需要装 Android SDK：:core 是纯 JVM 模块，而且 AGP 9 的
+      # `compileSdk { version = release(37) }` 是惰性的，配置 :app 不会去要 SDK。
+      # （本机把 local.properties 挪走、ANDROID_HOME 指向空目录验过。）
+      - name: ./gradlew :core:test
+        working-directory: Apps/android
+        run: ./gradlew :core:test --console=plain
+
+  # ───────────────────────── App 层编译检查 ─────────────────────────
+  # `swift test` 只编译 SwiftPM 里的 LinkPureCore。Apps/Shared 下那上千行
+  # SwiftUI（以及 macOS / iOS 两个 target）不在任何 SwiftPM target 里，
+  # 只有 xcodebuild 编译得到——少了这个 job，改 RuleEditorView.swift 也能全绿。
+  apps-compile:
+    name: Build apps (unsigned)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      # .xcodeproj 是 xcodegen 的产物、且在 .gitignore 里，CI 上必须现生成。
+      # （project.yml 才是工程配置的唯一来源。）
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      # 只做编译检查。签名证书 / 描述文件 / 上传 App Store 都是发布 job 的事，
+      # 跟 PR 无关，也不该让 PR 拿到那些 secret。
+      - name: Build macOS
+        run: |
+          xcodebuild -project LinkPure.xcodeproj \
+            -scheme LinkPureMac \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Build iOS
+        run: |
+          xcodebuild -project LinkPure.xcodeproj \
+            -scheme LinkPureIOS \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
