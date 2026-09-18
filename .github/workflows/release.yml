@@ -113,8 +113,6 @@ jobs:
 
       - name: Setup keychain and API key
         env:
-          APPSTORE_CERT: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}
-          APPSTORE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}
           INSTALLER_CERT: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_BASE64 }}
           INSTALLER_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_INSTALLER_PASSWORD }}
           API_KEY: ${{ secrets.APPLE_API_KEY }}
@@ -125,10 +123,10 @@ jobs:
           security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
           security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
 
-          # 上传 Mac App Store 需要两张证书：Apple Distribution（签 app）+
-          # 3rd Party Mac Developer Installer（签 .pkg）
-          echo "$APPSTORE_CERT" | base64 --decode > $RUNNER_TEMP/appstore.p12
-          security import $RUNNER_TEMP/appstore.p12 -P "$APPSTORE_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          # 只需要导入 Installer 这一张（签 .pkg）。签 app 的 Apple Distribution 证书
+          # 由 Xcode 自己通过 API key 拿：DistributionSummary 里写的是
+          # Cloud Managed Apple Distribution，而且 find-identity 报 0 个身份——
+          # 之前导进来的那张 appstore 证书根本没被用上（所以它也删了）。
           echo "$INSTALLER_CERT" | base64 --decode > $RUNNER_TEMP/installer.p12
           security import $RUNNER_TEMP/installer.p12 -P "$INSTALLER_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
 
@@ -256,8 +254,6 @@ jobs:
 
       - name: Setup keychain and API key
         env:
-          APPSTORE_CERT: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_BASE64 }}
-          APPSTORE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_APPSTORE_PASSWORD }}
           API_KEY: ${{ secrets.APPLE_API_KEY }}
           API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
         run: |
@@ -266,8 +262,10 @@ jobs:
           security unlock-keychain -p actions $RUNNER_TEMP/app-signing.keychain-db
           security default-keychain -s $RUNNER_TEMP/app-signing.keychain-db
 
-          echo "$APPSTORE_CERT" | base64 --decode > $RUNNER_TEMP/appstore.p12
-          security import $RUNNER_TEMP/appstore.p12 -P "$APPSTORE_PASSWORD" -A -t cert -f pkcs12 -k $RUNNER_TEMP/app-signing.keychain-db
+          # iOS 不需要导任何证书：App Store 那套（Apple Distribution + profile）
+          # 都由 Xcode 通过 API key 自动搞定（DistributionSummary 里是
+          # Cloud Managed Apple Distribution）。keychain 只为自动签名可能用到的
+          # 本地证书留着，以及下一行写 API key 用。
 
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions $RUNNER_TEMP/app-signing.keychain-db
           security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db
