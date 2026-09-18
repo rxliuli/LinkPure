@@ -19,6 +19,8 @@ struct ShortcutGuideView: View {
                 stepsSection
                 entrySection
                 verifySection
+                aboutSection
+                rulesSection
             }
             .navigationTitle("How to Use")
         }
@@ -155,6 +157,33 @@ struct ShortcutGuideView: View {
             Text("Current status")
         } footer: {
             Text("Want to try it in the app first? Switch to the Rules tab — there's a test field there.")
+        }
+    }
+
+    // MARK: - 关于
+
+    /// iOS 没有设置页，也没有 macOS 那种系统自带的 About 面板，
+    /// 所以版本号与对外链接只能放这里——接在「怎么用」后面，
+    /// 这页就同时是这个 app 的 info 页（iOS 上没有设置页的小工具通常都这么干）。
+    ///
+    /// 容器按平台来（macOS 借设置窗口），**内容必须一致**。
+    private var aboutSection: some View {
+        Section {
+            LabeledContent("Version") { Text(AppVersion.display) }
+            Link("GitHub", destination: LinkPureLinks.github)
+            Link("Discord", destination: LinkPureLinks.discord)
+            Link("Website", destination: LinkPureLinks.website)
+        } header: {
+            Text("About")
+        }
+    }
+
+    /// 规则库署名——**许可要求**，不能只放在仓库 README 里。
+    private var rulesSection: some View {
+        Section {
+            RulesAttribution()
+        } header: {
+            Text("Rules")
         }
     }
 }

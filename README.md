@@ -38,6 +38,11 @@ linkpure/
 │   ├── SettingsView.swift            设置（⌘,）
 │   └── LinkPureApp.swift             Scene / 菜单命令（FocusedValues）
 ├── Apps/iOS/                         规则管理 + 使用方式引导
+├── Apps/android/                     Android 原生实现（Kotlin / Gradle）
+│   ├── settings.gradle.kts           Gradle 根（:core 纯 JVM / 后面加 :app）
+│   └── core/                         LinkPureCore 的 Kotlin 版
+│       └── src/                      ★ 规则库与向量**不在这里存副本**，
+│                                       由 build.gradle.kts 引用上面那两个目录
 ├── Scripts/sync-spec.sh              从 Flutter 仓库同步规则库与向量
 └── project.yml                       XcodeGen（macOS / iOS）
 ```
@@ -181,12 +186,35 @@ xcodebuild -project LinkPure.xcodeproj -scheme LinkPureIOS \
 
 | | macOS | iOS |
 |---|---|---|
-| 次要信息（如规则 id） | `.help()` 悬停提示 | **长按菜单**（`.help()` 在 iPhone 上是死的） |
-| 进详情 | 行内铅笔按钮 / 右键菜单 | **点整行**（只有 swipe 等于藏起来，没人会去试） |
+| 次要信息（如规则 id） | `.help()` 悬停提示 | **不展示**（`.help()` 在 iPhone 上是死的） |
+| 进详情 | 双击（`primaryAction`） | **点整行**（只有 swipe 等于藏起来，没人会去试） |
 | 长列表 | 要自己截断/虚拟化 | `List` 本身就是懒的，**不要**截断 |
 | 空状态 | `ContentUnavailableView` 铺满 | 同一个组件，但要把 `listRowBackground` 清掉 |
 | 操作结果提示 | 底部状态栏 | **必须 `.alert`**（内置规则库有 1061 行，提示塞进列表末尾等于看不见） |
-| 删除 | 行内垃圾桶 → **立即删** + 状态栏 8 秒「撤销」 | 滑动 → **立即删** + 底部 6 秒撤销条 |
+| 删除 | 选中 → 工具栏 / 右键菜单 / Delete 键 → **立即删** + 状态栏 8 秒「撤销」 | 滑动 → **立即删** + 底部 6 秒撤销条 |
+| 行的右键/长按菜单 | ✅ `contextMenu(forSelectionType:)`，作用于**选中集** | ❌ **不做** |
+| 对外链接 / 规则库署名 | 设置窗口里的 `Links` 分组 | 「How to Use」页尾的 `About` + `Rules` 分组 |
+
+> **关于「关于」**：macOS 有系统自带的 About 面板（`.appInfo` 没被动过），所以版本号不重复写；
+> 但链接不能放 Help 菜单——这是个 `LSUIElement` 菜单栏 app，**它几乎不前台**，
+> app 级菜单（包括 Help）用户基本看不到。设置窗口才是两个入口都够得到的那个。
+> iOS 既没有设置页也没有系统 About 面板，所以版本号 + 链接只能接在「How to Use」后面
+> （Android 则用溢出菜单 + 独立页面，Material 的惯用法）。
+>
+> 三端的 URL 必须保持一致：Swift 侧在 `Apps/Shared/AboutContent.swift`，
+> Android 侧在 `AboutScreen.kt`。**规则库那段署名是 LGPL-3.0 的许可要求**——
+> 只写在仓库 README 里的话，装到设备上的用户看不到。
+
+> **为什么 iOS 没有长按菜单，macOS 有**：这不是“风格不同”，是**有没有多选**。
+macOS 的菜单拿的是选中集（`Enable` / `Disable` 作用于全部选中，删除文案是
+`Delete N Rules`），那是名副其实的“上下文”菜单；iPhone 没有多选，那种菜单就只剩
+重复动作的集散地（Edit / Enable / Delete 原本已经分别由点整行 / 尾部开关 / swipe 承担）。
+Android 也按同一条规则处理（同样是单选）。
+>
+> 代价：“拿到一条内置规则的正则”这个能力在移动端只剩**选中文本复制**
+>（内置规则只读、打不开编辑器），所以那些文案开了 `.textSelection(.enabled)` /
+> `SelectionContainer`。macOS 的 `Table` 单元格不支持文本选中，所以它那边保留了
+> `Copy Regular Expression` 菜单项。
 
 两边都不二次确认：
 
@@ -281,7 +309,9 @@ Flutter 版的 `LocalRule` 形状（`{"rule":{...},"enabled":bool}`）与本仓�
 | `LinkPureCore` | ✅ 1053/1053 向量通过 |
 | macOS app | ✅ 可用（菜单栏常驻 / 剪贴板监听 / 改写写回 / 通知 / 规则管理 / 导入导出 / URL 测试 / 开机自启 / **沙盒已开**） |
 | iOS app | ✅ 可用（规则管理 / 使用方式引导 / `CleanURLTextIntent` 已注册给 Shortcuts） |
-| 多语言一致性 | ✅ Dart / Rust / Swift 三个实现零分歧 |
+| Android `:core` | ✅ 1053/1053 向量通过（Kotlin；纯 JVM 模块，不依赖 Android） |
+| Android app | ✅ 可用（`ACTION_PROCESS_TEXT` 静默原位替换 + 通知 / 规则管理 / URL 测试 / Flutter 规则迁移） |
+| 多语言一致性 | ✅ Dart / Rust / Swift / Kotlin 四个实现零分歧 |
 
 ### 两个平台的已知欠账
 

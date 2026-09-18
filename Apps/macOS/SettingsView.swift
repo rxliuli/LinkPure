@@ -43,18 +43,27 @@ struct SettingsView: View {
             }
 
             Section {
-                LabeledContent("Version", value: Self.version)
+                LabeledContent("Version", value: AppVersion.display)
+            }
+
+            // 链接放设置窗口，而不是 Help 菜单：这是个 `LSUIElement` 菜单栏 app，
+            // **它几乎不前台**（菜单栏 app 级菜单只在 app 前台时存在），
+            // 所以 Help 菜单用户基本看不到。设置窗口才是两个入口
+            // （状态栏菜单 / 主窗口侧边栏）都够得到的那个。
+            //
+            // 版本号由系统自带的 About 面板（`.appInfo` 没被动过）负责，这里不重复。
+            Section("Links") {
+                Link("GitHub", destination: LinkPureLinks.github)
+                Link("Discord", destination: LinkPureLinks.discord)
+                Link("Website", destination: LinkPureLinks.website)
+            }
+
+            Section {
+                RulesAttribution()
             }
         }
         .formStyle(.grouped)
         .frame(width: 420, height: 400)
-    }
-
-    private static var version: String {
-        let info = Bundle.main.infoDictionary
-        let short = info?["CFBundleShortVersionString"] as? String ?? "—"
-        let build = info?["CFBundleVersion"] as? String ?? "—"
-        return "\(short) (\(build))"
     }
 
     private func applyLaunchAtLogin(_ on: Bool) {
