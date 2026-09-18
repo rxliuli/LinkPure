@@ -9,3 +9,8 @@ local.properties
 
 # Gradle 自动生成，会把 daemon 钉在某个本机 JDK 上
 gradle/gradle-daemon-jvm.properties
+
+# 上传密钥与它的密码：只在 CI（由 secrets 现写）和本机发布时存在，绝不进版本控制
+key.properties
+*.jks
+*.keystore

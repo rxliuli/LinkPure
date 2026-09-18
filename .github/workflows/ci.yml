@@ -76,6 +76,25 @@ jobs:
         working-directory: Apps/android
         run: ./gradlew :core:test --console=plain
 
+  # ───────────────────────── Android app 编译检查 ─────────────────────────
+  # android-core 只跑 :core 的 1053 条向量（纯 JVM，连 Android SDK 都不用）。
+  # :app 那上千行 Compose 不在它的覆盖范围里——少了这个 job，改 RulesScreen.kt
+  # 也能全绿。跟上面 macOS/iOS 的 apps-compile 是同一个理由。
+  android-app:
+    name: Build Android app (debug)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      # 只编 debug：签名密钥是发布 job 的事，PR 不该碰到它
+      - name: ./gradlew :app:assembleDebug
+        working-directory: Apps/android
+        run: ./gradlew :app:assembleDebug --console=plain
+
   # ───────────────────────── App 层编译检查 ─────────────────────────
   # `swift test` 只编译 SwiftPM 里的 LinkPureCore。Apps/Shared 下那上千行
   # SwiftUI（以及 macOS / iOS 两个 target）不在任何 SwiftPM target 里，

@@ -220,6 +220,31 @@ https://www.youtube.com/watch?v=dQw4w9WgXcQ      ← 正文
    `~/code/flutter/LinkPure/android/`）。Play 要求同一 package name 用同一 upload key，
    换了就永远无法更新，只能新开一个 app。
 
+## CI 发布（release.yml 的 `android` job）
+
+`./gradlew :app:bundleRelease :app:assembleRelease` → 校验 APK 签名 → 把 AAB 传给 Play，
+AAB/APK 同时作为构建产物留下。
+
+**签名**的四个 secret 已经在 `build-android` environment 里
+（`ANDROID_KEYSTORE_BASE64` / `ANDROID_PASSWORD` 系列：`ANDROID_STORE_PASSWORD`、
+`ANDROID_KEY_PASSWORD`、`ANDROID_KEY_ALIAS`），CI 用它们现写 `key.properties` 与
+`upload-keystore.jks`——这两个文件都在 `.gitignore` 里，本机发布时自己放一份在
+`Apps/android/` 下即可（`storeFile` 用相对模块根的路径）。
+
+**Play 的发布凭据**是另一样东西，需要自己建一次：
+
+1. Play Console → 设置 → API 访问权限 → 关联（或创建）一个 Google Cloud 项目
+2. 在该 Cloud 项目里建服务账号，授予「Play 服务账号」角色；只发测试轨道要
+   「发布到测试轨道」，要发 production 还要「管理生产版本与发布」
+3. 下载该服务账号的 JSON 密钥
+4. `gh secret set PLAY_SERVICE_ACCOUNT_JSON --env build-android < 下载的.json`
+
+没配这一步时 job **不会红**：打印一条 warning 并在 Step Summary 里说明，
+AAB/APK 照旧产出（其它渠道也互不影响）。配好之后每次发版自动上传。
+
+默认发到 **internal** 轨道（秒级生效、不进审核）。要发正式版就
+`gh workflow run release.yml -f play-track=production`。
+
 ## 还没做的
 
 - **真机验证**：目前只在 API 37 模拟器上跑过

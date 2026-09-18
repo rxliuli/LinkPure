@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -40,6 +42,30 @@ android {
         version = release(37)
     }
 
+    // 签名
+    // key.properties 与 keystore 都不进版本控制（见 .gitignore），CI 里由 secrets 现写。
+    // 文件放在模块根（Apps/android/）而不是 app/，所以用 rootProject.file 解析，
+    // 不依赖在哪个目录下执行 gradle。
+    //
+    // ★ 这里的 keystore **必须**是 Flutter 版一直在用的那个 upload-keystore.jks
+    //   （Play 要求同一 package name 用同一 upload key，换了就永远无法更新，
+    //   只能另开一个 app —— 见 README「上架前必须改的两处」）。
+    val keyPropertiesFile = rootProject.file("key.properties")
+    val hasKeyProperties = keyPropertiesFile.exists()
+    if (hasKeyProperties) {
+        val keyProperties = Properties().apply {
+            keyPropertiesFile.inputStream().use { load(it) }
+        }
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     defaultConfig {
         // ★ Release **必须**复用 Flutter 版在 Play 上的包名，否则老用户收不到更新、
         //   评分/下载量归零。跟 iOS/macOS 复用 bundle id 是同一个道理。
@@ -68,6 +94,13 @@ android {
         }
         release {
             isMinifyEnabled = false
+            // 没有 key.properties 时保持不签名（本机想看一眼 release 产物时不必先准备 keystore），
+            // 但发布流水线必须带它 —— Play 会拒收未签名/签名不对的包。
+            if (hasKeyProperties) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                logger.warn("没有 Apps/android/key.properties：release 产物将不签名（只能用于本机检查）")
+            }
         }
     }
 

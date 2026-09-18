@@ -19,6 +19,10 @@ on:
         description: 覆盖 CFBundleVersion（留空 = 按版本号自动算：x*10000 + y*100 + z）
         type: string
         default: ""
+      play-track:
+        description: Google Play 轨道（internal / alpha / beta / production）；留空 = internal
+        type: string
+        default: ""
 
 # 两个 release 同时跑会抢同一个 tag 和同一个 cask 文件
 concurrency:
@@ -186,6 +190,106 @@ jobs:
           name: macos-dmg
           path: ${{ steps.dmg.outputs.dmg-path }}
           if-no-files-found: error
+
+  # ───────────────────────── Android → Google Play ─────────────────────────
+  # 不需要 macOS：Android 那条路全是 Linux 上的 Gradle 活。
+  #
+  # 版本号不在这里维护：Apps/android/app/build.gradle.kts 从仓库根的 project.yml 派生
+  # versionName / versionCode（跟 Apple 侧 build number 同一个公式），
+  # Scripts/check-version.sh 盯着"不许在 Android 侧再写一份"。
+  #
+  # 上传密钥复用 Flutter 版一直在用的那个 upload-keystore.jks —— Play 要求同一个
+  # package name 用同一个 upload key，换了就永远无法更新，只能另开一个 app。
+  #
+  # 默认发到 **internal** 轨道（秒级生效、不进审核），确认没问题再用
+  # `workflow_dispatch -f play-track=production` 发正式版。
+  android:
+    name: Android → Google Play
+    needs: version
+    if: needs.version.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: build-android
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Setup signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > Apps/android/upload-keystore.jks
+          cat > Apps/android/key.properties <<EOF
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build AAB + APK
+        working-directory: Apps/android
+        run: ./gradlew :app:bundleRelease :app:assembleRelease --console=plain
+
+      # 未签名或签错密钥的包 Play 一律拒收，所以当场验一遍——比上传后拿一个
+      # 服务端的抽象报错便宜得多
+      - name: Verify the APK signature
+        working-directory: Apps/android
+        run: |
+          APK=app/build/outputs/apk/release/app-release.apk
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
+
+      - name: Rename artifacts
+        run: |
+          mv Apps/android/app/build/outputs/bundle/release/app-release.aab LinkPure-android.aab
+          mv Apps/android/app/build/outputs/apk/release/app-release.apk LinkPure-android.apk
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: |
+            LinkPure-android.aab
+            LinkPure-android.apk
+          if-no-files-found: error
+
+      # Play 的发布凭据（服务账号 JSON）需要单独在 Play Console 里建，见 Apps/android/README.md。
+      # 没配就跳过并留下一条 warning，而不是把整条发布判红——其它渠道（Apple / DMG / cask）
+      # 与它互不相关。
+      - name: Check Play credentials
+        id: play
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_JSON" ]; then
+            echo "::warning::PLAY_SERVICE_ACCOUNT_JSON 未配置 —— 跳过 Play 上传（AAB/APK 仍然产出了）；配置步骤见 Apps/android/README.md"
+            {
+              echo "### Play 上传已跳过"
+              echo
+              echo "缺少 \`PLAY_SERVICE_ACCOUNT_JSON\`（Play Developer API 服务账号 JSON）。"
+              echo "配置步骤见 \`Apps/android/README.md\`。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload to Google Play
+        if: steps.play.outputs.configured == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.rxliuli.linkpure
+          releaseFiles: LinkPure-android.aab
+          track: ${{ inputs.play-track || 'internal' }}
+          status: completed
 
   # ───────────────────────── GitHub Release + Homebrew cask ─────────────────────────
   release:
