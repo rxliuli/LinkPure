@@ -1,114 +1,122 @@
 # LinkPure (Swift)
 
-LinkPure 的 **native Apple 平台实现**：macOS 菜单栏应用 + iOS（AppIntent）。
+LinkPure's **native Apple-platform implementation**: a macOS menu bar app + iOS (AppIntent).
 
-规则引擎抽成 `LinkPureCore` Swift Package —— 与 Flutter 版、以及未来的 Android 版
-共享**同一份规则库与同一套行为规范**。
+The rule engine is extracted into the `LinkPureCore` Swift Package — sharing **the same
+rule library and the same behavioral spec** with the Flutter version and the future
+Android version.
 
-## 安装
+## Installation
 
-| 平台 | 可用的渠道 |
+| Platform | Available channels |
 | --- | --- |
-| iOS | **只能从 App Store 装**（没有 TestFlight 之类的外部渠道） |
-| macOS | App Store / Homebrew / 直接下载 DMG，三选一 |
+| iOS | **App Store only** (no external channels such as TestFlight) |
+| macOS | App Store / Homebrew / direct DMG download — pick one |
 
-- **App Store**（macOS 与 iOS 共用同一个 app 记录，Universal Purchase）：
+- **App Store** (macOS and iOS share the same app record, Universal Purchase):
   <https://apps.apple.com/app/id6753670551>
-- **Homebrew**（直发版）：
+- **Homebrew** (direct-distribution build):
 
   ```sh
   brew install --cask rxliuli/tap/linkpure
   ```
 
-- **DMG**（直发版，Developer ID 签名 + 已公证）：
+- **DMG** (direct-distribution build, Developer ID signed + notarized):
   <https://github.com/rxliuli/LinkPure/releases/latest>
 
-> ⚠️ Homebrew / DMG 装的直发版与 App Store 版 **bundle id 相同**
-> （`com.rxliuli.linkpure2`），两份同时装会互相覆盖。换渠道之前先卸掉另一份。
+> ⚠️ The direct-distribution build installed via Homebrew / DMG and the App Store build
+> have the **same bundle id** (`com.rxliuli.linkpure2`); installing both will overwrite
+> each other. Uninstall the other one before switching channels.
 
-系统要求：macOS 15（Sequoia）及以上；iOS 17 及以上。
+Requirements: macOS 15 (Sequoia) or later; iOS 17 or later.
 
-## 为什么这样组织
+## Why it's organized this way
 
-核心逻辑（规则引擎 + 1061 条规则）是唯一的资产；平台集成才是各端差异所在。
-所以策略是：
+The core logic (rule engine + 1061 rules) is the only asset; platform integration is
+where the platforms differ. So the strategy is:
 
-> **共享真相（规则数据 + conformance 向量），而不是共享运行时（代码）。**
+> **Share the truth (rule data + conformance vectors), not the runtime (code).**
 
-`LinkPureCore` 只有约 250 行，但被 **1053 条语言无关向量**验证过——这些向量同时也在
-Dart（参考实现）与 Rust（独立实现）上跑过。
+`LinkPureCore` is only about 250 lines, but it is verified by **1053 language-agnostic
+vectors** — the same vectors also run against Dart (the reference implementation) and
+Rust (an independent implementation).
 
-## 结构
+## Structure
 
 ```
 linkpure/
 ├── Package.swift                     # LinkPureCore
 ├── Sources/LinkPureCore/
-│   ├── Rule.swift                    数据契约（与 shared-rules.json 对应）
-│   ├── LocalRule.swift               用户规则 + 导入/导出交换格式
-│   ├── UrlCleaner.swift              规则引擎（行为契约见 conformance/README.md）
-│   ├── RulesManager.swift            加载内置规则库 + 默认重定向跟随
-│   └── Resources/shared-rules.json   vendored 规则库
-├── Tests/LinkPureCoreTests/          1053 条一致性向量
-├── Apps/Shared/                      两个平台共用
-│   ├── AppModel.swift                规则状态 + 测试（macOS 额外带剪贴板监听）
-│   ├── RuleStore.swift               用户规则持久化
-│   ├── RuleEditorView.swift          规则编辑（macOS sheet / iOS Form）
-│   ├── JSONDocument.swift            导入导出用
-│   └── CleanURLTextIntent.swift      ★ 给 Shortcut 用的纯函数 AppIntent
-├── Apps/macOS/                       菜单栏应用（MenuBarExtra + 窗口）
-│   ├── MainWindowView.swift          NavigationSplitView + Table 的规则管理窗口
-│   ├── SettingsView.swift            设置（⌘,）
-│   └── LinkPureApp.swift             Scene / 菜单命令（FocusedValues）
-├── Apps/iOS/                         规则管理 + 使用方式引导
-├── Apps/android/                     Android 原生实现（Kotlin / Gradle）
-│   ├── settings.gradle.kts           Gradle 根（:core 纯 JVM / 后面加 :app）
-│   └── core/                         LinkPureCore 的 Kotlin 版
-│       └── src/                      ★ 规则库与向量**不在这里存副本**，
-│                                       由 build.gradle.kts 引用上面那两个目录
-├── Scripts/sync-spec.sh              从 Flutter 仓库同步规则库与向量
-└── project.yml                       XcodeGen（macOS / iOS）
+│   ├── Rule.swift                    data contract (mirrors shared-rules.json)
+│   ├── LocalRule.swift               user rules + import/export exchange format
+│   ├── UrlCleaner.swift              rule engine (behavior contract: conformance/README.md)
+│   ├── RulesManager.swift            loads the built-in rule library + default redirect following
+│   └── Resources/shared-rules.json   vendored rule library
+├── Tests/LinkPureCoreTests/          1053 conformance vectors
+├── Apps/Shared/                      shared by both platforms
+│   ├── AppModel.swift                rule state + testing (macOS additionally has clipboard monitoring)
+│   ├── RuleStore.swift               user-rule persistence
+│   ├── RuleEditorView.swift          rule editing (macOS sheet / iOS Form)
+│   ├── JSONDocument.swift            used for import/export
+│   └── CleanURLTextIntent.swift      ★ pure-function AppIntent for Shortcuts
+├── Apps/macOS/                       menu bar app (MenuBarExtra + window)
+│   ├── MainWindowView.swift          rule management window (NavigationSplitView + Table)
+│   ├── SettingsView.swift            settings (⌘,)
+│   └── LinkPureApp.swift             scenes / menu commands (FocusedValues)
+├── Apps/iOS/                         rule management + usage guide
+├── Apps/android/                     native Android implementation (Kotlin / Gradle)
+│   ├── settings.gradle.kts           Gradle root (:core is pure JVM / :app added later)
+│   └── core/                         the Kotlin port of LinkPureCore
+│       └── src/                      ★ the rule library and vectors are NOT copied here;
+│                                       build.gradle.kts references the two directories above
+├── Scripts/sync-spec.sh              syncs the rule library and vectors from the Flutter repo
+└── project.yml                       XcodeGen (macOS / iOS)
 ```
 
-## 两个平台的能力差异（重要）
+## Capability differences between the two platforms (important)
 
 | | macOS | iOS |
 |---|---|---|
-| 自动改写（零操作） | ✅ 后台轮询 `NSPasteboard` | ❌ **系统不允许** |
-| 用户需要做什么 | 什么都不用做 | 配置一次快捷指令，之后手动触发 |
-| 入口 | 菜单栏常驻 | 控制中心 / 轻点背面 / Siri |
-| 集成方式 | 剪贴板监听 | `CleanURLTextIntent` + Shortcut |
+| Automatic rewriting (zero interaction) | ✅ background polling of `NSPasteboard` | ❌ **not allowed by the system** |
+| What the user must do | nothing at all | configure a shortcut once, then trigger manually |
+| Entry point | always-on menu bar | Control Center / Back Tap / Siri |
+| Integration | clipboard monitoring | `CleanURLTextIntent` + Shortcut |
 
-### iOS 的形态是**实测逼出来的**，不是选出来的
+### iOS's shape was **forced by real-world testing**, not chosen
 
-1. **`ControlWidget`（控制中心控件）不可行。**
-   后台执行时 `UIPasteboard.general` 不是“被拒绝”，而是**另一块空的 pasteboard**：
-   `numberOfItems == 0`，`detectedValues` 直接抛 `PBErrorDomain Code=4`。
-2. **`AppShortcutsProvider` 也救不了。**
-   App Shortcut 只能包装你自己的一个 intent，**装不下 `Get Clipboard` 这种系统动作**；
-   而 intent 自己在后台又读不到剪贴板。
-3. **唯一可行**：让 **Shortcuts 自己去读**，把字符串当参数传进来——
-   因此 `CleanURLTextIntent` 是纯字符串进/出，**完全不碰剪贴板**，
-   也就能做到**不弹「允许粘贴」提示**。
+1. **`ControlWidget` (Control Center widget) is not viable.**
+   When it runs in the background, `UIPasteboard.general` isn't "denied" — it's **a
+   different, empty pasteboard**: `numberOfItems == 0`, and `detectedValues` throws
+   `PBErrorDomain Code=4` outright.
+2. **`AppShortcutsProvider` doesn't save you either.**
+   An App Shortcut can only wrap one of your own intents; it **can't hold a system
+   action like `Get Clipboard`** — and the intent itself can't read the clipboard in
+   the background.
+3. **The only workable approach**: let **Shortcuts read it itself** and pass the
+   string in as a parameter — which is why `CleanURLTextIntent` takes a plain string
+   in and out and **never touches the clipboard**, and can therefore avoid the
+   "allow paste" prompt.
 
-对应的工作流（App 内的「使用方式」页有逐步引导）：
+The corresponding workflow (the in-app "How to Use" page walks through it step by step):
 
 ```
-获取剪贴板（系统读） → Clean URL Text（本 App） → [结果有变化才] 拷贝到剪贴板（系统写）+ 通知
+Get Clipboard (system reads) → Clean URL Text (this app) → [only if the result changed] Copy to Clipboard (system writes) + notification
 ```
 
-写回（「拷贝到剪贴板」）必须包在这个 `If` **里面**，而不是放在它外面：
-iOS 写剪贴板**没有内容去重**，结果一样也照写会白白触发 Universal Clipboard 同步、
-把复制的富文本压成纯文本。`Clean URL Text` 本身没有副作用，风险全在这个写回动作的位置。
-macOS 端挡这件事的是同一套判断（`ClipboardMonitor` 里的 `rewritten != text`）。
+The write-back ("Copy to Clipboard") must be **inside** this `If`, not outside it: iOS
+clipboard writes have **no content deduplication**, so writing an unchanged result
+would needlessly trigger Universal Clipboard sync and flatten copied rich text into
+plain text. `Clean URL Text` itself has no side effects; all the risk is in where this
+write-back sits. On macOS the same check guards it (`rewritten != text` in
+`ClipboardMonitor`).
 
-## 构建与测试
+## Build and test
 
 ```bash
-# 规则引擎：跑 1053 条一致性向量
+# rule engine: run the 1053 conformance vectors
 swift test
 
-# 同步规则库与向量（唯一来源是 Flutter 仓库）
+# sync the rule library and vectors (the Flutter repo is the single source of truth)
 ./Scripts/sync-spec.sh ~/code/flutter/LinkPure
 
 # macOS app
@@ -120,171 +128,200 @@ xcodebuild -project LinkPure.xcodeproj -scheme LinkPureIOS \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16' build
 ```
 
-## 实现要点（几处容易踩的坑）
+## Implementation notes (a few easy-to-hit pitfalls)
 
-1. **`\d` / `\w` 必须按 ASCII 解释。** Swift 走的 ICU 默认是 Unicode 语义，
-   而规范要求 ASCII（与 Dart/JS 一致）。`UrlCleaner.asciiRewrite()` 把它们改写成
-   显式字符类 `[0-9]` / `[0-9A-Za-z_]`。Rust 侧也踩过同一个坑。
-2. **规则匹配大小写不敏感**（`NSRegularExpression.Options.caseInsensitive`），
-   与 Redirector 一致；但**参数名匹配区分大小写**。
-3. **参数移除按原始 query 串处理**，不走 `URLComponents` 往返：
-   否则会折叠重复参数、重编码参数值、省略默认端口。
-4. **参数名先精确匹配再试正则**：Branch 风格的 `$3p` / `$deep_link` 字面上含 `$`，
-   当正则会因 `$` 是行尾锚点而永久失效。
-5. **`followRedirect` 用注入的 `RedirectFollower`**，网络调用不进 golden 向量。
-6. **改 app 名不能只改 `CFBundleDisplayName`。**
-   `PRODUCT_NAME` 默认取 `$(TARGET_NAME)`，会连带决定 **`.app` 文件名**、
-   `CFBundleName`、`CFBundleExecutable`；而 `CFBundleDisplayName` **只覆盖
-   Finder / 主屏**的显示名。曾经的表现：
+1. **`\d` / `\w` must be interpreted as ASCII.** Swift's ICU defaults to Unicode
+   semantics, but the spec requires ASCII (to match Dart/JS). `UrlCleaner.asciiRewrite()`
+   rewrites them into explicit character classes `[0-9]` / `[0-9A-Za-z_]`. The Rust side
+   hit the same pitfall.
+2. **Rule matching is case-insensitive** (`NSRegularExpression.Options.caseInsensitive`),
+   consistent with Redirector; but **parameter-name matching is case-sensitive**.
+3. **Parameter removal operates on the raw query string**, not via a `URLComponents`
+   round-trip: otherwise it would collapse duplicate parameters, re-encode parameter
+   values, and drop default ports.
+4. **Parameter names are matched exactly first, then as regexes**: Branch-style `$3p` /
+   `$deep_link` literally contain `$`, and treating them as a regex makes them
+   permanently fail because `$` is an end-of-line anchor.
+5. **`followRedirect` uses an injected `RedirectFollower`**, so network calls never
+   enter the golden vectors.
+6. **Renaming the app takes more than changing `CFBundleDisplayName`.**
+   `PRODUCT_NAME` defaults to `$(TARGET_NAME)` and in turn determines the **`.app` file
+   name**, `CFBundleName`, and `CFBundleExecutable`; `CFBundleDisplayName` **only
+   overrides the Finder / Home Screen** display name. What it once looked like:
 
-   | 场景 | 实际用的键 | 错误显示 |
+   | Scenario | Key actually used | Wrong display |
    |---|---|---|
-   | Finder / iOS 主屏 | `CFBundleDisplayName` | ✅ LinkPure |
-   | **系统设置 → 登录项** | **`.app` 文件名** | ❌ LinkPureMac.app |
-   | iOS 权限弹窗 / 设置 | `CFBundleName` | ❌ LinkPureIOS |
-   | 进程名 | `CFBundleExecutable` | ❌ LinkPureMac |
+   | Finder / iOS Home Screen | `CFBundleDisplayName` | ✅ LinkPure |
+   | **System Settings → Login Items** | **`.app` file name** | ❌ LinkPureMac.app |
+   | iOS permission prompts / Settings | `CFBundleName` | ❌ LinkPureIOS |
+   | Process name | `CFBundleExecutable` | ❌ LinkPureMac |
 
-   所以两个 target 都必须显式 `PRODUCT_NAME: LinkPure`。
-   > 注：已经注册过的登录项，其显示名是 BTM 数据库里**注册时缓存**的，
-   > 改名后即使 unregister → `lsregister -f` → register 也不会刷新；
-   > 全新安装不会有这个问题。
-7. **菜单栏图标不要用 `NSApp.applicationIconImage`。**
-   那是 **Finder 渲染版**（系统在外层加了一圈圆角底板），实际图形会小约 30%
-   （实测 11.5pt vs 其他图标的 17.5pt）。应该从原始 artwork 裁掉透明留白后
-   生成菜单栏专用图（`MenuBarIcon.imageset`）。
-   > 排查时还踩到一个坑：Xcode 调试器启的实例会一直在跑旧二进制，
-   > 改动看不到效果——要先把 `debugserver` 一起清掉。
-8. **UI 的“测试结果”要把规则集版本号算进 `task(id:)`。**
-   只写 `.task(id: testURL)` 的话，切换规则启用/禁用时 URL 没变，
-   结果不会重算，会一直显示陈旧的。
+   So both targets must set `PRODUCT_NAME: LinkPure` explicitly.
+   > Note: for a login item that has already been registered, its display name is
+   > **cached at registration time** in the BTM database, so even unregister →
+   > `lsregister -f` → register won't refresh it; a clean install won't have this problem.
+7. **Don't use `NSApp.applicationIconImage` for the menu bar icon.**
+   That's the **Finder-rendered** version (the system adds a rounded backing plate
+   around it), so the actual artwork comes out about 30% smaller (measured 11.5pt vs
+   17.5pt for other icons). You should crop the transparent padding from the original
+   artwork and generate a menu-bar-specific image (`MenuBarIcon.imageset`).
+   > While debugging this I also hit: an instance launched by the Xcode debugger keeps
+   > running the old binary, so changes appear to have no effect — clear out
+   > `debugserver` too first.
+8. **The UI's "test result" must include the rule-set version in its `task(id:)`.**
+   With only `.task(id: testURL)`, toggling a rule on/off doesn't change the URL, so
+   the result isn't recomputed and stale output sticks around.
 
-前 5 条在 `Tests/LinkPureCoreTests/Vectors/` 里有对应向量守护；
-6–8 是 UI/工程层面的，靠文档与代码注释约束。
+The first 5 are guarded by corresponding vectors in `Tests/LinkPureCoreTests/Vectors/`;
+6–8 are UI/engineering-level and are constrained by docs and code comments.
 
-## macOS 应用
+## The macOS app
 
-- 菜单栏常驻（`LSUIElement`，无 Dock 图标）
-- 轮询 `NSPasteboard.changeCount` 监听剪贴板（macOS 允许后台读取，
-  所以桌面端能做到真正的「零操作自动改写」）
-- 改写后写回剪贴板 + 系统通知（3 秒后自动收起）
-- 规则列表（搜索 / 单条开关）、URL 测试、新增用户规则、导入导出
-- 开机自启：`SMAppService.mainApp`（macOS 13+），入口在主窗口侧边栏底部和状态栏菜单（⌘, 也可）
-- 最低版本 **macOS 15**：唯一原因是 `Scene.defaultLaunchBehavior(.suppressed)`
-  （用来做到“启动不弹主窗口”），它 `@available(macOS 15.0, *)`
-- **App Sandbox 已开启**（上架 Mac App Store 的硬性要求）
+- Always-on menu bar (`LSUIElement`, no Dock icon)
+- Polls `NSPasteboard.changeCount` to monitor the clipboard (macOS allows background
+  reads, so the desktop app achieves true "zero-interaction automatic rewriting")
+- Writes the rewritten value back to the clipboard + system notification (auto-dismisses
+  after 3 seconds)
+- Rule list (search / per-rule toggle), URL testing, adding user rules, import/export
+- Launch at login: `SMAppService.mainApp` (macOS 13+), reachable from the bottom of the
+  main window's sidebar and the status bar menu (also ⌘,)
+- Minimum version **macOS 15**: the only reason is `Scene.defaultLaunchBehavior(.suppressed)`
+  (used to avoid showing the main window at launch), which is `@available(macOS 15.0, *)`
+- **App Sandbox is enabled** (a hard requirement for Mac App Store submission)
 
-### 窗口 UI：布局交给系统容器
+### Window UI: hand layout to system containers
 
-主窗口刻意**不**用 `VStack` 自己摆一个工具栏 + 分隔线堆叠的布局，而是把每个意图交给
-对应的系统容器，由它去决定位置、尺寸和交互：
+The main window deliberately does **not** hand-place a toolbar + divider stack with a
+`VStack`; instead each intent is handed to the corresponding system container, which
+decides position, size, and interaction:
 
-| 意图 | 容器 | 白拿到的行为 |
+| Intent | Container | Behavior you get for free |
 |---|---|---|
-| 切「我的规则 / 内置规则库」 | `NavigationSplitView` sidebar | 活的半透明材质、系统列宽、`⌃⌘S` 折叠 |
-| 搜索 | `.searchable` | 搜索框进工具栏、`⌘F`、`Esc` 清空、焦点环 |
-| 新增 / 导入 / 导出 | `ToolbarItemGroup` | 高度、间距、hover、窗口变窄时的溢出折叠 |
-| 状态 | `.navigationSubtitle` | 进标题栏副标题 |
-| 1061 条内置规则 | `Table` | 点列头排序、拖列宽、自动虚拟化 |
-| 开机自启 | `Settings` scene | 设置窗口 |
-| 菜单 / 快捷键 | `.commands` + `FocusedValues` | `⌘N` / `⌘I` / `⌘E`，窗口不在时自动置灰 |
+| Switch between "My Rules / Built-in Rule Library" | `NavigationSplitView` sidebar | live translucent material, system column width, `⌃⌘S` collapse |
+| Search | `.searchable` | search field in the toolbar, `⌘F`, `Esc` to clear, focus ring |
+| Add / Import / Export | `ToolbarItemGroup` | height, spacing, hover, overflow collapse when the window narrows |
+| Status | `.navigationSubtitle` | goes into the title bar subtitle |
+| 1061 built-in rules | `Table` | click column headers to sort, drag column widths, automatic virtualization |
+| Launch at login | `Settings` scene | the settings window |
+| Menus / shortcuts | `.commands` + `FocusedValues` | `⌘N` / `⌘I` / `⌘E`, automatically greyed out when the window isn't open |
 
-四个实测踩到的坑（都已在代码里注释）：
+Four pitfalls hit during real-world testing (all noted in code comments):
 
-1. **`.commands` 必须挂在 `Window` 场景上。** 挂到 `Settings` 场景上，菜单项就只在
-   设置窗口活动时才存在——按 `⌘N` 什么都不发生。
-2. **`Settings` 场景不会给 `LSUIElement` app 自动装「设置…」菜单项。** 环境里的
-   `openSettings()` 是好的（窗口能正常开），但菜单栏里没这一项、`⌘,` 按下去无反应。
-   要用 `CommandGroup(replacing: .appSettings) { SettingsLink { … } }` 自己接一下。
-3. **`ContentUnavailableView` 不会自己撑满**，它是按内容取尺寸的。空状态直接放进
-   detail 列的话，整列（测试条 + 空状态 + 状态栏）会变成一个"内容大小的块"，
-   被 `NavigationSplitView` 在中间居中——上下各留一大片空白。要显式
-   `.frame(maxWidth: .infinity, maxHeight: .infinity)`。有数据时那位置是 `List`，
-   天然撑满，所以只有空状态看得出来。
-4. **设置入口不能只放在状态栏菜单里。** 这是个菜单栏 app，用户习惯去点状态栏图标；
-   主窗口开着的时候，设置就该在窗口里点得到（侧边栏底部，macOS 上放应用级控件的位置）。
+1. **`.commands` must be attached to the `Window` scene.** Attached to the `Settings`
+   scene, the menu items only exist while the settings window is active — pressing `⌘N`
+   does nothing.
+2. **The `Settings` scene does not automatically install a "Settings…" menu item for an
+   `LSUIElement` app.** The environment's `openSettings()` is fine (the window opens
+   normally), but there's no such menu item and `⌘,` does nothing. You have to wire it
+   up yourself with `CommandGroup(replacing: .appSettings) { SettingsLink { … } }`.
+3. **`ContentUnavailableView` does not fill its container by itself** — it sizes to its
+   content. Put an empty state directly into the detail column and the whole column
+   (test bar + empty state + status bar) becomes a "content-sized block" centered by
+   `NavigationSplitView`, leaving big blank areas above and below. You need an explicit
+   `.frame(maxWidth: .infinity, maxHeight: .infinity)`. With data, that spot is a `List`,
+   which fills naturally, so only the empty state shows the problem.
+4. **The settings entry point can't live only in the status bar menu.** This is a menu
+   bar app and users habitually click the status bar icon; while the main window is
+   open, settings should be reachable in the window too (bottom of the sidebar, where
+   app-level controls go on macOS).
 
-### iOS 窗口 UI：约定和 macOS 相反
+### iOS window UI: conventions are the opposite of macOS
 
-同一套数据模型，但两个平台的"原生"不是同一套东西：
+Same data model, but "native" is not the same thing on the two platforms:
 
 | | macOS | iOS |
 |---|---|---|
-| 次要信息（如规则 id） | `.help()` 悬停提示 | **不展示**（`.help()` 在 iPhone 上是死的） |
-| 进详情 | 双击（`primaryAction`） | **点整行**（只有 swipe 等于藏起来，没人会去试） |
-| 长列表 | 要自己截断/虚拟化 | `List` 本身就是懒的，**不要**截断 |
-| 空状态 | `ContentUnavailableView` 铺满 | 同一个组件，但要把 `listRowBackground` 清掉 |
-| 操作结果提示 | 底部状态栏 | **必须 `.alert`**（内置规则库有 1061 行，提示塞进列表末尾等于看不见） |
-| 删除 | 选中 → 工具栏 / 右键菜单 / Delete 键 → **立即删** + 状态栏 8 秒「撤销」 | 滑动 → **立即删** + 底部 6 秒撤销条 |
-| 行的右键/长按菜单 | ✅ `contextMenu(forSelectionType:)`，作用于**选中集** | ❌ **不做** |
-| 对外链接 / 规则库署名 | 设置窗口里的 `Links` 分组 | 「How to Use」页尾的 `About` + `Rules` 分组 |
+| Secondary information (e.g. rule id) | `.help()` hover tooltip | **not shown** (`.help()` is dead on iPhone) |
+| Go to detail | double-click (`primaryAction`) | **tap the whole row** (swipe-only means hidden; nobody will try) |
+| Long lists | must truncate/virtualize yourself | `List` is lazy already, **don't** truncate |
+| Empty state | `ContentUnavailableView` fills | same component, but clear `listRowBackground` |
+| Operation result feedback | bottom status bar | **must be `.alert`** (the built-in rule library has 1061 rows; a message appended to the end of the list is invisible) |
+| Delete | select → toolbar / context menu / Delete key → **delete immediately** + 8-second "Undo" in the status bar | swipe → **delete immediately** + 6-second undo bar at the bottom |
+| Row context/long-press menu | ✅ `contextMenu(forSelectionType:)`, acts on the **selection set** | ❌ **not implemented** |
+| External links / rule-library attribution | `Links` group in the settings window | `About` + `Rules` groups at the end of the "How to Use" page |
 
-> **关于「关于」**：macOS 有系统自带的 About 面板（`.appInfo` 没被动过），所以版本号不重复写；
-> 但链接不能放 Help 菜单——这是个 `LSUIElement` 菜单栏 app，**它几乎不前台**，
-> app 级菜单（包括 Help）用户基本看不到。设置窗口才是两个入口都够得到的那个。
-> iOS 既没有设置页也没有系统 About 面板，所以版本号 + 链接只能接在「How to Use」后面
-> （Android 则用溢出菜单 + 独立页面，Material 的惯用法）。
+> **About "About"**: macOS has the system About panel (`.appInfo` untouched), so the
+> version number isn't duplicated; but links can't go in the Help menu — this is an
+> `LSUIElement` menu bar app that **is almost never in the foreground**, so app-level
+> menus (including Help) are basically invisible to users. The settings window is the
+> one entry point both can reach. iOS has neither a settings page nor a system About
+> panel, so the version number + links can only go after "How to Use" (Android uses an
+> overflow menu + a separate page, the Material idiom).
 >
-> 三端的 URL 必须保持一致：Swift 侧在 `Apps/Shared/AboutContent.swift`，
-> Android 侧在 `AboutScreen.kt`。**规则库那段署名是 LGPL-3.0 的许可要求**——
-> 只写在仓库 README 里的话，装到设备上的用户看不到。
+> The URLs must stay consistent across all three platforms: on the Swift side in
+> `Apps/Shared/AboutContent.swift`, on the Android side in `AboutScreen.kt`. **That
+> rule-library attribution is an LGPL-3.0 licensing requirement** — writing it only in
+> the repo README means users who installed the app can't see it.
 
-> **为什么 iOS 没有长按菜单，macOS 有**：这不是“风格不同”，是**有没有多选**。
-macOS 的菜单拿的是选中集（`Enable` / `Disable` 作用于全部选中，删除文案是
-`Delete N Rules`），那是名副其实的“上下文”菜单；iPhone 没有多选，那种菜单就只剩
-重复动作的集散地（Edit / Enable / Delete 原本已经分别由点整行 / 尾部开关 / swipe 承担）。
-Android 也按同一条规则处理（同样是单选）。
+> **Why iOS has no long-press menu but macOS does**: it's not "different style", it's
+> **whether there's multi-select**. macOS's menu takes the selection set (`Enable` /
+> `Disable` apply to all selected, and the delete label is `Delete N Rules`), making it
+> a genuine "context" menu; iPhone has no multi-select, so such a menu would just be a
+> dumping ground of duplicate actions (Edit / Enable / Delete are already handled by
+> tapping the row / the trailing toggle / swipe respectively). Android follows the same
+> rule (also single-select).
 >
-> 代价：“拿到一条内置规则的正则”这个能力在移动端只剩**选中文本复制**
->（内置规则只读、打不开编辑器），所以那些文案开了 `.textSelection(.enabled)` /
-> `SelectionContainer`。macOS 的 `Table` 单元格不支持文本选中，所以它那边保留了
-> `Copy Regular Expression` 菜单项。
+> The cost: on mobile the "get the regex of a built-in rule" capability is left to
+> **selecting text to copy** (built-in rules are read-only and can't open the editor),
+> so those texts enable `.textSelection(.enabled)` / `SelectionContainer`. macOS's
+> `Table` cells don't support text selection, so it keeps the `Copy Regular Expression`
+> menu item.
 
-两边都不二次确认：
+Neither platform confirms twice:
 
-- **macOS**：confirm 是留给"撤销不了"的操作的（Safari 清历史、关闭未保存的文稿），
-  而删一条规则就是一次数组插入就能恢复的事。Finder / Xcode / Mail / 备忘录
-  删东西也都不问。
-- **iOS**：滑动删除本来就不二次确认（邮件 / 提醒事项 / 信息 / 文件 都不问），
-  iOS 对误删的答案是**撤销**而不是确认——确认只对"手滑"有用，对"点错了"没用。
-- iOS 上还有个副作用：`.swipeActions` 里的 `Button(role: .destructive)` 会让
-  SwiftUI **乐观地**把整行划走（它假设这行马上要消失），确认期间数据没变，
-  List 重画时行又回来了——就是那个"先消失再加回来"。
+- **macOS**: confirmation is reserved for operations that **can't be undone** (Safari
+  clearing history, closing an unsaved document), whereas deleting a rule can be
+  recovered with a single array insert. Finder / Xcode / Mail / Notes don't ask either
+  when deleting.
+- **iOS**: swipe-to-delete never confirms anyway (Mail / Reminders / Messages / Files
+  don't ask), and iOS's answer to accidental deletion is **undo**, not confirmation —
+  confirmation only helps with "a slip of the finger", not with "picked the wrong one".
+- There's another iOS side effect: a `Button(role: .destructive)` inside `.swipeActions`
+  makes SwiftUI **optimistically** swipe the whole row away (it assumes the row is about
+  to disappear); while confirming, the data hasn't changed, so the row comes back when
+  List redraws — that "disappears then comes back".
 
-**刻意不接 `UndoManager`**（不注册撤销、不集成「编辑 > 撤销」）：
-那套东西要维护的不变量不少（撤销/重做两个方向必须互相注册、分组跟 `groupsByEvent`
-的交互、反向操作时的下标漂移），而它换来的只是 "⌘Z" 一种入口——
-恰好又是**最没有可发现性**的那一种。这里用一个可见的提示条，
-`UndoManager` 完全不碰。macOS 侧的唯一额外代价是那 8 秒里状态栏的
-「撤销」按钮带 `.keyboardShortcut("z")`；提示条消失后快捷键也跟着没了，
-不会抢文本框自己的 ⌘Z。
+**Deliberately not wiring up `UndoManager`** (no undo registration, no Edit > Undo
+integration): that machinery carries a fair number of invariants to maintain (undo/redo
+must register with each other in both directions, the interaction with `groupsByEvent`,
+index drift when reversing operations), and all it buys is one entry point — "⌘Z" —
+which happens to be **the least discoverable** one. Here we use a visible banner instead
+and don't touch `UndoManager` at all. The only extra cost on macOS is that for those 8
+seconds the status bar's "Undo" button carries `.keyboardShortcut("z")`; once the banner
+is gone, so is the shortcut, and it won't steal the text field's own ⌘Z.
 
-撤销必须把规则插回**原来的下标**：规则集是有序的，顺序会影响命中结果。
+Undo must insert the rule back at its **original index**: the rule set is ordered, and
+the order affects which rule matches.
 
-行的排版：正则占两行（一行里不管怎么截都看不出是哪条），替换目标占一行且**从中间截**
-（`https://addons.mozilla.org/en-US/…addon/$1/` 两头都在）。单个开关放尾端，
-跟「设置」一致；放前面会跟正文抢左边缘，一列文字参差不齐。
+Row layout: the regex takes two lines (however you truncate it, one line doesn't tell
+you which rule it is), the replacement target takes one line and truncates **from the
+middle** (`https://addons.mozilla.org/en-US/…addon/$1/` has both ends meaningful). A
+single toggle goes at the trailing edge, consistent with "Settings"; putting it in front
+would fight the body text for the left edge and make the column of text ragged.
 
-### 关于沙盒
+### About the sandbox
 
-已经实测：**沙盒不影响剪贴板轮询**（Flutter 版就是沙盒的）。entitlements 只需：
+Verified: **the sandbox does not affect clipboard polling** (the Flutter version was
+sandboxed too). The entitlements only need:
 
 ```xml
 com.apple.security.app-sandbox                        = true
 com.apple.security.network.client                     = true   <!-- followRedirect -->
-com.apple.security.files.user-selected.read-write     = true   <!-- 导入导出 -->
+com.apple.security.files.user-selected.read-write     = true   <!-- import/export -->
 ```
 
-副作用：沙盒下读不到别的 app 的 preferences，所以规则迁移里「扫 plist 文件」
-那两步会被拒（自动退化为只查 `UserDefaults`）。这恰好是正确的——
-真实升级场景里原生版与 Flutter 版**共用 bundle id，共享同一个容器**。
+Side effect: under the sandbox you can't read other apps' preferences, so the two "scan
+plist files" steps in rule migration get denied (it degrades to checking only
+`UserDefaults`). That's actually correct — in the real upgrade scenario the native and
+Flutter versions **share a bundle id, and thus the same container**.
 
-> 启用沙盒会把规则文件从 `~/Library/Application Support/` 换到
-> `~/Library/Containers/<bundleID>/Data/Library/Application Support/`，
-> 开发期已有数据会变得读不到。
+> Enabling the sandbox moves the rules file from `~/Library/Application Support/` to
+> `~/Library/Containers/<bundleID>/Data/Library/Application Support/`, so existing
+> dev-time data becomes unreadable.
 
-## 数据与存储
+## Data and storage
 
-### 规则存在文件里，不用 UserDefaults
+### Rules live in a file, not UserDefaults
 
 ```
 ~/Library/Application Support/LinkPure/rules.json
@@ -294,99 +331,110 @@ com.apple.security.files.user-selected.read-write     = true   <!-- 导入导出
 { "version": 1, "rules": [ { "rule": {...}, "enabled": true, "testUrl": "..." } ] }
 ```
 
-**为什么不用 `UserDefaults`（踩过的坑）**：它是**按 bundle id 分域**的。
-开发期只要换一次 bundle id，就等于换了一个全新的空库；升级/改名/多环境共存时也一样。
-当时表现就是“规则每次打开都是空的”，而且**毫无痕迹**。
-文件路径与 bundle id 无关，也更好备份、迁移、调试。
+**Why not `UserDefaults` (a pitfall we hit)**: it's **scoped by bundle id**. During
+development, just changing the bundle id once is equivalent to a brand-new empty store;
+the same goes for upgrades/renames/multiple environments coexisting. The symptom was
+"the rules are empty every time I open it", and **with no trace**. A file path is
+independent of the bundle id and is also easier to back up, migrate, and debug.
 
-> 解码同时接受带 `version` 的对象和**裸数组**（历史上出现过的形状）。
+> Decoding accepts both an object with `version` and a **bare array** (a shape that
+> appeared historically).
 
-### Flutter 版规则迁移
+### Migrating rules from the Flutter version
 
-发布时原生版会**替换**App Store 上的 Flutter 版（同一 bundle id），
-但两者的存储键不同：
+On release, the native version **replaces** the Flutter version on the App Store (same
+bundle id), but the two store their data under different keys:
 
-| | 位置 |
+| | Location |
 |---|---|
-| Flutter 版 | `UserDefaults` 键 `flutter.local_rules`（JSON **字符串**） |
-| 原生版 | `Application Support/LinkPure/rules.json` |
+| Flutter version | `UserDefaults` key `flutter.local_rules` (a JSON **string**) |
+| Native version | `Application Support/LinkPure/rules.json` |
 
-所以首次启动时（本地规则文件不存在）会**自动迁入**旧数据，
-来源按优先级依次尝试：
+So on first launch (when the local rules file doesn't exist), it **automatically
+migrates** the old data, trying sources in priority order:
 
 1. `UserDefaults.standard[flutter.local_rules]`
-   —— 两个平台都适用；iOS 上共用 bundle id 时会共享容器，升级替换后直接命中
-2. `~/Library/Preferences/<legacyID>.plist`（仅 macOS）
-3. `~/Library/Containers/<legacyID>/Data/Library/Preferences/<legacyID>.plist`（仅 macOS）
+   — applies to both platforms; on iOS with a shared bundle id the container is shared,
+   so an upgrade replacement hits it directly
+2. `~/Library/Preferences/<legacyID>.plist` (macOS only)
+3. `~/Library/Containers/<legacyID>/Data/Library/Preferences/<legacyID>.plist` (macOS only)
 
-`<legacyID>` 依次尝试 `com.rxliuli.linkpure2`、`com.rxliuli.linkpure`。
-迁移是**幂等的**：本地文件一旦存在就走加载，不会重复迁。
+`<legacyID>` is tried as `com.rxliuli.linkpure2`, then `com.rxliuli.linkpure`. Migration
+is **idempotent**: once the local file exists it goes through the load path and won't
+migrate twice.
 
-Flutter 版的 `LocalRule` 形状（`{"rule":{...},"enabled":bool}`）与本仓库完全一致，
-包括 `removeParams` 型规则（那种规则存得下、只是导不出）。
+The Flutter version's `LocalRule` shape (`{"rule":{...},"enabled":bool}`) is exactly the
+same as this repo's, including `removeParams`-type rules (which can be stored but not
+exported).
 
-## 状态
+## Status
 
-| 部分 | 状态 |
+| Part | Status |
 |---|---|
-| `LinkPureCore` | ✅ 1053/1053 向量通过 |
-| macOS app | ✅ 可用（菜单栏常驻 / 剪贴板监听 / 改写写回 / 通知 / 规则管理 / 导入导出 / URL 测试 / 开机自启 / **沙盒已开**） |
-| iOS app | ✅ 可用（规则管理 / 使用方式引导 / `CleanURLTextIntent` 已注册给 Shortcuts） |
-| Android `:core` | ✅ 1053/1053 向量通过（Kotlin；纯 JVM 模块，不依赖 Android） |
-| Android app | ✅ 可用（`ACTION_PROCESS_TEXT` 静默原位替换 + 通知 / 规则管理 / URL 测试 / Flutter 规则迁移） |
-| 多语言一致性 | ✅ Dart / Rust / Swift / Kotlin 四个实现零分歧 |
+| `LinkPureCore` | ✅ 1053/1053 vectors pass |
+| macOS app | ✅ usable (always-on menu bar / clipboard monitoring / write-back after rewriting / notifications / rule management / import-export / URL testing / launch at login / **sandbox enabled**) |
+| iOS app | ✅ usable (rule management / usage guide / `CleanURLTextIntent` registered with Shortcuts) |
+| Android `:core` | ✅ 1053/1053 vectors pass (Kotlin; a pure JVM module, no Android dependency) |
+| Android app | ✅ usable (`ACTION_PROCESS_TEXT` silent in-place replacement + notifications / rule management / URL testing / Flutter rule migration) |
+| Cross-language consistency | ✅ zero divergence across the Dart / Rust / Swift / Kotlin implementations |
 
-### 两个平台的已知欠账
+### Known debts on the two platforms
 
 **macOS**
 
-- ~~App Sandbox 关闭~~ → ✅ 已开启并实测（剪贴板轮询不受影响）
-- ~~无开机自启~~ → ✅ 已实现（`SMAppService`）
-- 通知横幅需在干净环境验证（当前开发机的通知权限库已被反复重建弄脏）
-- 无 Sparkle 更新
-- 菜单栏图标用的是裁剪后的彩色 artwork；要做单色模板图需单独设计矢量稿
+- ~~App Sandbox disabled~~ → ✅ enabled and verified (clipboard polling unaffected)
+- ~~No launch at login~~ → ✅ implemented (`SMAppService`)
+- Notification banners need verification in a clean environment (on the current dev
+  machine the notification-permission database has been dirtied by repeated rebuilds)
+- No Sparkle updates
+- The menu bar icon uses the cropped color artwork; a monochrome template image needs a
+  dedicated vector design
 
 **iOS**
 
-- ~~规则列表最多展示 300 条内置规则~~ → ✅ 已去掉（`List` 本来就是懒加载的，
-  截断只会制造"搜不到但其实有"）
-- 未做 App Store 相关配置（隐私清单、截图等）
+- ~~The rule list shows at most 300 built-in rules~~ → ✅ removed (`List` is lazy
+  already; truncation only creates "you can't find it even though it exists")
+- App Store-related setup not done (privacy manifest, screenshots, etc.)
 
-## 发布注意
+## Release notes
 
-### bundle id（已定）
+### bundle id (decided)
 
-| 配置 | 两个平台 |
+| Configuration | Both platforms |
 |---|---|
 | Debug | `com.rxliuli.linkpure2.dev` |
 | **Release** | **`com.rxliuli.linkpure2`** |
 
-`com.rxliuli.linkpure2` 是 Flutter 版在 App Store 上的记录，
-**iOS 与 macOS 共用同一个 bundle id（Universal Purchase）**。
-原生版要作为更新替换上去，**必须复用它**：
+`com.rxliuli.linkpure2` is the Flutter version's record on the App Store, and **iOS and
+macOS share the same bundle id (Universal Purchase)**. For the native version to replace
+it as an update, it **must reuse it**:
 
-- ✅ 复用 → 老用户能收到更新，保留评分 / 评论 / 下载量
-- ❌ 不复用 → 变成两个独立 App，从零开始
+- ✅ Reuse → existing users get the update, ratings / reviews / downloads preserved
+- ❌ Don't reuse → two independent apps, starting from zero
 
-注意 macOS 与 iOS 的 Release bundle id **必须相同**——这是 Universal Purchase 的硬性要求
-（Apple 文档：“uses the same Apple ID (an app identifier), SKU, and bundle ID as the iOS app”）。
+Note that the macOS and iOS Release bundle ids **must be identical** — that's a hard
+requirement of Universal Purchase (Apple docs: "uses the same Apple ID (an app
+identifier), SKU, and bundle ID as the iOS app").
 
-Debug 加 `.dev` 是为了能与 App Store 版共存，且避开开发机上被污染的通知权限记录。
+Debug adds `.dev` so it can coexist with the App Store version and avoid the
+notification-permission records polluted on the dev machine.
 
-### 分发前还缺
+### Still missing before distribution
 
-| 项 | 说明 |
+| Item | Notes |
 |---|---|
-| ~~macOS App Sandbox~~ | ✅ **已开启**（见「关于沙盒」）；上架 Mac App Store 的前提已满足 |
-| ~~开机自启~~ | ✅ 已实现（`SMAppService`） |
-| 分发签名 | 现在是 `Apple Development`；正式分发要用 `Apple Distribution` / `3rd Party Mac Developer Application` |
-| iOS 上架材料 | 隐私清单、App Store 截图等 |
-| 自动更新 | 未接 Sparkle |
-| 迁移的真实场景验证 | 目前只在 dev bundle id 下验过；发布前应用 Release 配置 + 真正升级一次 Flutter 版再走一遍 |
+| ~~macOS App Sandbox~~ | ✅ **enabled** (see "About the sandbox"); the prerequisite for Mac App Store submission is met |
+| ~~Launch at login~~ | ✅ implemented (`SMAppService`) |
+| Distribution signing | Currently `Apple Development`; formal distribution needs `Apple Distribution` / `3rd Party Mac Developer Application` |
+| iOS submission materials | Privacy manifest, App Store screenshots, etc. |
+| Auto-update | Sparkle not wired up |
+| Real-world migration verification | So far only verified under the dev bundle id; before release, apply the Release configuration + actually upgrade from the Flutter version once |
 
-## 与 Flutter 版的关系
+## Relationship with the Flutter version
 
-Flutter 版仍是规则库与 conformance 向量的**唯一来源**（single source of truth）。
-本仓库通过 `Scripts/sync-spec.sh` 做 vendored 拷贝，从而能自包含构建。
+The Flutter version remains the **single source of truth** for the rule library and
+conformance vectors. This repo makes a vendored copy via `Scripts/sync-spec.sh` so it
+can build self-contained.
 
-长期看，`Spec/`（规则库 + 向量）应该独立成一个仓库或 submodule，由各端共同引用。
+Long term, `Spec/` (rule library + vectors) should become an independent repo or
+submodule, referenced by every implementation.

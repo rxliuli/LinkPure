@@ -7,7 +7,7 @@ name: Release
 # 走 workflow_dispatch 并覆盖 build-number）。
 on:
   push:
-    branches: [feat/swift-native]
+    branches: [main]
     paths: [project.yml]
   workflow_dispatch:
     inputs:

@@ -1,12 +1,10 @@
 name: CI
 
-# 这个文件只在 Swift 原生版的分支上存在。**刻意不监听 main**：
-# main 是 Flutter 版，目录结构完全不同（pubspec.yaml / lib/ / macos/），
-# 在这里跑 Swift 的命令只会全红。等本分支合并进 main 之后再把它加进来
-# （那时 main 上的 .github/workflows/release.yml 也该一起处理掉——见 README「与 Flutter 版的关系」）。
+# main 现在是 Swift 原生版的开发主线（Flutter 版已备份到 flutter 分支），
+# 所以直接监听 main。
 on:
   push:
-    branches: [feat/swift-native]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
