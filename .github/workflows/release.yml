@@ -135,6 +135,11 @@ jobs:
           # 少一个 '=' 就丢 2 字节，PEM 结束行被砍成 `-----END PRIVATE KEY---`，
           # 结果 notarytool / xcodebuild 在几分钟后才报一个看不懂的 invalidPEMDocument。
           # 所以：补回 padding → 解码 → 立刻用 openssl 验一遍。
+          if [[ -z "$API_KEY_ID" ]]; then
+            echo "::error::APPLE_API_KEY_ID 是空的（secret 被设成空值了？）——文件名与 -authenticationKeyID 都会错。"
+            exit 1
+          fi
+          mkdir -p "$HOME/private_keys"
           KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
           python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
           if ! openssl pkey -in "$KEY" -noout; then
@@ -264,6 +269,11 @@ jobs:
 
           # 同上：补 padding + openssl 校验，别让残缺的 base64 在几分钟后才以
           # invalidPEMDocument 的形式暴露出来
+          if [[ -z "$API_KEY_ID" ]]; then
+            echo "::error::APPLE_API_KEY_ID 是空的（secret 被设成空值了？）——文件名与 -authenticationKeyID 都会错。"
+            exit 1
+          fi
+          mkdir -p "$HOME/private_keys"
           KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
           python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
           if ! openssl pkey -in "$KEY" -noout; then
@@ -389,6 +399,11 @@ jobs:
 
           # 同上：补 padding + openssl 校验，别让残缺的 base64 在几分钟后才以
           # invalidPEMDocument 的形式暴露出来
+          if [[ -z "$API_KEY_ID" ]]; then
+            echo "::error::APPLE_API_KEY_ID 是空的（secret 被设成空值了？）——文件名与 -authenticationKeyID 都会错。"
+            exit 1
+          fi
+          mkdir -p "$HOME/private_keys"
           KEY="$HOME/private_keys/AuthKey_${API_KEY_ID}.p8"
           python3 -c 'import base64,sys; s=sys.argv[1].strip(); sys.stdout.buffer.write(s.encode()+b"\n" if "BEGIN PRIVATE KEY" in s else base64.b64decode(s+"="*(-len(s)%4)))' "$API_KEY" > "$KEY"
           if ! openssl pkey -in "$KEY" -noout; then
