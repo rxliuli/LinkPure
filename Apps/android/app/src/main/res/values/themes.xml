@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.LinkPure" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+      清洗入口的窗口：半透明、无内容、无动画。
+
+      用户点「Clean URL Text」之后不该看到任何界面 —— 选区里的文字当场变了，
+      那就是反馈。窗口存在只是为了让 activity 能拿到结果并 setResult。
+
+      注意没做成 Theme.NoDisplay：那条路要求 activity 必须在 onResume 之前 finish，
+      而我们可能要等 1.5s 的网络（followRedirect 短链展开），会直接崩。
+    -->
+    <style name="Theme.LinkPure.Silent" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
+</resources>

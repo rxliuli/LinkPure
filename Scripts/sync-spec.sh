@@ -30,6 +30,11 @@ done
 
 cp "$SRC/assets/shared-rules.json" "$DST/Sources/LinkPureCore/Resources/shared-rules.json"
 
+# 注：Apps/android 的 :core 模块**不存副本**，它的 build.gradle.kts 直接引用
+# Sources/LinkPureCore/Resources 与 Tests/LinkPureCoreTests/Vectors。
+# 所以改这里的路径 = 同时改了两个平台，改完记得 `./gradlew :core:test`
+# （在 Apps/android 下跑）验一下 Kotlin 侧。
+
 # 先把向量拷到临时目录、成功了再把目录换过去：
 # 直接 `rm -rf` 再 `cp` 的话，一旦源目录里没有向量（或 cp 失败），
 # 本地就只剩下一个空目录——测试会“跑 0 条向量且全绿”，比直接报错隐蔽得多。

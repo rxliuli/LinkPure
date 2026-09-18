@@ -1,0 +1,11 @@
+# Android / Gradle 构建产物
+.gradle/
+build/
+*/build/
+.kotlin/
+local.properties
+*.iml
+.idea/
+
+# Gradle 自动生成，会把 daemon 钉在某个本机 JDK 上
+gradle/gradle-daemon-jvm.properties

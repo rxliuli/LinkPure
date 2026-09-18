@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LinkPure</string>
+
+    <!-- 选区菜单里显示的名字。跟 iOS 的 CleanURLTextIntent 保持一致。 -->
+    <string name="process_text_label">Clean URL Text</string>
+
+    <!-- 通知 -->
+    <string name="notif_channel_name">Clean results</string>
+    <string name="notif_channel_desc">Shows what happened after you clean a link.</string>
+    <string name="notif_cleaned_title">URL cleaned</string>
+    <string name="notif_already_clean_title">Already clean</string>
+    <string name="notif_not_a_link_title">Not a link</string>
+    <string name="notif_not_a_url">Not a http/https URL</string>
+    <string name="notif_readonly_note">Copied — this field is read-only</string>
+    <string name="notif_action_copy">Copy</string>
+    <string name="notif_copied">Copied cleaned URL</string>
+</resources>
