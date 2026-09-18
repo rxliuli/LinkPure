@@ -283,22 +283,15 @@ struct IOSRulesView: View {
                 Label("Delete Rule", systemImage: "trash")
             }
         }
-        // 次要信息走长按，而不是 `.help()`（那个在 iPhone 上没有任何效果）
-        .contextMenu {
-            Button { openEditor(local.rule, testUrl: local.testUrl) } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-            Button(local.enabled ? "Disable" : "Enable") { model.setEnabled(local, !local.enabled) }
-            Divider()
-            Button { copy(local.rule.regexFilter) } label: {
-                Label("Copy Regular Expression", systemImage: "doc.on.doc")
-            }
-            Button { copy(local.rule.id) } label: {
-                Label("Copy Rule ID", systemImage: "number")
-            }
-            Divider()
-            Button("Delete Rule", role: .destructive) { delete(local) }
-        }
+        // 这里刻意**没有** `.contextMenu`。
+        //
+        // 它原本有 5 项，其中 Edit / Enable-Disable / Delete 三项已经分别由
+        // 「点整行」/ 尾部开关 / swipe 承担了；没有多选的移动端，长按菜单只是
+        // 重复动作的集散地。macOS 那边是 `contextMenu(forSelectionType:)`，
+        // 作用于**选中集**（「Delete N Rules」），那才叫名副其实的上下文菜单。
+        //
+        // 被删掉的 `Copy Regular Expression` 并非没有替代：用户规则打开编辑器
+        // 就能从可选的输入框里复制；内置规则（只读）见 `builtinRow`。
     }
 
     // MARK: - 删除 / 撤销
@@ -373,27 +366,26 @@ struct IOSRulesView: View {
         } header: {
             Text("\(filteredBuiltinRules.count) rules · Read-only")
         } footer: {
-            Text("Built-in rules can't be edited and always apply. Long-press any rule to copy its regular expression.")
+            Text("Built-in rules can't be edited and always apply. Select the text to copy a regular expression.")
         }
     }
 
+    /// 内置规则行（只读）。
+    ///
+    /// 文案开 `.textSelection(.enabled)`：内置规则打不开编辑器，
+    /// **选中文本复制是拿到它那条正则的唯一路径**——用系统原生的文本交互，
+    /// 而不是自造一个长按菜单（那个原本两项，全都是单项动作）。
     private func builtinRow(_ rule: Rule) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(rule.id)
                 .font(.subheadline)
                 .lineLimit(1)
+                .textSelection(.enabled)
             Text(rule.regexFilter)
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
-        }
-        .contextMenu {
-            Button { copy(rule.regexFilter) } label: {
-                Label("Copy Regular Expression", systemImage: "doc.on.doc")
-            }
-            Button { copy(rule.id) } label: {
-                Label("Copy Rule ID", systemImage: "number")
-            }
+                .textSelection(.enabled)
         }
     }
 

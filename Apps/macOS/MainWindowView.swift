@@ -478,19 +478,21 @@ struct MainWindowView: View {
         .padding(.vertical, 2)
     }
 
-    /// 右键菜单。按选中数量决定给哪几项——跟 Finder 一样，只在单选时给"编辑/复制"。
+    /// 右键菜单。**只放作用于选中集的动作**。
+    ///
+    /// 单项动作不属于这里（它们各自已有归属）：
+    ///   - 编辑 → 双击（`primaryAction`，macOS 的「激活」手势）
+    ///   - 开关 → 行尾那个 `Toggle`
+    ///   - 复制正则 → 打开编辑器，从可选的输入框里复制
+    ///
+    /// 之前还挂着「Edit…」和「Copy Regular Expression」，两项都限 `count == 1`，
+    /// 与上面三条重复。
     @ViewBuilder
     private func userRuleMenu(for ids: Set<LocalRule.ID>) -> some View {
-        if let local = singleUserRule(in: ids) {
-            Button("Edit…") { openEditor(local.rule, testUrl: local.testUrl) }
-        }
         if !ids.isEmpty {
             Button("Enable") { setEnabled(ids, true) }
             Button("Disable") { setEnabled(ids, false) }
             Divider()
-            if let local = singleUserRule(in: ids) {
-                Button("Copy Regular Expression") { copyToPasteboard(local.rule.regexFilter) }
-            }
             Button(ids.count == 1 ? "Delete Rule" : "Delete \(ids.count) Rules", role: .destructive) {
                 deleteRules(ids)
             }
@@ -549,10 +551,19 @@ struct MainWindowView: View {
                     .truncationMode(.middle)
             }
         }
+        // 这块只留 `Copy Regular Expression`，是**唯一一处破例**：
+        //
+        //   - 它不是选中集动作（`Table` 里没有可批量做的事），按理不属于这里；
+        //   - 但 `Table` 的单元格**不支持文本选中**（`List` 才支持 `.textSelection`），
+        //     双击复制（`primaryAction`）虽然存在，但没有任何可见提示；
+        //     两者都删就等于把「拿到一条内置规则的正则」这个能力彻底拿掉。
+        //
+        // 用户规则那边不需要破例：它们的正则在编辑器里可选中复制。
+        // `Copy Rule ID` 则**全面删掉**——id 是内部标识（见 `Rule.newUserRuleID`
+        // 的注释「不在界面上展示」），本来就不该做成用户可见的动作。
         .contextMenu(forSelectionType: Rule.ID.self) { ids in
             if let rule = singleRule(in: ids) {
                 Button("Copy Regular Expression") { copyToPasteboard(rule.regexFilter) }
-                Button("Copy Rule ID") { copyToPasteboard(rule.id) }
             }
         } primaryAction: { ids in
             // 双击 = 复制正则
