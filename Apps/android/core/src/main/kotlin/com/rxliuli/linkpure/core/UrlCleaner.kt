@@ -272,7 +272,7 @@ class UrlCleaner(
             return patternCache.computeIfAbsent(key) {
                 try {
                     Optional.of(
-                        Pattern.compile(pattern, (if (caseInsensitive) Pattern.CASE_INSENSITIVE else 0) or Pattern.UNICODE_CHARACTER_CLASS),
+                        Pattern.compile(pattern, if (caseInsensitive) Pattern.CASE_INSENSITIVE else 0),
                     )
                 } catch (_: Exception) {
                     // 非法正则 → 视为不匹配，不崩溃
