@@ -3,6 +3,37 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// ── 版本号不在这里存第二份 ────────────────────────────────────────────────
+// 唯一来源是仓库根部的 project.yml（跟 :core 引用规则库/一致向量是同一个做法，
+// 见 core/build.gradle.kts）。于是“改版本号”在两端都是同一个动作：改 project.yml。
+//
+// 用 providers.fileContents 而不是 file().readText()：前者会被记成构建输入，
+// 将来打开 configuration cache 也不会读到缓存的旧值（Gradle 一直在提示可以开）。
+val projectYmlFile = layout.projectDirectory.file("../../../project.yml")
+// 文件不存在时 asText 是一个“没有值”的 provider，.get() 只会抛
+// "Cannot query the value of this provider…"；先 orElse 成空串，
+// 再由下面的检查给出能看懂的报错。
+val projectYmlText = providers.fileContents(projectYmlFile).asText.orElse("")
+
+fun projectYmlSetting(text: String, key: String): String {
+    if (text.isBlank()) {
+        error("读不到 ${projectYmlFile.asFile}——Android 的版本号从仓库根的 project.yml 派生（见 Scripts/check-version.sh）")
+    }
+    return Regex("""^\s*$key:\s*"?([^"#\s]+)""", RegexOption.MULTILINE)
+        .find(text)?.groupValues?.get(1)
+        ?: error("project.yml 里读不到 $key")
+}
+
+val marketingVersion: String = projectYmlText.map { projectYmlSetting(it, "MARKETING_VERSION") }.get()
+
+// 与 Apple 侧 release.yml、以及 Flutter 那条线用同一个公式：x*10000 + y*100 + z
+val versionCodeFromVersion: Int = marketingVersion.split(".").let { parts ->
+    if (parts.size != 3 || parts.any { it.toIntOrNull() == null }) {
+        error("project.yml 的 MARKETING_VERSION '$marketingVersion' 不是 x.y.z 形式")
+    }
+    parts[0].toInt() * 10000 + parts[1].toInt() * 100 + parts[2].toInt()
+}
+
 android {
     namespace = "com.rxliuli.linkpure"
     compileSdk {
@@ -18,9 +49,10 @@ android {
         minSdk = 26
         targetSdk = 37
         // ★ versionCode 必须**大于 Flutter 版在 Play 上的当前值**（0.5.2 → 502），
-        //   否则 Play 会直接拒掉。命名与 Swift 侧的 build 号对齐（0.6.0 → 600）。
-        versionCode = 600
-        versionName = "0.6.0"
+        //   否则 Play 会直接拒掉。值来自 project.yml 的 MARKETING_VERSION，
+        //   公式与 Apple 侧的 build number 相同（0.6.1 → 601）。
+        versionCode = versionCodeFromVersion
+        versionName = marketingVersion
     }
 
     buildTypes {

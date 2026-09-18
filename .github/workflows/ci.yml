@@ -19,6 +19,18 @@ permissions:
   contents: read
 
 jobs:
+  # ───────────────────────── 版本号一致性 ─────────────────────────
+  # Apple 与 Android 的版本号都必须从 project.yml 派生（公式 x*10000 + y*100 + z）。
+  # 这个 job 只跑几秒，但能挡住两端版本号漂移——那种漂移只会在发版时以
+  # App Store / Play 拒收的形式暴露出来（今天刚被 ASC 用 409 拒过一次）。
+  version-consistency:
+    name: Version consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: ./Scripts/check-version.sh
+        run: ./Scripts/check-version.sh
+
   # ───────────────────────── 规则引擎 ─────────────────────────
   # 规则库 + conformance 向量是全仓库唯一一份「跨语言数据契约」，
   # Swift 与 Kotlin 两个实现跑的是同一批 1053 条向量——这里跑的就是它。
