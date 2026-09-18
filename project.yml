@@ -18,12 +18,13 @@ settings:
     # 0.6.1：ASC 里 0.6.0 的 build 600 已经用掉了，而 build number 必须严格递增，
     # 所以补丁版一起往前走。0.6.2：签名/发布流程改成「ASC 靠 cloud signing +
     # 一个合集证书 secret」那一版，而 build 602 已被 ASC 占掉，所以 0.6.3 是同
-    # 一份代码的重发（流程改动不产生代码差异）。
-    MARKETING_VERSION: "0.6.3"
+    # 一份代码的重发（流程改动不产生代码差异）。0.6.4：发布流程改用共享的
+    # rxliuli/apple-release action（上架 / DMG / cask 三个渠道各一个）。
+    MARKETING_VERSION: "0.6.4"
     # build number 用 Flutter 仓库 CI 里那条公式：x*10000 + y*100 + z
-    #（0.6.3 → 6*100+3 = 603）。发版时 release.yml 会按版本号算出来覆盖本值，
-    # 这里的 603 只是给本机 Xcode archive 用的默认值，两者要保持一致。
-    CURRENT_PROJECT_VERSION: "603"
+    #（0.6.4 → 6*100+4 = 604）。发版时 release.yml 会按版本号算出来覆盖本值，
+    # 这里的 604 只是给本机 Xcode archive 用的默认值，两者要保持一致。
+    CURRENT_PROJECT_VERSION: "604"
     # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（会显示在 macOS 的「关于」面板）。
     # 原来沿用 Flutter 版的值是 `Copyright © 2025 com.rxliuli. …`——
     # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
