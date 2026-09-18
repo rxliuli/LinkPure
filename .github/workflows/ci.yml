@@ -31,6 +31,22 @@ jobs:
       - name: ./Scripts/check-version.sh
         run: ./Scripts/check-version.sh
 
+  # ───────────────────────── 发布脚本的语法 ─────────────────────────
+  # Scripts/ci-signing.sh 只在 40 分钟一趟、还要烧 macOS runner 额度的发布流程里
+  # 才会被真正执行——错一个 `fi` 要等一次发版才发现，太贵了。所以在这里先过一遍
+  # 语法（所有脚本一起，不是只为它）。带外依赖为零。
+  scripts:
+    name: Shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: bash -n
+        run: |
+          for f in Scripts/*.sh; do
+            echo "── $f"
+            bash -n "$f"
+          done
+
   # ───────────────────────── 规则引擎 ─────────────────────────
   # 规则库 + conformance 向量是全仓库唯一一份「跨语言数据契约」，
   # Swift 与 Kotlin 两个实现跑的是同一批 1053 条向量——这里跑的就是它。
