@@ -25,11 +25,14 @@ settings:
     # 挂到 GitHub Release；Play 上传待服务账号凭据配好后自动生效）。
     # 0.6.7：Android 换成品牌图标 + 补深色启动主题（0.6.6 那版 AAB/APK 用的还是
     # 占位图标，验过 0.6.7 的产物就是新图标）。
-    MARKETING_VERSION: "0.6.7"
+    # 0.6.8：规则库给 linkumori-google.com-params 补 gl/pws/zx（Google 搜索链接的
+    # 地区与个性化参数；gws_rd 早已被 clearurls 那条正则覆盖），并删掉与 Flutter
+    # 仓库的规则同步脚本。
+    MARKETING_VERSION: "0.6.8"
     # build number 用 Flutter 仓库 CI 里那条公式：x*10000 + y*100 + z
-    #（0.6.7 → 6*100+7 = 607）。发版时 release.yml 会按版本号算出来覆盖本值，
-    # 这里的 607 只是给本机 Xcode archive 用的默认值，两者要保持一致。
-    CURRENT_PROJECT_VERSION: "607"
+    #（0.6.8 → 6*100+8 = 608）。发版时 release.yml 会按版本号算出来覆盖本值，
+    # 这里的 608 只是给本机 Xcode archive 用的默认值，两者要保持一致。
+    CURRENT_PROJECT_VERSION: "608"
     # Info.plist 的 `NSHumanReadableCopyright` 用这个变量（会显示在 macOS 的「关于」面板）。
     # 原来沿用 Flutter 版的值是 `Copyright © 2025 com.rxliuli. …`——
     # 把 bundle id 写进用户可见的版权声明里不合适，换成 App Store 上的卖家名，年份也改成当前。
