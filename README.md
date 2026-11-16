@@ -70,7 +70,6 @@ linkpure/
 │   │   └── src/                      ★ the rule library and vectors are NOT copied here;
 │   │                                   build.gradle.kts references the two directories above
 │   └── app/                          the Android app (Compose); ProcessTextActivity is the entry point
-├── Scripts/sync-spec.sh              syncs the rule library and vectors from the Flutter repo
 └── project.yml                       XcodeGen (macOS / iOS)
 ```
 
@@ -116,9 +115,6 @@ write-back sits. On macOS the same check guards it (`rewritten != text` in
 ```bash
 # rule engine: run the 1053 conformance vectors
 swift test
-
-# sync the rule library and vectors (the Flutter repo is the single source of truth)
-./Scripts/sync-spec.sh ~/code/flutter/LinkPure
 
 # macOS app
 xcodegen generate
@@ -434,7 +430,7 @@ notification-permission records polluted on the dev machine.
 ## Relationship with the Flutter version
 
 The Flutter version remains the **single source of truth** for the rule library and
-conformance vectors. This repo makes a vendored copy via `Scripts/sync-spec.sh` so it
+conformance vectors. This repo carries a vendored copy so it
 can build self-contained.
 
 Long term, `Spec/` (rule library + vectors) should become an independent repo or

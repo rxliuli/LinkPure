@@ -13,8 +13,8 @@ the repo stores exactly one copy of each:
 | Rule library | `Sources/LinkPureCore/Resources/shared-rules.json` | `core/build.gradle.kts` puts it on the classpath via `resources.srcDir(...)` |
 | Conformance vectors | `Tests/LinkPureCoreTests/Vectors/` | the `syncVectors` task syncs them into `build/vectors` and passes the path to the tests via a system property |
 
-**No copies live here.** When you run `Scripts/sync-spec.sh` to pull a new upstream
-version, Swift and Android both move together.
+**No copies live here.** Swift and Android both read the same files, so they move
+together.
 
 ## Structure
 

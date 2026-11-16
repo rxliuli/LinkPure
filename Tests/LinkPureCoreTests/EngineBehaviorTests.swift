@@ -82,10 +82,8 @@ final class EngineBehaviorTests: XCTestCase {
 
     /// 内置规则库里必须带 youtu.be 短链 → 观看页 的改写。
     ///
-    /// 这两条是 Swift 侧先加的（上游 Flutter 的规则源里还没有），而
-    /// `Resources/shared-rules.json` 是 vendored 文件、`Scripts/sync-spec.sh`
-    /// 会整体覆盖。**故意写成断言而不是向量**：向量目录也会被同步 rm -rf，
-    /// 放这里才能在“同步后规则没了”时直接报红，而不是悄悄少个功能。
+    /// 这两条是 Swift 侧先加的（上游 Flutter 的规则源里还没有）。用断言而不是
+    /// conformance 向量来守护：规则被误删时直接报红，而不是悄悄少个功能。
     func testBundledRulesRewriteYoutuBeShortLinks() async throws {
         let rules = try RulesManager.loadBundledRules(includeRedirects: false)
         let ids = Set(rules.map(\.id))

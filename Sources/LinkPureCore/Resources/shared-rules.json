@@ -2927,6 +2927,7 @@
         "esrc",
         "fbs",
         "fg",
+        "gl",
         "gs_lcp",
         "gs_lcrp",
         "gs_lp",
@@ -2940,6 +2941,7 @@
         "ls_rcp",
         "oq",
         "pcampaignid",
+        "pws",
         "rlz",
         "sa",
         "sca_esv",
@@ -2953,7 +2955,8 @@
         "uact",
         "usg",
         "ved",
-        "vet"
+        "vet",
+        "zx"
       ]
     },
     {

@@ -43,8 +43,7 @@ settings:
     # 死代码剥离：Release 不剥离的话，未被引用的代码会留在包里。
     # 之前 macOS 两个配置都是 NO（iOS 反而是 YES），发货配置因此白白变大。
     DEAD_CODE_STRIPPING: YES
-    # 用户脚本沙盒：本工程没有任何 run script 阶段（Scripts/sync-spec.sh 存在但
-    # 没接进 project.yml），所以现在开关它不改变任何行为。写上是给将来立规矩——
+    # 用户脚本沙盒：本工程没有任何 run script 阶段，所以现在开关它不改变任何行为。写上是给将来立规矩——
     # 一旦加了脚本，就只能读写自己声明的输入输出。
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     # 让编译器把 SwiftUI 的 Text("…") 之类抽成 .stringsdata，
