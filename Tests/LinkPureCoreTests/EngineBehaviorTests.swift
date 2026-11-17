@@ -109,6 +109,26 @@ final class EngineBehaviorTests: XCTestCase {
         XCTAssertEqual(already.url, "https://www.youtube.com/watch?v=jGTCHlxhtak&t=30")
     }
 
+    /// X / Twitter 的“复制链接”会带一个 `?a=` 分享标记，规则库里必须清掉它。
+    ///
+    /// 这两条规则原本只列了 cn / s / t / ref_src 等，`a=` 无人认领，
+    /// 于是整条链接回来是 notMatched，用户看到“没有可清理的参数”。
+    func testBundledRulesStripXShareParam() async throws {
+        let rules = try RulesManager.loadBundledRules(includeRedirects: false)
+        let cleaner = UrlCleaner(rules: rules)
+
+        let x = await cleaner.check(
+            "https://x.com/rxliuli/status/2122616954804670681?a=i41-xjzv7dRkWDLWc_Y"
+        )
+        XCTAssertEqual(x.status, .matched)
+        XCTAssertEqual(x.url, "https://x.com/rxliuli/status/2122616954804670681")
+
+        // 分享链接的常见组合：a= 与 s= 一起出现，且真正的 query 参数要留下
+        let both = await cleaner.check("https://twitter.com/jack/status/20?a=abc&s=20")
+        XCTAssertEqual(both.status, .matched)
+        XCTAssertEqual(both.url, "https://twitter.com/jack/status/20")
+    }
+
     /// 编辑器弹窗的“打开前预览”：能同步算的必须在弹窗出现前就给结果，
     /// 否则弹窗会先画一帧空的、再长高，看起来就是闪烁。
     func testEditorPreviewIsComputedBeforeSheetOpens() throws {

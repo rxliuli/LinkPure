@@ -6850,6 +6850,7 @@
       "id": "linkumori-twitter.com-params",
       "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?twitter\\.com",
       "removeParams": [
+        "a",
         "cn",
         "ref_src=",
         "ref_url",
@@ -7339,6 +7340,7 @@
       "id": "linkumori-x.com-params",
       "regexFilter": "^https?:\\/\\/(?:[a-z0-9-]+\\.)*?x\\.com",
       "removeParams": [
+        "a",
         "cn",
         "ref_src",
         "ref_src=",
