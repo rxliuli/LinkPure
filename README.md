@@ -435,3 +435,10 @@ can build self-contained.
 
 Long term, `Spec/` (rule library + vectors) should become an independent repo or
 submodule, referenced by every implementation.
+
+## License
+
+LinkPure is licensed under the [GNU General Public License v3](./LICENSE), with one exception:
+the built-in rule library `Sources/LinkPureCore/Resources/shared-rules.json`, derived from
+[ClearURLs](https://github.com/ClearURLs/Addon) and [Linkumori](https://github.com/Linkumori/Linkumori-Extension), is licensed under the
+[GNU Lesser General Public License v3](./LICENSE.LGPL).
