@@ -149,6 +149,37 @@ jobs:
           api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
           api-issuer: ${{ secrets.APPLE_API_ISSUER }}
 
+  # ───────────────────────── 提交 App Store 审核（macOS + iOS） ─────────────────────────
+  # 上传完之后等 Apple 处理 build（按 build number 精确查找）→ 建/接管版本 → 挂 build →
+  # 提交审核，审核通过后自动发布。只调 API，所以跑在 Linux 上，不占 macOS runner。
+  # 已经提交过、或者别的版本还在审核中，都会跳过（job 保持绿色），原因写在 job summary 里。
+  # 失败多半是 ASC 网页上才能补的东西（年龄分级、协议……），补完点 Re-run failed jobs 即可，
+  # 不用重新构建。规则与"为什么"见 https://github.com/rxliuli/apple-release
+  #
+  # 刻意不让 release job 依赖它：审核这一步卡住不该压住 DMG / GitHub Release。
+  appstore-submit:
+    name: ${{ matrix.platform }} → App Store review
+    needs: [version, appstore]
+    if: needs.version.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    environment: release-macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [macos, ios]
+    steps:
+      - uses: rxliuli/apple-release/submit@v1
+        with:
+          platform: ${{ matrix.platform }}
+          bundle-id: com.rxliuli.linkpure2
+          version: ${{ needs.version.outputs.version }}
+          build-number: ${{ needs.version.outputs.build_number }}
+          release: ${{ needs.version.outputs.publish }}
+          api-key: ${{ secrets.APPLE_API_KEY }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-issuer: ${{ secrets.APPLE_API_ISSUER }}
+
   # ───────────────────────── macOS → 公证过的 DMG ─────────────────────────
   # 直发渠道（Homebrew / GitHub Release）。规则与"为什么"都在共享 action 那边：
   # https://github.com/rxliuli/apple-release —— 与上架那条路最大的不同是它必须
